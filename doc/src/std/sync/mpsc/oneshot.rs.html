@@ -1,0 +1,634 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\sync\mpsc\oneshot.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>oneshot.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../std/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+</pre><pre class="rust">
+<span class="doccomment">/// Oneshot channels/ports</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 这是用于通讯模块的 channels/ports 的初始风格。这是针对通道的一次使用情况的优化。这种类型的主要优化是在创建 chan/port 对时仅分配一个且仅分配一个。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 另一个可能的优化是不使用 Arc box，因为从理论上讲我们知道何时可以重新分配共享数据包 (不需要真正的原子引用计数)，但我遇到了如何在一个端口丢弃的早期销毁数据的麻烦。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Implementation</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Oneshots 是围绕一个原子的 usize 变量实现的。该变量不仅指示 port/chan 的状态，还包含端口上阻塞的所有线程。所有的原子运算都发生在这个词上。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 为了升级 oneshot 通道，升级被视为代表事物在通道方面的断开连接 (在心理上可以认为是在占用端口)。然后，此升级也存储在共享数据包中。</span>
+<span class="doccomment">/// 需要考虑的一个警告是，当端口看到断开的通道时，它必须检查数据，因为没有 &quot;data plus upgrade&quot; 状态。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::Failure</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="self">self</span><span class="ident">::MyUpgrade</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::UpgradeResult</span>::<span class="kw-2">*</span>;
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::cell::UnsafeCell</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::mpsc::blocking</span>::{<span class="self">self</span>, <span class="ident">SignalToken</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::mpsc::Receiver</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::time::Instant</span>;
+
+<span class="comment">// 您可以在各种状态下找到端口。</span>
+<span class="kw">const</span> <span class="ident">EMPTY</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>; <span class="comment">// 初始状态: 无数据，无阻塞接收者</span>
+<span class="kw">const</span> <span class="ident">DATA</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>; <span class="comment">// 准备好供接收者接收的数据</span>
+<span class="kw">const</span> <span class="ident">DISCONNECTED</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>; <span class="comment">// 通道已断开连接或已升级</span>
+<span class="comment">// 任何其他值都表示一个指向 SignalToken 值的指针。</span>
+<span class="comment">// 该协议确保当状态从 *移到指针时，将 token 的所有权提供给数据包，并且在状态从* 指针移向 * 时，token 的所有权将转移给更改状态的任何人。</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Packet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="comment">// chan/port 对的内部状态 (也存储阻塞的线程)</span>
+    <span class="ident">state</span>: <span class="ident">AtomicUsize</span>,
+    <span class="comment">// 一键式数据插槽位置</span>
+    <span class="ident">data</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="comment">// 第二次使用时，必须升级 oneshot 通道，其中包含用于升级的插槽</span>
+    <span class="comment">//</span>
+    <span class="ident">upgrade</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">MyUpgrade</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Failure</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="ident">Empty</span>,
+    <span class="ident">Disconnected</span>,
+    <span class="ident">Upgraded</span>(<span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>),
+}
+
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">UpgradeResult</span> {
+    <span class="ident">UpSuccess</span>,
+    <span class="ident">UpDisconnected</span>,
+    <span class="ident">UpWoke</span>(<span class="ident">SignalToken</span>),
+}
+
+<span class="kw">enum</span> <span class="ident">MyUpgrade</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="ident">NothingSent</span>,
+    <span class="ident">SendUsed</span>,
+    <span class="ident">GoUp</span>(<span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>),
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Packet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Packet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="ident">Packet</span> {
+            <span class="ident">data</span>: <span class="ident">UnsafeCell::new</span>(<span class="prelude-val">None</span>),
+            <span class="ident">upgrade</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">NothingSent</span>),
+            <span class="ident">state</span>: <span class="ident">AtomicUsize::new</span>(<span class="ident">EMPTY</span>),
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">t</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">unsafe</span> {
+            <span class="comment">// 完整性检查</span>
+            <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>() {
+                <span class="ident">NothingSent</span> <span class="op">=</span><span class="op">&gt;</span> {}
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;sending on a oneshot that&#39;s already sent on &quot;</span>),
+            }
+            <span class="macro">assert!</span>((<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">is_none</span>());
+            <span class="ident">ptr::write</span>(<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>(), <span class="prelude-val">Some</span>(<span class="ident">t</span>));
+            <span class="ident">ptr::write</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">SendUsed</span>);
+
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">DATA</span>, <span class="ident">Ordering::SeqCst</span>) {
+                <span class="comment">// 发送数据，没有人在等待</span>
+                <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(()),
+
+                <span class="comment">// 无法发送数据，端口首先挂断。</span>
+                <span class="comment">// 将数据返回栈。</span>
+                <span class="ident">DISCONNECTED</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">DISCONNECTED</span>, <span class="ident">Ordering::SeqCst</span>);
+                    <span class="ident">ptr::write</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">NothingSent</span>);
+                    <span class="prelude-val">Err</span>((<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>())
+                }
+
+                <span class="comment">// 不可能，这些是一次性通道</span>
+                <span class="ident">DATA</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+
+                <span class="comment">// 另一端有一个线程在等待。</span>
+                <span class="comment">// 我们将 &#39;DATA&#39; 状态留在内部，以便在另一端将其拾取。</span>
+                <span class="ident">ptr</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">SignalToken::cast_from_usize</span>(<span class="ident">ptr</span>).<span class="ident">signal</span>();
+                    <span class="prelude-val">Ok</span>(())
+                }
+            }
+        }
+    }
+
+    <span class="comment">// 只需测试此通道是否已发送，就可以从发送方安全地使用它。</span>
+    <span class="comment">//</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sent</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">unsafe</span> { <span class="op">!</span><span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">NothingSent</span>) }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">recv</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">deadline</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Failure</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="comment">// 尝试不阻塞线程 (这有点贵)。</span>
+        <span class="comment">// 如果看起来我们不是空的，那么请立即进行 `try_recv` 的操作。</span>
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">EMPTY</span> {
+            <span class="kw">let</span> (<span class="ident">wait_token</span>, <span class="ident">signal_token</span>) <span class="op">=</span> <span class="ident">blocking::tokens</span>();
+            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">signal_token</span>.<span class="ident">cast_to_usize</span>() };
+
+            <span class="comment">// 与发送者竞争进入阻止状态</span>
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">compare_exchange</span>(<span class="ident">EMPTY</span>, <span class="ident">ptr</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::SeqCst</span>).<span class="ident">is_ok</span>() {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">deadline</span>) <span class="op">=</span> <span class="ident">deadline</span> {
+                    <span class="kw">let</span> <span class="ident">timed_out</span> <span class="op">=</span> <span class="op">!</span><span class="ident">wait_token</span>.<span class="ident">wait_max_until</span>(<span class="ident">deadline</span>);
+                    <span class="comment">// 尝试重置状态</span>
+                    <span class="kw">if</span> <span class="ident">timed_out</span> {
+                        <span class="self">self</span>.<span class="ident">abort_selection</span>().<span class="ident">map_err</span>(<span class="ident">Upgraded</span>)<span class="question-mark">?</span>;
+                    }
+                } <span class="kw">else</span> {
+                    <span class="ident">wait_token</span>.<span class="ident">wait</span>();
+                    <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">EMPTY</span>);
+                }
+            } <span class="kw">else</span> {
+                <span class="comment">// 丢弃信号 token，因为我们从未阻止</span>
+                <span class="ident">drop</span>(<span class="kw">unsafe</span> { <span class="ident">SignalToken::cast_from_usize</span>(<span class="ident">ptr</span>) });
+            }
+        }
+
+        <span class="self">self</span>.<span class="ident">try_recv</span>()
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_recv</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Failure</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">unsafe</span> {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) {
+                <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Empty</span>),
+
+                <span class="comment">// 我们在通道上看到了一些数据，但是可以再次使用通道来向我们发送升级。</span>
+                <span class="comment">// 结果，我们需要重新插入没有可用数据的通道 (否则，下一次我们将只看到 DATA)。</span>
+                <span class="comment">//</span>
+                <span class="comment">// 这是作为 cmpxchg 完成的，因为如果状态在我们的脚下改变，我们宁愿只看到状态改变。</span>
+                <span class="comment">//</span>
+                <span class="comment">//</span>
+                <span class="ident">DATA</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">compare_exchange</span>(
+                        <span class="ident">DATA</span>,
+                        <span class="ident">EMPTY</span>,
+                        <span class="ident">Ordering::SeqCst</span>,
+                        <span class="ident">Ordering::SeqCst</span>,
+                    );
+                    <span class="kw">match</span> (<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">take</span>() {
+                        <span class="prelude-val">Some</span>(<span class="ident">data</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">data</span>),
+                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+                    }
+                }
+
+                <span class="comment">// 无法保证在升级发生之前我们会收到，并且升级会将通道标记为断开连接，因此，当我们看到此消息时，我们首先需要检查是否有可用数据，然后 *然后* 进行升级。</span>
+                <span class="comment">//</span>
+                <span class="comment">//</span>
+                <span class="comment">//</span>
+                <span class="ident">DISCONNECTED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> (<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">take</span>() {
+                    <span class="prelude-val">Some</span>(<span class="ident">data</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">data</span>),
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">ptr::replace</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">SendUsed</span>) {
+                        <span class="ident">SendUsed</span> <span class="op">|</span> <span class="ident">NothingSent</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Disconnected</span>),
+                        <span class="ident">GoUp</span>(<span class="ident">upgrade</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Upgraded</span>(<span class="ident">upgrade</span>)),
+                    },
+                },
+
+                <span class="comment">// 我们是唯一的接收者; 已经没有阻塞的接收者了。</span>
+                <span class="comment">//</span>
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+            }
+        }
+    }
+
+    <span class="comment">// 返回升级是否完成。</span>
+    <span class="comment">// 如果升级未完成，则无法将端口发送到另一半 (它将永远不会收到)。</span>
+    <span class="comment">//</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upgrade</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">up</span>: <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UpgradeResult</span> {
+        <span class="kw">unsafe</span> {
+            <span class="kw">let</span> <span class="ident">prev</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>() {
+                <span class="ident">NothingSent</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">NothingSent</span>,
+                <span class="ident">SendUsed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">SendUsed</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;upgrading again&quot;</span>),
+            };
+            <span class="ident">ptr::write</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">GoUp</span>(<span class="ident">up</span>));
+
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">DISCONNECTED</span>, <span class="ident">Ordering::SeqCst</span>) {
+                <span class="comment">// 如果通道为空或上面有数据，那么我们很好。</span>
+                <span class="comment">// 发送者将在升级之前检查数据 (以防我们粘贴 DATA 状态)。</span>
+                <span class="comment">//</span>
+                <span class="ident">DATA</span> <span class="op">|</span> <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">UpSuccess</span>,
+
+                <span class="comment">// 如果另一端已经断开连接，则升级失败。</span>
+                <span class="comment">// 请确保将我们给的端口丢掉。</span>
+                <span class="ident">DISCONNECTED</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="ident">ptr::replace</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">prev</span>);
+                    <span class="ident">UpDisconnected</span>
+                }
+
+                <span class="comment">// 如果有人在等，我们得叫醒他们</span>
+                <span class="ident">ptr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">UpWoke</span>(<span class="ident">SignalToken::cast_from_usize</span>(<span class="ident">ptr</span>)),
+            }
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop_chan</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">DISCONNECTED</span>, <span class="ident">Ordering::SeqCst</span>) {
+            <span class="ident">DATA</span> <span class="op">|</span> <span class="ident">DISCONNECTED</span> <span class="op">|</span> <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> {}
+
+            <span class="comment">// 如果有人在等，我们得叫醒他们</span>
+            <span class="ident">ptr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
+                <span class="ident">SignalToken::cast_from_usize</span>(<span class="ident">ptr</span>).<span class="ident">signal</span>();
+            },
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop_port</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="ident">DISCONNECTED</span>, <span class="ident">Ordering::SeqCst</span>) {
+            <span class="comment">// 空通道无关紧要，而远程断开连接的通道也无关紧要 b/c 我们将要运行 drop glue</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="ident">DISCONNECTED</span> <span class="op">|</span> <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> {}
+
+            <span class="comment">// 通道上有数据，因此请确保我们立即销毁它。</span>
+            <span class="comment">// 这就是为什么不使用圆弧会有些困难的原因 (需要 box 才能在获取数据时保持有效)。</span>
+            <span class="comment">//</span>
+            <span class="ident">DATA</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
+                (<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">take</span>().<span class="ident">unwrap</span>();
+            },
+
+            <span class="comment">// 我们是唯一可以阻止此端口的人</span>
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+        }
+    }
+
+    <span class="comment">////////////////////////////////////////////////////////////////////////////</span>
+    <span class="comment">// 选择实现</span>
+    <span class="comment">////////////////////////////////////////////////////////////////////////////</span>
+
+    <span class="comment">// 从该端口中删除先前的选择线程。</span>
+    <span class="comment">// 这确保了被阻塞的线程将不再对任何其他线程可见。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 返回值指示此端口上是否有数据。</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abort_selection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) {
+            <span class="comment">// 这些状态中的每一个都意味着在堕胎选择方面不会发生进一步的活动</span>
+            <span class="comment">//</span>
+            <span class="ident">s</span> @ (<span class="ident">EMPTY</span> <span class="op">|</span> <span class="ident">DATA</span> <span class="op">|</span> <span class="ident">DISCONNECTED</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">s</span>,
+
+            <span class="comment">// 如果我们有一个阻塞的线程，则使用原子来获得它的所有权 (可能会失败)</span>
+            <span class="comment">//</span>
+            <span class="ident">ptr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>
+                .<span class="ident">state</span>
+                .<span class="ident">compare_exchange</span>(<span class="ident">ptr</span>, <span class="ident">EMPTY</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::SeqCst</span>)
+                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>),
+        };
+
+        <span class="comment">// 既然我们已经拥有了国家的所有权，那么想出办法去做。</span>
+        <span class="comment">//</span>
+        <span class="kw">match</span> <span class="ident">state</span> {
+            <span class="ident">EMPTY</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
+            <span class="comment">// 用于选择的线程被盗</span>
+            <span class="ident">DATA</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+
+            <span class="comment">// 如果另一端挂断了，那么我们就拥有该端口的完全所有权。首先，检查是否有数据在等待我们。</span>
+            <span class="comment">// 如果另一端发送了一些内容然后挂断，则可能发生这种情况。</span>
+            <span class="comment">//</span>
+            <span class="comment">// 然后，我们需要检查是否请求了升级，如果是，则升级后的端口需要中止选择。</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="ident">DISCONNECTED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
+                <span class="kw">if</span> (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">is_some</span>() {
+                    <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+                } <span class="kw">else</span> {
+                    <span class="kw">match</span> <span class="ident">ptr::replace</span>(<span class="self">self</span>.<span class="ident">upgrade</span>.<span class="ident">get</span>(), <span class="ident">SendUsed</span>) {
+                        <span class="ident">GoUp</span>(<span class="ident">port</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">port</span>),
+                        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+                    }
+                }
+            },
+
+            <span class="comment">// 我们从精选中唤醒了自己。</span>
+            <span class="ident">ptr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">unsafe</span> {
+                <span class="ident">drop</span>(<span class="ident">SignalToken::cast_from_usize</span>(<span class="ident">ptr</span>));
+                <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+            },
+        }
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Packet</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>), <span class="ident">DISCONNECTED</span>);
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="std" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="使用 `IMM8` 中的控件将包装的字符串 `a` 和 `b` 与长度 `la` 和 `lb` 进行比较，并返回生成的索引。 与 `_mm_cmpistri` 相似，但 `_mm_cmpistri` 隐式确定 `a` 和 `b` 的长度。"><meta name="keywords" content="rust, rustlang, rust-lang, _mm_cmpestri"><title>_mm_cmpestri in core::arch::x86 - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../../index.html">core</a>::<wbr><a href="../index.html">arch</a>::<wbr><a href="index.html">x86</a></h2><div id="sidebar-vars" data-name="_mm_cmpestri" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../../index.html">core</a>::<wbr><a href="../index.html">arch</a>::<wbr><a href="index.html">x86</a>::<wbr><a class="fn" href="#">_mm_cmpestri</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.27.0">1.27.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/core/up/up/stdarch/crates/core_arch/src/x86/sse42.rs.html#441-444" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub unsafe fn _mm_cmpestri&lt;const IMM8:&nbsp;i32&gt;(<br>&nbsp;&nbsp;&nbsp;&nbsp;a: <a class="struct" href="struct.__m128i.html" title="struct core::arch::x86::__m128i">__m128i</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;la: i32, <br>&nbsp;&nbsp;&nbsp;&nbsp;b: <a class="struct" href="struct.__m128i.html" title="struct core::arch::x86::__m128i">__m128i</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;lb: i32<br>) -&gt; i32</pre><div class="item-info"><div class="stab portability">This is supported on <strong>x86 and target feature <code>sse4.2</code></strong> only.</div></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>使用 <code>IMM8</code> 中的控件将包装的字符串 <code>a</code> 和 <code>b</code> 与长度 <code>la</code> 和 <code>lb</code> 进行比较，并返回生成的索引。
+与 <a href="fn._mm_cmpistri.html"><code>_mm_cmpistri</code></a> 相似，但 <a href="fn._mm_cmpistri.html"><code>_mm_cmpistri</code></a> 隐式确定 <code>a</code> 和 <code>b</code> 的长度。</p>
+<h1 id="控制方式" class="section-header"><a href="#控制方式">控制方式</a></h1>
+<p><code>IMM8</code> 指定的控件可以是以下一种或多种。</p>
+<h2 id="数据大小和签名" class="section-header"><a href="#数据大小和签名">数据大小和签名</a></h2>
+<ul>
+<li><a href="constant._SIDD_UBYTE_OPS.html"><code>_SIDD_UBYTE_OPS</code></a> - Default</li>
+<li><a href="constant._SIDD_UWORD_OPS.html"><code>_SIDD_UWORD_OPS</code></a></li>
+<li><a href="constant._SIDD_SBYTE_OPS.html"><code>_SIDD_SBYTE_OPS</code></a></li>
+<li><a href="constant._SIDD_SWORD_OPS.html"><code>_SIDD_SWORD_OPS</code></a></li>
+</ul>
+<h2 id="比较选项" class="section-header"><a href="#比较选项">比较选项</a></h2>
+<ul>
+<li><a href="constant._SIDD_CMP_EQUAL_ANY.html"><code>_SIDD_CMP_EQUAL_ANY</code></a> - Default</li>
+<li><a href="constant._SIDD_CMP_RANGES.html"><code>_SIDD_CMP_RANGES</code></a></li>
+<li><a href="constant._SIDD_CMP_EQUAL_EACH.html"><code>_SIDD_CMP_EQUAL_EACH</code></a></li>
+<li><a href="constant._SIDD_CMP_EQUAL_ORDERED.html"><code>_SIDD_CMP_EQUAL_ORDERED</code></a></li>
+</ul>
+<h2 id="结果极性" class="section-header"><a href="#结果极性">结果极性</a></h2>
+<ul>
+<li><a href="constant._SIDD_POSITIVE_POLARITY.html"><code>_SIDD_POSITIVE_POLARITY</code></a> - Default</li>
+<li><a href="constant._SIDD_NEGATIVE_POLARITY.html"><code>_SIDD_NEGATIVE_POLARITY</code></a></li>
+</ul>
+<h2 id="返回位" class="section-header"><a href="#返回位">返回位</a></h2>
+<ul>
+<li><a href="constant._SIDD_LEAST_SIGNIFICANT.html"><code>_SIDD_LEAST_SIGNIFICANT</code></a> - Default</li>
+<li><a href="constant._SIDD_MOST_SIGNIFICANT.html"><code>_SIDD_MOST_SIGNIFICANT</code></a></li>
+</ul>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86_64</span>::<span class="kw-2">*</span>;
+
+
+<span class="comment">// 我们要在其中找到子字符串的字符串</span>
+<span class="kw">let</span> <span class="ident">haystack</span> <span class="op">=</span> <span class="string">b&quot;Split \r\n\t line  &quot;</span>;
+
+<span class="comment">// 我们要搜索的字符串带有一些我们不想搜索的额外字节。</span>
+<span class="kw">let</span> <span class="ident">needle</span> <span class="op">=</span> <span class="string">b&quot;\r\n\t ignore this &quot;</span>;
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">needle</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">haystack</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+
+<span class="comment">// Note: 我们明确指定只想在 `b` 中搜索 a 的前 3 个字符。</span>
+<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">_mm_cmpestri</span>(<span class="ident">a</span>, <span class="number">3</span>, <span class="ident">b</span>, <span class="number">15</span>, <span class="ident">_SIDD_CMP_EQUAL_ORDERED</span>);
+
+<span class="macro">assert_eq!</span>(<span class="ident">idx</span>, <span class="number">6</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23%5Bcfg(target_arch%20%3D%20%22x86%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86%3A%3A*%3B%0A%23%5Bcfg(target_arch%20%3D%20%22x86_64%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86_64%3A%3A*%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20if%20is_x86_feature_detected!(%22sse4.2%22)%20%7B%0A%20%20%20%20%20%20%20%20%23%5Btarget_feature(enable%20%3D%20%22sse4.2%22)%5D%0A%20%20%20%20%20%20%20%20unsafe%20fn%20worker()%20%7B%0A%0A%2F%2F%20%E6%88%91%E4%BB%AC%E8%A6%81%E5%9C%A8%E5%85%B6%E4%B8%AD%E6%89%BE%E5%88%B0%E5%AD%90%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%0Alet%20haystack%20%3D%20b%22Split%20%5Cr%5Cn%5Ct%20line%20%20%22%3B%0A%0A%2F%2F%20%E6%88%91%E4%BB%AC%E8%A6%81%E6%90%9C%E7%B4%A2%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%B8%A6%E6%9C%89%E4%B8%80%E4%BA%9B%E6%88%91%E4%BB%AC%E4%B8%8D%E6%83%B3%E6%90%9C%E7%B4%A2%E7%9A%84%E9%A2%9D%E5%A4%96%E5%AD%97%E8%8A%82%E3%80%82%0Alet%20needle%20%3D%20b%22%5Cr%5Cn%5Ct%20ignore%20this%20%22%3B%0A%0Alet%20a%20%3D%20_mm_loadu_si128(needle.as_ptr()%20as%20*const%20_)%3B%0Alet%20b%20%3D%20_mm_loadu_si128(haystack.as_ptr()%20as%20*const%20_)%3B%0A%0A%2F%2F%20Note%3A%20%E6%88%91%E4%BB%AC%E6%98%8E%E7%A1%AE%E6%8C%87%E5%AE%9A%E5%8F%AA%E6%83%B3%E5%9C%A8%20%60b%60%20%E4%B8%AD%E6%90%9C%E7%B4%A2%20a%20%E7%9A%84%E5%89%8D%203%20%E4%B8%AA%E5%AD%97%E7%AC%A6%E3%80%82%0Alet%20idx%20%3D%20_mm_cmpestri(a%2C%203%2C%20b%2C%2015%2C%20_SIDD_CMP_EQUAL_ORDERED)%3B%0A%0Aassert_eq!(idx%2C%206)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20unsafe%20%7B%20worker()%3B%20%7D%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_cmpestri">Intel’s documentation</a></p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script></body></html>

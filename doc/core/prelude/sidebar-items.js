@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["rust_2015","2015 版本的核心 prelude。"],["rust_2018","2018 版本的核心 prelude。"],["rust_2021","2021 版本的核心 prelude。"],["v1","第一个版本的核心 prelude。"]]});

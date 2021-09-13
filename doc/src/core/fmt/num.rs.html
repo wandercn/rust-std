@@ -1,0 +1,1372 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\fmt\num.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>num.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+</pre><pre class="rust">
+<span class="doccomment">//! 整数和浮点数格式</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::fmt</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::mem::MaybeUninit</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::fmt</span> <span class="kw">as</span> <span class="ident">numfmt</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ops</span>::{<span class="ident">Div</span>, <span class="ident">Rem</span>, <span class="ident">Sub</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::slice</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::str</span>;
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">trait</span> <span class="ident">DisplayInt</span>:
+    <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">PartialOrd</span> <span class="op">+</span> <span class="ident">Div</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Rem</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Copy</span>
+{
+    <span class="kw">fn</span> <span class="ident">zero</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">from_u8</span>(<span class="ident">u</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">to_u8</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span>;
+    <span class="kw">fn</span> <span class="ident">to_u16</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span>;
+    <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>;
+    <span class="kw">fn</span> <span class="ident">to_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span>;
+    <span class="kw">fn</span> <span class="ident">to_u128</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u128</span>;
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">impl_int</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (
+      $(<span class="kw">impl</span> <span class="ident">DisplayInt</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+          <span class="kw">fn</span> <span class="ident">zero</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> { <span class="number">0</span> }
+          <span class="kw">fn</span> <span class="ident">from_u8</span>(<span class="ident">u</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> { <span class="ident">u</span> <span class="kw">as</span> <span class="self">Self</span> }
+          <span class="kw">fn</span> <span class="ident">to_u8</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u8</span> }
+          <span class="kw">fn</span> <span class="ident">to_u16</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u16</span> }
+          <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u32</span> }
+          <span class="kw">fn</span> <span class="ident">to_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u64</span> }
+          <span class="kw">fn</span> <span class="ident">to_u128</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u128</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u128</span> }
+      })<span class="op">*</span>
+    )
+}
+<span class="macro">macro_rules!</span> <span class="ident">impl_uint</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (
+      $(<span class="kw">impl</span> <span class="ident">DisplayInt</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+          <span class="kw">fn</span> <span class="ident">zero</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> { <span class="number">0</span> }
+          <span class="kw">fn</span> <span class="ident">from_u8</span>(<span class="ident">u</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> { <span class="ident">u</span> <span class="kw">as</span> <span class="self">Self</span> }
+          <span class="kw">fn</span> <span class="ident">to_u8</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u8</span> }
+          <span class="kw">fn</span> <span class="ident">to_u16</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u16</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u16</span> }
+          <span class="kw">fn</span> <span class="ident">to_u32</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u32</span> }
+          <span class="kw">fn</span> <span class="ident">to_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u64</span> }
+          <span class="kw">fn</span> <span class="ident">to_u128</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u128</span> { <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u128</span> }
+      })<span class="op">*</span>
+    )
+}
+
+<span class="macro">impl_int!</span> { <span class="ident">i8</span> <span class="ident">i16</span> <span class="ident">i32</span> <span class="ident">i64</span> <span class="ident">i128</span> <span class="ident">isize</span> }
+<span class="macro">impl_uint!</span> { <span class="ident">u8</span> <span class="ident">u16</span> <span class="ident">u32</span> <span class="ident">u64</span> <span class="ident">u128</span> <span class="ident">usize</span> }
+
+<span class="doccomment">/// 代表特定基数的类型</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">trait</span> <span class="ident">GenericRadix</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// 数字位数。</span>
+    <span class="kw">const</span> <span class="ident">BASE</span>: <span class="ident">u8</span>;
+
+    <span class="doccomment">/// 一个特定于基数的前缀字符串。</span>
+    <span class="kw">const</span> <span class="ident">PREFIX</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+
+    <span class="doccomment">/// 将整数转换为相应的基数数字。</span>
+    <span class="kw">fn</span> <span class="ident">digit</span>(<span class="ident">x</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span>;
+
+    <span class="doccomment">/// 使用格式化程序使用基数格式化整数。</span>
+    <span class="kw">fn</span> <span class="ident">fmt_int</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">DisplayInt</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">x</span>: <span class="ident">T</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="comment">// 基数可以低至 2，因此对于基数为 2 的数字，我们需要至少 128 个字符的缓冲区。</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">zero</span> <span class="op">=</span> <span class="ident">T::zero</span>();
+        <span class="kw">let</span> <span class="ident">is_nonnegative</span> <span class="op">=</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">zero</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="number">128</span>];
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>();
+        <span class="kw">let</span> <span class="ident">base</span> <span class="op">=</span> <span class="ident">T::from_u8</span>(<span class="self">Self</span><span class="ident">::BASE</span>);
+        <span class="kw">if</span> <span class="ident">is_nonnegative</span> {
+            <span class="comment">// 从最低有效数字到最高有效数字累积数字的每个数字。</span>
+            <span class="comment">//</span>
+            <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="ident">buf</span>.<span class="ident">iter_mut</span>().<span class="ident">rev</span>() {
+                <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">x</span> <span class="op">%</span> <span class="ident">base</span>; <span class="comment">// 获取当前位置值。</span>
+                <span class="ident">x</span> <span class="op">=</span> <span class="ident">x</span> <span class="op">/</span> <span class="ident">base</span>; <span class="comment">// 对数字进行累加。</span>
+                <span class="ident">byte</span>.<span class="ident">write</span>(<span class="self">Self</span><span class="ident">::digit</span>(<span class="ident">n</span>.<span class="ident">to_u8</span>())); <span class="comment">// 将数字存储在缓冲区中。</span>
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="kw">if</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="ident">zero</span> {
+                    <span class="comment">// 没有更多的数字可累加。</span>
+                    <span class="kw">break</span>;
+                };
+            }
+        } <span class="kw">else</span> {
+            <span class="comment">// 进行与上述相同的操作，但要考虑到二进制补码。</span>
+            <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="ident">buf</span>.<span class="ident">iter_mut</span>().<span class="ident">rev</span>() {
+                <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">zero</span> <span class="op">-</span> (<span class="ident">x</span> <span class="op">%</span> <span class="ident">base</span>); <span class="comment">// 获取当前位置值。</span>
+                <span class="ident">x</span> <span class="op">=</span> <span class="ident">x</span> <span class="op">/</span> <span class="ident">base</span>; <span class="comment">// 对数字进行累加。</span>
+                <span class="ident">byte</span>.<span class="ident">write</span>(<span class="self">Self</span><span class="ident">::digit</span>(<span class="ident">n</span>.<span class="ident">to_u8</span>())); <span class="comment">// 将数字存储在缓冲区中。</span>
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="kw">if</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="ident">zero</span> {
+                    <span class="comment">// 没有更多的数字可累加。</span>
+                    <span class="kw">break</span>;
+                };
+            }
+        }
+        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">buf</span>[<span class="ident">curr</span>..];
+        <span class="comment">// SAFETY: `buf` 中唯一的字符由 `Self::digit` 创建，并被假定为有效的 UTF-8。</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">buf</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+            <span class="ident">str::from_utf8_unchecked</span>(<span class="ident">slice::from_raw_parts</span>(
+                <span class="ident">MaybeUninit::slice_as_ptr</span>(<span class="ident">buf</span>),
+                <span class="ident">buf</span>.<span class="ident">len</span>(),
+            ))
+        };
+        <span class="ident">f</span>.<span class="ident">pad_integral</span>(<span class="ident">is_nonnegative</span>, <span class="self">Self</span><span class="ident">::PREFIX</span>, <span class="ident">buf</span>)
+    }
+}
+
+<span class="doccomment">/// 二进制 (以 2 为底) 基数</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Binary</span>;
+
+<span class="doccomment">/// 八进制 (基数为 8) 的基数</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Octal</span>;
+
+<span class="doccomment">/// 十六进制 (以 16 为底) 基数，格式为小写字符</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">struct</span> <span class="ident">LowerHex</span>;
+
+<span class="doccomment">/// 十六进制 (以 16 为底) 基数，格式为大写字符</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">struct</span> <span class="ident">UpperHex</span>;
+
+<span class="macro">macro_rules!</span> <span class="ident">radix</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">base</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">prefix</span>:<span class="ident">expr</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">pat</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv</span>:<span class="ident">expr</span>),<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">impl</span> <span class="ident">GenericRadix</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> {
+            <span class="kw">const</span> <span class="ident">BASE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">base</span>;
+            <span class="kw">const</span> <span class="ident">PREFIX</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">prefix</span>;
+            <span class="kw">fn</span> <span class="ident">digit</span>(<span class="ident">x</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
+                <span class="kw">match</span> <span class="ident">x</span> {
+                    $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv</span>,)<span class="op">+</span>
+                    <span class="ident">x</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;number not in the range 0..={}: {}&quot;</span>, <span class="self">Self</span><span class="ident">::BASE</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">x</span>),
+                }
+            }
+        }
+    }
+}
+
+<span class="macro">radix!</span> { <span class="ident">Binary</span>,    <span class="number">2</span>, <span class="string">&quot;0b&quot;</span>, <span class="ident">x</span> @  <span class="number">0</span> ..<span class="op">=</span>  <span class="number">1</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">x</span> }
+<span class="macro">radix!</span> { <span class="ident">Octal</span>,     <span class="number">8</span>, <span class="string">&quot;0o&quot;</span>, <span class="ident">x</span> @  <span class="number">0</span> ..<span class="op">=</span>  <span class="number">7</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">x</span> }
+<span class="macro">radix!</span> { <span class="ident">LowerHex</span>, <span class="number">16</span>, <span class="string">&quot;0x&quot;</span>, <span class="ident">x</span> @  <span class="number">0</span> ..<span class="op">=</span>  <span class="number">9</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">x</span>, <span class="ident">x</span> @ <span class="number">10</span> ..<span class="op">=</span> <span class="number">15</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;a&#39;</span> <span class="op">+</span> (<span class="ident">x</span> <span class="op">-</span> <span class="number">10</span>) }
+<span class="macro">radix!</span> { <span class="ident">UpperHex</span>, <span class="number">16</span>, <span class="string">&quot;0x&quot;</span>, <span class="ident">x</span> @  <span class="number">0</span> ..<span class="op">=</span>  <span class="number">9</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">x</span>, <span class="ident">x</span> @ <span class="number">10</span> ..<span class="op">=</span> <span class="number">15</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">b&#39;A&#39;</span> <span class="op">+</span> (<span class="ident">x</span> <span class="op">-</span> <span class="number">10</span>) }
+
+<span class="macro">macro_rules!</span> <span class="ident">int_base</span> {
+    (<span class="ident">fmt</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Trait</span>:<span class="ident">ident</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>:<span class="ident">ident</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">U</span>:<span class="ident">ident</span> <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Radix</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+        <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Trait</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> {
+            <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Radix</span>.<span class="ident">fmt_int</span>(<span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">U</span>, <span class="ident">f</span>)
+            }
+        }
+    };
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">integer</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Int</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="macro">int_base!</span> { <span class="ident">fmt::Binary</span>   <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Int</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span>  <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Binary</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::Octal</span>    <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Int</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span>  <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Octal</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::LowerHex</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Int</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span>  <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LowerHex</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::UpperHex</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Int</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span>  <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UpperHex</span> }
+
+        <span class="macro">int_base!</span> { <span class="ident">fmt::Binary</span>   <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Binary</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::Octal</span>    <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Octal</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::LowerHex</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LowerHex</span> }
+        <span class="macro">int_base!</span> { <span class="ident">fmt::UpperHex</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Uint</span> <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UpperHex</span> }
+    };
+}
+<span class="macro">integer!</span> { <span class="ident">isize</span>, <span class="ident">usize</span> }
+<span class="macro">integer!</span> { <span class="ident">i8</span>, <span class="ident">u8</span> }
+<span class="macro">integer!</span> { <span class="ident">i16</span>, <span class="ident">u16</span> }
+<span class="macro">integer!</span> { <span class="ident">i32</span>, <span class="ident">u32</span> }
+<span class="macro">integer!</span> { <span class="ident">i64</span>, <span class="ident">u64</span> }
+<span class="macro">integer!</span> { <span class="ident">i128</span>, <span class="ident">u128</span> }
+<span class="macro">macro_rules!</span> <span class="ident">debug</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span>:<span class="ident">ident</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {$(
+        <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+        <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">T</span> {
+            <span class="attribute">#[<span class="ident">inline</span>]</span>
+            <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+                <span class="kw">if</span> <span class="ident">f</span>.<span class="ident">debug_lower_hex</span>() {
+                    <span class="ident">fmt::LowerHex::fmt</span>(<span class="self">self</span>, <span class="ident">f</span>)
+                } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">f</span>.<span class="ident">debug_upper_hex</span>() {
+                    <span class="ident">fmt::UpperHex::fmt</span>(<span class="self">self</span>, <span class="ident">f</span>)
+                } <span class="kw">else</span> {
+                    <span class="ident">fmt::Display::fmt</span>(<span class="self">self</span>, <span class="ident">f</span>)
+                }
+            }
+        }
+    )<span class="kw-2">*</span>};
+}
+<span class="macro">debug!</span> {
+  <span class="ident">i8</span> <span class="ident">i16</span> <span class="ident">i32</span> <span class="ident">i64</span> <span class="ident">i128</span> <span class="ident">isize</span>
+  <span class="ident">u8</span> <span class="ident">u16</span> <span class="ident">u32</span> <span class="ident">u64</span> <span class="ident">u128</span> <span class="ident">usize</span>
+}
+
+<span class="comment">// 2 位十进制查询表</span>
+<span class="kw">static</span> <span class="ident">DEC_DIGITS_LUT</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="number">200</span>] <span class="op">=</span> <span class="string">b&quot;0001020304050607080910111213141516171819\
+      2021222324252627282930313233343536373839\
+      4041424344454647484950515253545556575859\
+      6061626364656667686970717273747576777879\
+      8081828384858687888990919293949596979899&quot;</span>;
+
+<span class="macro">macro_rules!</span> <span class="ident">impl_Display</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>),<span class="op">*</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">u</span>:<span class="ident">ident</span> <span class="ident">via</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>:<span class="ident">ident</span> <span class="ident">named</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="kw-2">mut</span> <span class="ident">n</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">u</span>, <span class="ident">is_nonnegative</span>: <span class="ident">bool</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+            <span class="comment">// 2^128 大约是 3*10^38，所以 39 给出了一个额外的字节空间</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="number">39</span>];
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">isize</span>;
+            <span class="kw">let</span> <span class="ident">buf_ptr</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>);
+            <span class="kw">let</span> <span class="ident">lut_ptr</span> <span class="op">=</span> <span class="ident">DEC_DIGITS_LUT</span>.<span class="ident">as_ptr</span>();
+
+            <span class="comment">// SAFETY: 由于 `d1` 和 `d2` 始终小于或等于 `198`，因此我们可以从 `lut_ptr[d1..d1 + 1]` 和 `lut_ptr[d2..d2 + 1]` 复制。</span>
+            <span class="comment">// 为了表明可以复制到 `buf_ptr`，请注意，从 `n &lt; 2^128 &lt; 10^39` 开始在 `curr == buf.len() == 39 &gt; log(n)` 的开头，并且在每一步都与 `n` 相同。</span>
+            <span class="comment">//</span>
+            <span class="comment">// 由于 `n` 始终为非负数，这意味着 `curr &gt; 0` 可以安全地访问 `buf_ptr[curr..curr + 1]`。</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="kw">unsafe</span> {
+                <span class="comment">// 一次至少需要 4 个字符才能使用至少 16 位。</span>
+                <span class="macro">assert!</span>(<span class="kw">crate</span><span class="ident">::mem::size_of</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">u</span><span class="op">&gt;</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span>);
+
+                <span class="comment">// 一次一次地解码 4 个字符</span>
+                <span class="kw">while</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10000</span> {
+                    <span class="kw">let</span> <span class="ident">rem</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">%</span> <span class="number">10000</span>) <span class="kw">as</span> <span class="ident">isize</span>;
+                    <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">10000</span>;
+
+                    <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> (<span class="ident">rem</span> <span class="op">/</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                    <span class="kw">let</span> <span class="ident">d2</span> <span class="op">=</span> (<span class="ident">rem</span> <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                    <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">4</span>;
+
+                    <span class="comment">// 我们可以在这里复制到 `buf_ptr[curr..curr + 3]`，否则 `curr &lt; 0`。</span>
+                    <span class="comment">// 但是后来 `n` 至少是 `10000^10`，也就是 `10^40 &gt; 2^128 &gt; n`。</span>
+                    <span class="comment">//</span>
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="number">2</span>);
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d2</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span> <span class="op">+</span> <span class="number">2</span>), <span class="number">2</span>);
+                }
+
+                <span class="comment">// 如果我们到达此处，数字是 &lt;= 9999，那么最多为 4 个字符</span>
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">n</span> <span class="kw">as</span> <span class="ident">isize</span>; <span class="comment">// 可能减少 64 位数学</span>
+
+                <span class="comment">// 如果大于 2 个字符，则再解码 2 个字符</span>
+                <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">100</span> {
+                    <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                    <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">100</span>;
+                    <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">2</span>;
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="number">2</span>);
+                }
+
+                <span class="comment">// 解码最后 1 个或 2 个字符</span>
+                <span class="kw">if</span> <span class="ident">n</span> <span class="op">&lt;</span> <span class="number">10</span> {
+                    <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                    <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>) <span class="op">=</span> (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+                } <span class="kw">else</span> {
+                    <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                    <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">2</span>;
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="number">2</span>);
+                }
+            }
+
+            <span class="comment">// SAFETY: `curr`&gt; 0 (因为我们使 `buf` 足够大)，并且所有字符都是有效的 UTF-8，因为 `DEC_DIGITS_LUT` 是</span>
+            <span class="comment">//</span>
+            <span class="kw">let</span> <span class="ident">buf_slice</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+                <span class="ident">str::from_utf8_unchecked</span>(
+                    <span class="ident">slice::from_raw_parts</span>(<span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">curr</span> <span class="kw">as</span> <span class="ident">usize</span>))
+            };
+            <span class="ident">f</span>.<span class="ident">pad_integral</span>(<span class="ident">is_nonnegative</span>, <span class="string">&quot;&quot;</span>, <span class="ident">buf_slice</span>)
+        }
+
+        $(<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+        <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_comparisons</span>)]</span>
+            <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+                <span class="kw">let</span> <span class="ident">is_nonnegative</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>;
+                <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_nonnegative</span> {
+                    <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()
+                } <span class="kw">else</span> {
+                    <span class="comment">// 通过将 1 加 2 来将负数转换为正数</span>
+                    (<span class="op">!</span><span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()).<span class="ident">wrapping_add</span>(<span class="number">1</span>)
+                };
+                <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="ident">n</span>, <span class="ident">is_nonnegative</span>, <span class="ident">f</span>)
+            }
+        })<span class="op">*</span>
+    };
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">impl_Exp</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ident</span>),<span class="op">*</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">u</span>:<span class="ident">ident</span> <span class="ident">via</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>:<span class="ident">ident</span> <span class="ident">named</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(
+            <span class="kw-2">mut</span> <span class="ident">n</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">u</span>,
+            <span class="ident">is_nonnegative</span>: <span class="ident">bool</span>,
+            <span class="ident">upper</span>: <span class="ident">bool</span>,
+            <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>
+        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+            <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">n</span>, <span class="kw-2">mut</span> <span class="ident">exponent</span>, <span class="ident">trailing_zeros</span>, <span class="ident">added_precision</span>) <span class="op">=</span> {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exponent</span> <span class="op">=</span> <span class="number">0</span>;
+                <span class="comment">// 计算并删除尾随的十进制零</span>
+                <span class="kw">while</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">10</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span> {
+                    <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+                    <span class="ident">exponent</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                }
+                <span class="kw">let</span> <span class="ident">trailing_zeros</span> <span class="op">=</span> <span class="ident">exponent</span>;
+
+                <span class="kw">let</span> (<span class="ident">added_precision</span>, <span class="ident">subtracted_precision</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">f</span>.<span class="ident">precision</span>() {
+                    <span class="prelude-val">Some</span>(<span class="ident">fmt_prec</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="comment">// 小数位数减 1</span>
+                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">n</span>;
+                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prec</span> <span class="op">=</span> <span class="number">0</span>;
+                        <span class="kw">while</span> <span class="ident">tmp</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span> {
+                            <span class="ident">tmp</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+                            <span class="ident">prec</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                        }
+                        (<span class="ident">fmt_prec</span>.<span class="ident">saturating_sub</span>(<span class="ident">prec</span>), <span class="ident">prec</span>.<span class="ident">saturating_sub</span>(<span class="ident">fmt_prec</span>))
+                    }
+                    <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> (<span class="number">0</span>,<span class="number">0</span>)
+                };
+                <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">subtracted_precision</span> {
+                    <span class="ident">n</span><span class="op">/</span><span class="op">=</span><span class="number">10</span>;
+                    <span class="ident">exponent</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                }
+                <span class="kw">if</span> <span class="ident">subtracted_precision</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+                    <span class="kw">let</span> <span class="ident">rem</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">10</span>;
+                    <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+                    <span class="ident">exponent</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                    <span class="comment">// 四舍五入最后一位数字</span>
+                    <span class="kw">if</span> <span class="ident">rem</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">5</span> {
+                        <span class="ident">n</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                    }
+                }
+                (<span class="ident">n</span>, <span class="ident">exponent</span>, <span class="ident">trailing_zeros</span>, <span class="ident">added_precision</span>)
+            };
+
+            <span class="comment">// 39 位数 (最坏情况 u128) +。</span>
+            <span class="comment">// = 40 由于 `curr` 总是减少复制的位数，因此表示 `curr &gt;= 0`。</span>
+            <span class="comment">//</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="number">40</span>];
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">isize</span>; <span class="comment">// buf 的索引</span>
+            <span class="kw">let</span> <span class="ident">buf_ptr</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>);
+            <span class="kw">let</span> <span class="ident">lut_ptr</span> <span class="op">=</span> <span class="ident">DEC_DIGITS_LUT</span>.<span class="ident">as_ptr</span>();
+
+            <span class="comment">// 一次解码 2 个字符</span>
+            <span class="kw">while</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">100</span> {
+                <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> ((<span class="ident">n</span> <span class="op">%</span> <span class="number">100</span>) <span class="kw">as</span> <span class="ident">isize</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">2</span>;
+                <span class="comment">// SAFETY: `d1 &lt;= 198`，因此我们可以从 `lut_ptr[d1..d1 + 2]` 复制，因为 `DEC_DIGITS_LUT` 的长度为 200。</span>
+                <span class="comment">//</span>
+                <span class="kw">unsafe</span> {
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="number">2</span>);
+                }
+                <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">100</span>;
+                <span class="ident">exponent</span> <span class="op">+</span><span class="op">=</span> <span class="number">2</span>;
+            }
+            <span class="comment">// n &lt;= 99，因此最多 2 个字符</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">n</span> <span class="kw">as</span> <span class="ident">isize</span>; <span class="comment">// 可能减少 64 位数学</span>
+            <span class="comment">// 倒数第二个字符</span>
+            <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">10</span> {
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="comment">// SAFETY: 自 `40 &gt; curr &gt;= 0` 起安全 (请参见注释)</span>
+                <span class="kw">unsafe</span> {
+                    <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>) <span class="op">=</span> (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u8</span> <span class="op">%</span> <span class="number">10_u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+                }
+                <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+                <span class="ident">exponent</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            }
+            <span class="comment">// 添加小数点 iff&gt; 1 尾数将被打印</span>
+            <span class="kw">if</span> <span class="ident">exponent</span> <span class="op">!</span><span class="op">=</span> <span class="ident">trailing_zeros</span> <span class="op">|</span><span class="op">|</span> <span class="ident">added_precision</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="comment">// SAFETY: 当 `40 &gt; curr &gt;= 0` 时安全</span>
+                <span class="kw">unsafe</span> {
+                    <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>) <span class="op">=</span> <span class="string">b&#39;.&#39;</span>;
+                }
+            }
+
+            <span class="comment">// SAFETY: 当 `40 &gt; curr &gt;= 0` 时安全</span>
+            <span class="kw">let</span> <span class="ident">buf_slice</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+                <span class="comment">// 解码最后一个字符</span>
+                <span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>) <span class="op">=</span> (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+
+                <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">curr</span> <span class="kw">as</span> <span class="ident">usize</span>;
+                <span class="ident">slice::from_raw_parts</span>(<span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>), <span class="ident">len</span>)
+            };
+
+            <span class="comment">// 存储 &#39;e&#39; (或 &#39;E&#39;) 和最多 2 位数的指数</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exp_buf</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="number">3</span>];
+            <span class="kw">let</span> <span class="ident">exp_ptr</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">exp_buf</span>);
+            <span class="comment">// SAFETY: 在这两种情况下，自 `len &lt;= 3` 开始，`exp_buf` 都被写在边界内，而 `exp_ptr[..len]` 被包含在 `exp_buf` 内。</span>
+            <span class="comment">//</span>
+            <span class="kw">let</span> <span class="ident">exp_slice</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+                <span class="kw-2">*</span><span class="ident">exp_ptr</span>.<span class="ident">offset</span>(<span class="number">0</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">upper</span> {<span class="string">b&#39;E&#39;</span>} <span class="kw">else</span> {<span class="string">b&#39;e&#39;</span>};
+                <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">exponent</span> <span class="op">&lt;</span> <span class="number">10</span> {
+                    <span class="kw-2">*</span><span class="ident">exp_ptr</span>.<span class="ident">offset</span>(<span class="number">1</span>) <span class="op">=</span> (<span class="ident">exponent</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+                    <span class="number">2</span>
+                } <span class="kw">else</span> {
+                    <span class="kw">let</span> <span class="ident">off</span> <span class="op">=</span> <span class="ident">exponent</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+                    <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">off</span>), <span class="ident">exp_ptr</span>.<span class="ident">offset</span>(<span class="number">1</span>), <span class="number">2</span>);
+                    <span class="number">3</span>
+                };
+                <span class="ident">slice::from_raw_parts</span>(<span class="ident">exp_ptr</span>, <span class="ident">len</span>)
+            };
+
+            <span class="kw">let</span> <span class="ident">parts</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
+                <span class="ident">numfmt::Part::Copy</span>(<span class="ident">buf_slice</span>),
+                <span class="ident">numfmt::Part::Zero</span>(<span class="ident">added_precision</span>),
+                <span class="ident">numfmt::Part::Copy</span>(<span class="ident">exp_slice</span>)
+            ];
+            <span class="kw">let</span> <span class="ident">sign</span> <span class="op">=</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">is_nonnegative</span> {
+                <span class="string">&quot;-&quot;</span>
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">f</span>.<span class="ident">sign_plus</span>() {
+                <span class="string">&quot;+&quot;</span>
+            } <span class="kw">else</span> {
+                <span class="string">&quot;&quot;</span>
+            };
+            <span class="kw">let</span> <span class="ident">formatted</span> <span class="op">=</span> <span class="ident">numfmt::Formatted</span>{<span class="ident">sign</span>, <span class="ident">parts</span>};
+            <span class="ident">f</span>.<span class="ident">pad_formatted_parts</span>(<span class="kw-2">&amp;</span><span class="ident">formatted</span>)
+        }
+
+        $(
+            <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer_exp_format&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.42.0&quot;</span>)]</span>
+            <span class="kw">impl</span> <span class="ident">fmt::LowerExp</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+                <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_comparisons</span>)]</span>
+                <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+                    <span class="kw">let</span> <span class="ident">is_nonnegative</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>;
+                    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_nonnegative</span> {
+                        <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()
+                    } <span class="kw">else</span> {
+                        <span class="comment">// 通过将 1 加 2 来将负数转换为正数</span>
+                        (<span class="op">!</span><span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()).<span class="ident">wrapping_add</span>(<span class="number">1</span>)
+                    };
+                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="ident">n</span>, <span class="ident">is_nonnegative</span>, <span class="bool-val">false</span>, <span class="ident">f</span>)
+                }
+            })<span class="op">*</span>
+        $(
+            <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer_exp_format&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.42.0&quot;</span>)]</span>
+            <span class="kw">impl</span> <span class="ident">fmt::UpperExp</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
+                <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_comparisons</span>)]</span>
+                <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+                    <span class="kw">let</span> <span class="ident">is_nonnegative</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>;
+                    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_nonnegative</span> {
+                        <span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()
+                    } <span class="kw">else</span> {
+                        <span class="comment">// 通过将 1 加 2 来将负数转换为正数</span>
+                        (<span class="op">!</span><span class="self">self</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">conv_fn</span>()).<span class="ident">wrapping_add</span>(<span class="number">1</span>)
+                    };
+                    <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>(<span class="ident">n</span>, <span class="ident">is_nonnegative</span>, <span class="bool-val">true</span>, <span class="ident">f</span>)
+                }
+            })<span class="op">*</span>
+    };
+}
+
+<span class="comment">// 在此处包括 wasm32，因为它不反映原生指针的大小，并且通常非常在意如何减小代码大小。</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;wasm32&quot;</span>))]</span>
+<span class="kw">mod</span> <span class="ident">imp</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="macro">impl_Display!</span>(
+        <span class="ident">i8</span>, <span class="ident">u8</span>, <span class="ident">i16</span>, <span class="ident">u16</span>, <span class="ident">i32</span>, <span class="ident">u32</span>, <span class="ident">i64</span>, <span class="ident">u64</span>, <span class="ident">usize</span>, <span class="ident">isize</span>
+            <span class="kw">as</span> <span class="ident">u64</span> <span class="ident">via</span> <span class="ident">to_u64</span> <span class="ident">named</span> <span class="ident">fmt_u64</span>
+    );
+    <span class="macro">impl_Exp!</span>(
+        <span class="ident">i8</span>, <span class="ident">u8</span>, <span class="ident">i16</span>, <span class="ident">u16</span>, <span class="ident">i32</span>, <span class="ident">u32</span>, <span class="ident">i64</span>, <span class="ident">u64</span>, <span class="ident">usize</span>, <span class="ident">isize</span>
+            <span class="kw">as</span> <span class="ident">u64</span> <span class="ident">via</span> <span class="ident">to_u64</span> <span class="ident">named</span> <span class="ident">exp_u64</span>
+    );
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;wasm32&quot;</span>)))]</span>
+<span class="kw">mod</span> <span class="ident">imp</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="macro">impl_Display!</span>(<span class="ident">i8</span>, <span class="ident">u8</span>, <span class="ident">i16</span>, <span class="ident">u16</span>, <span class="ident">i32</span>, <span class="ident">u32</span>, <span class="ident">isize</span>, <span class="ident">usize</span> <span class="kw">as</span> <span class="ident">u32</span> <span class="ident">via</span> <span class="ident">to_u32</span> <span class="ident">named</span> <span class="ident">fmt_u32</span>);
+    <span class="macro">impl_Display!</span>(<span class="ident">i64</span>, <span class="ident">u64</span> <span class="kw">as</span> <span class="ident">u64</span> <span class="ident">via</span> <span class="ident">to_u64</span> <span class="ident">named</span> <span class="ident">fmt_u64</span>);
+    <span class="macro">impl_Exp!</span>(<span class="ident">i8</span>, <span class="ident">u8</span>, <span class="ident">i16</span>, <span class="ident">u16</span>, <span class="ident">i32</span>, <span class="ident">u32</span>, <span class="ident">isize</span>, <span class="ident">usize</span> <span class="kw">as</span> <span class="ident">u32</span> <span class="ident">via</span> <span class="ident">to_u32</span> <span class="ident">named</span> <span class="ident">exp_u32</span>);
+    <span class="macro">impl_Exp!</span>(<span class="ident">i64</span>, <span class="ident">u64</span> <span class="kw">as</span> <span class="ident">u64</span> <span class="ident">via</span> <span class="ident">to_u64</span> <span class="ident">named</span> <span class="ident">exp_u64</span>);
+}
+<span class="macro">impl_Exp!</span>(<span class="ident">i128</span>, <span class="ident">u128</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="ident">via</span> <span class="ident">to_u128</span> <span class="ident">named</span> <span class="ident">exp_u128</span>);
+
+<span class="doccomment">/// 辅助函数，用于使用 `curr` 从最后到第一个将 u64 写入 `buf`。</span>
+<span class="kw">fn</span> <span class="ident">parse_u64_into</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">n</span>: <span class="ident">u64</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>; <span class="ident">N</span>], <span class="ident">curr</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">isize</span>) {
+    <span class="kw">let</span> <span class="ident">buf_ptr</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="ident">buf</span>);
+    <span class="kw">let</span> <span class="ident">lut_ptr</span> <span class="op">=</span> <span class="ident">DEC_DIGITS_LUT</span>.<span class="ident">as_ptr</span>();
+    <span class="macro">assert!</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">&gt;</span> <span class="number">19</span>);
+
+    <span class="comment">// SAFETY:</span>
+    <span class="comment">// 最多将 19 个字符写入缓冲区。保证进入 LUT 的任何 ptr 最多</span>
+    <span class="comment">// 198，所以永远不会 OOB。</span>
+    <span class="comment">// 上面有一个检查，是否至少剩余 19 个字符。</span>
+    <span class="kw">unsafe</span> {
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1e16</span> <span class="kw">as</span> <span class="ident">u64</span> {
+            <span class="kw">let</span> <span class="ident">to_parse</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">1e16</span> <span class="kw">as</span> <span class="ident">u64</span>;
+            <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">1e16</span> <span class="kw">as</span> <span class="ident">u64</span>;
+
+            <span class="comment">// 其中一些是点头的，但这种方式看起来更优雅。</span>
+            <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e14</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d2</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e12</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d3</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e10</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d4</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e8</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d5</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e6</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d6</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e4</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d7</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e2</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d8</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e0</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">16</span>;
+
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">0</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d2</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">2</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d3</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">4</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d4</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">6</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d5</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">8</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d6</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">10</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d7</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">12</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d8</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">14</span>), <span class="number">2</span>);
+        }
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1e8</span> <span class="kw">as</span> <span class="ident">u64</span> {
+            <span class="kw">let</span> <span class="ident">to_parse</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">1e8</span> <span class="kw">as</span> <span class="ident">u64</span>;
+            <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">1e8</span> <span class="kw">as</span> <span class="ident">u64</span>;
+
+            <span class="comment">// 其中一些是点头的，但这种方式看起来更优雅。</span>
+            <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e6</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d2</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e4</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d3</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e2</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d4</span> <span class="op">=</span> ((<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">1e0</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">8</span>;
+
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">0</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d2</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">2</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d3</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">4</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d4</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">6</span>), <span class="number">2</span>);
+        }
+        <span class="comment">// `n` &lt; 1e8 &lt; (1 &lt;&lt; 32)</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">n</span> <span class="kw">as</span> <span class="ident">u32</span>;
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">1e4</span> <span class="kw">as</span> <span class="ident">u32</span> {
+            <span class="kw">let</span> <span class="ident">to_parse</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">%</span> <span class="number">1e4</span> <span class="kw">as</span> <span class="ident">u32</span>;
+            <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">1e4</span> <span class="kw">as</span> <span class="ident">u32</span>;
+
+            <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> (<span class="ident">to_parse</span> <span class="op">/</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">d2</span> <span class="op">=</span> (<span class="ident">to_parse</span> <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">4</span>;
+
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">0</span>), <span class="number">2</span>);
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d2</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span> <span class="op">+</span> <span class="number">2</span>), <span class="number">2</span>);
+        }
+
+        <span class="comment">// `n` &lt; 1e4 &lt; (1 &lt;&lt; 16)</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">n</span> <span class="kw">as</span> <span class="ident">u16</span>;
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">100</span> {
+            <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">%</span> <span class="number">100</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="ident">n</span> <span class="op">/</span><span class="op">=</span> <span class="number">100</span>;
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">2</span>;
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span>), <span class="number">2</span>);
+        }
+
+        <span class="comment">// 解码最后 1 个或 2 个字符</span>
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">&lt;</span> <span class="number">10</span> {
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span>) <span class="op">=</span> (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+        } <span class="kw">else</span> {
+            <span class="kw">let</span> <span class="ident">d1</span> <span class="op">=</span> <span class="ident">n</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+            <span class="kw-2">*</span><span class="ident">curr</span> <span class="op">-</span><span class="op">=</span> <span class="number">2</span>;
+            <span class="ident">ptr::copy_nonoverlapping</span>(<span class="ident">lut_ptr</span>.<span class="ident">offset</span>(<span class="ident">d1</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="kw-2">*</span><span class="ident">curr</span>), <span class="number">2</span>);
+        }
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">u128</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="ident">fmt_u128</span>(<span class="kw-2">*</span><span class="self">self</span>, <span class="bool-val">true</span>, <span class="ident">f</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">i128</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="kw">let</span> <span class="ident">is_nonnegative</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">is_nonnegative</span> {
+            <span class="self">self</span>.<span class="ident">to_u128</span>()
+        } <span class="kw">else</span> {
+            <span class="comment">// 通过将 1 加 2 来将负数转换为正数</span>
+            (<span class="op">!</span><span class="self">self</span>.<span class="ident">to_u128</span>()).<span class="ident">wrapping_add</span>(<span class="number">1</span>)
+        };
+        <span class="ident">fmt_u128</span>(<span class="ident">n</span>, <span class="ident">is_nonnegative</span>, <span class="ident">f</span>)
+    }
+}
+
+<span class="doccomment">/// u128 的专业优化。</span>
+<span class="doccomment">/// 它不会一次占用两个项，而是最多分成两个 u64，然后按 10e16、10e8、10e4、10e2 和 10e1 进行分块。</span>
+<span class="doccomment">/// 它还必须处理最后 1 个项，例如 10 ^ 40&gt; 2 ^ 128&gt; 10 ^ 39，而</span>
+<span class="doccomment">/// 10^20 &gt; 2^64 &gt; 10^19.</span>
+<span class="kw">fn</span> <span class="ident">fmt_u128</span>(<span class="ident">n</span>: <span class="ident">u128</span>, <span class="ident">is_nonnegative</span>: <span class="ident">bool</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="comment">// 2^128 大约是 3*10^38，所以 39 给出了一个额外的字节空间</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::uninit</span>(); <span class="number">39</span>];
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">isize</span>;
+
+    <span class="kw">let</span> (<span class="ident">n</span>, <span class="ident">rem</span>) <span class="op">=</span> <span class="ident">udiv_1e19</span>(<span class="ident">n</span>);
+    <span class="ident">parse_u64_into</span>(<span class="ident">rem</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">curr</span>);
+
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="comment">// 0 填充到点</span>
+        <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> (<span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">19</span>) <span class="kw">as</span> <span class="ident">isize</span>;
+        <span class="comment">// SAFETY: 保证我们最多写入 19 个字节，并且由于长度为 39，因此必须有剩余空间</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">ptr::write_bytes</span>(
+                <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>).<span class="ident">offset</span>(<span class="ident">target</span>),
+                <span class="string">b&#39;0&#39;</span>,
+                (<span class="ident">curr</span> <span class="op">-</span> <span class="ident">target</span>) <span class="kw">as</span> <span class="ident">usize</span>,
+            );
+        }
+        <span class="ident">curr</span> <span class="op">=</span> <span class="ident">target</span>;
+
+        <span class="kw">let</span> (<span class="ident">n</span>, <span class="ident">rem</span>) <span class="op">=</span> <span class="ident">udiv_1e19</span>(<span class="ident">n</span>);
+        <span class="ident">parse_u64_into</span>(<span class="ident">rem</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">curr</span>);
+        <span class="comment">// 下面这个分支应该用不太可能来注释吗？</span>
+        <span class="kw">if</span> <span class="ident">n</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="kw">let</span> <span class="ident">target</span> <span class="op">=</span> (<span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">38</span>) <span class="kw">as</span> <span class="ident">isize</span>;
+            <span class="comment">// 原始 `buf_ptr` 指针仅在下一次使用 `buf` 之前有效，在此作用域中未使用 buf `buf`，所以我们很好。</span>
+            <span class="comment">//</span>
+            <span class="kw">let</span> <span class="ident">buf_ptr</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>);
+            <span class="comment">// SAFETY: 在这一点上，我们最多写入 38 个字节，直到该点为止，最多只能剩余 1 位数字。</span>
+            <span class="comment">//</span>
+            <span class="kw">unsafe</span> {
+                <span class="ident">ptr::write_bytes</span>(<span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">target</span>), <span class="string">b&#39;0&#39;</span>, (<span class="ident">curr</span> <span class="op">-</span> <span class="ident">target</span>) <span class="kw">as</span> <span class="ident">usize</span>);
+                <span class="ident">curr</span> <span class="op">=</span> <span class="ident">target</span> <span class="op">-</span> <span class="number">1</span>;
+                <span class="kw-2">*</span><span class="ident">buf_ptr</span>.<span class="ident">offset</span>(<span class="ident">curr</span>) <span class="op">=</span> (<span class="ident">n</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">+</span> <span class="string">b&#39;0&#39;</span>;
+            }
+        }
+    }
+
+    <span class="comment">// SAFETY: `curr`&gt; 0 (因为我们使 `buf` 足够大)，并且所有字符都是有效的 UTF-8，因为 `DEC_DIGITS_LUT` 是</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="ident">buf_slice</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+        <span class="ident">str::from_utf8_unchecked</span>(<span class="ident">slice::from_raw_parts</span>(
+            <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>).<span class="ident">offset</span>(<span class="ident">curr</span>),
+            <span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="ident">curr</span> <span class="kw">as</span> <span class="ident">usize</span>,
+        ))
+    };
+    <span class="ident">f</span>.<span class="ident">pad_integral</span>(<span class="ident">is_nonnegative</span>, <span class="string">&quot;&quot;</span>, <span class="ident">buf_slice</span>)
+}
+
+<span class="doccomment">/// `n` 分为 n&gt; 1e19 和 rem &lt;= 1e19</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 整数除法算法基于以下论文:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///   T. Granlund 和 P.</span>
+<span class="doccomment">///   Montgomery，Proc 中的使用乘法除以不变整数。</span>
+<span class="doccomment">///   SIGPLAN94 编程语言设计与实现会议，1994 年，第 134 页。</span>
+<span class="doccomment">///   61–72</span>
+<span class="kw">fn</span> <span class="ident">udiv_1e19</span>(<span class="ident">n</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">u128</span>, <span class="ident">u64</span>) {
+    <span class="kw">const</span> <span class="ident">DIV</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">1e19</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="kw">const</span> <span class="ident">FACTOR</span>: <span class="ident">u128</span> <span class="op">=</span> <span class="number">156927543384667019095894735580191660403</span>;
+
+    <span class="kw">let</span> <span class="ident">quot</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">n</span> <span class="op">&lt;</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">83</span> {
+        ((<span class="ident">n</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">19</span>) <span class="kw">as</span> <span class="ident">u64</span> <span class="op">/</span> (<span class="ident">DIV</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">19</span>)) <span class="kw">as</span> <span class="ident">u128</span>
+    } <span class="kw">else</span> {
+        <span class="ident">u128_mulhi</span>(<span class="ident">n</span>, <span class="ident">FACTOR</span>) <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">62</span>
+    };
+
+    <span class="kw">let</span> <span class="ident">rem</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">-</span> <span class="ident">quot</span> <span class="op">*</span> <span class="ident">DIV</span> <span class="kw">as</span> <span class="ident">u128</span>) <span class="kw">as</span> <span class="ident">u64</span>;
+    (<span class="ident">quot</span>, <span class="ident">rem</span>)
+}
+
+<span class="doccomment">/// 将无符号的 128 位整数相乘，返回结果的高 128 位</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">fn</span> <span class="ident">u128_mulhi</span>(<span class="ident">x</span>: <span class="ident">u128</span>, <span class="ident">y</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u128</span> {
+    <span class="kw">let</span> <span class="ident">x_lo</span> <span class="op">=</span> <span class="ident">x</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="kw">let</span> <span class="ident">x_hi</span> <span class="op">=</span> (<span class="ident">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="kw">let</span> <span class="ident">y_lo</span> <span class="op">=</span> <span class="ident">y</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="kw">let</span> <span class="ident">y_hi</span> <span class="op">=</span> (<span class="ident">y</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>) <span class="kw">as</span> <span class="ident">u64</span>;
+
+    <span class="comment">// 处理溢出的可能性</span>
+    <span class="kw">let</span> <span class="ident">carry</span> <span class="op">=</span> (<span class="ident">x_lo</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">*</span> <span class="ident">y_lo</span> <span class="kw">as</span> <span class="ident">u128</span>) <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>;
+    <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">x_lo</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">*</span> <span class="ident">y_hi</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">+</span> <span class="ident">carry</span>;
+    <span class="kw">let</span> <span class="ident">high1</span> <span class="op">=</span> <span class="ident">m</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>;
+
+    <span class="kw">let</span> <span class="ident">m_lo</span> <span class="op">=</span> <span class="ident">m</span> <span class="kw">as</span> <span class="ident">u64</span>;
+    <span class="kw">let</span> <span class="ident">high2</span> <span class="op">=</span> (<span class="ident">x_hi</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">*</span> <span class="ident">y_lo</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">+</span> <span class="ident">m_lo</span> <span class="kw">as</span> <span class="ident">u128</span>) <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">64</span>;
+
+    <span class="ident">x_hi</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">*</span> <span class="ident">y_hi</span> <span class="kw">as</span> <span class="ident">u128</span> <span class="op">+</span> <span class="ident">high1</span> <span class="op">+</span> <span class="ident">high2</span>
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script><script src="../../../source-script1.55.0.js"></script><script src="../../../source-files1.55.0.js"></script></body></html>

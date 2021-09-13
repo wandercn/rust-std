@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="由其他类型组成的类型。"><meta name="keywords" content="rust, rustlang, rust-lang, struct"><title>struct - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="struct" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">struct</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#1570" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>由其他类型组成的类型。</p>
+<p>Rust 中的结构体有三种风格: 带有命名字段的结构体，元组结构体和单元结构体。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">struct</span> <span class="ident">Regular</span> {
+    <span class="ident">field1</span>: <span class="ident">f32</span>,
+    <span class="ident">field2</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">field3</span>: <span class="ident">bool</span>
+}
+
+<span class="kw">struct</span> <span class="ident">Tuple</span>(<span class="ident">u32</span>, <span class="ident">String</span>);
+
+<span class="kw">struct</span> <span class="ident">Unit</span>;</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astruct%20Regular%20%7B%0A%20%20%20%20field1%3A%20f32%2C%0A%20%20%20%20field2%3A%20String%2C%0A%20%20%20%20pub%20field3%3A%20bool%0A%7D%0A%0Astruct%20Tuple(u32%2C%20String)%3B%0A%0Astruct%20Unit%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>常规结构体是最常用的。它们中定义的每个字段都有一个名称和类型，一旦定义，就可以使用 <code>example_struct.field</code> 语法进行访问。
+结构体的字段共享其可变性，因此 <code>foo.bar = 2;</code> 仅在 <code>foo</code> 是可变的时才有效。
+在字段中添加 <code>pub</code> 使其可以在其他模块中的代码中看到，并且可以直接对其进行访问和修改。</p>
+<p>元组结构体与常规结构体相似，但其字段没有名称。它们像元组一样使用，可以通过 <code>let TupleStruct(x, y) = foo;</code> 语法进行解构。
+为了访问单个变量，使用与常规元组相同的语法，即 <code>foo.0</code>，<code>foo.1</code> 等，从零开始。</p>
+<p>单元结构体最常用作标记。它们的大小为零字节，但是与空的枚举不同，它们可以实例化，使其与单元类型 <code>()</code> 同构。
+当您需要在某物上实现 trait 而不需要在其中存储任何数据时，单元结构体非常有用。</p>
+<h1 id="instantiation" class="section-header"><a href="#instantiation">Instantiation</a></h1>
+<p>可以用不同的方式实例化结构体，所有方式都可以根据需要进行混合和匹配。
+生成新结构体的最常见方法是通过诸如 <code>new()</code> 之类的构造函数方法，但是当该方法不可用 (或者您正在编写构造函数本身) 时，将使用结构体字面量语法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">example</span> <span class="op">=</span> <span class="ident">Foo</span> {
+    <span class="ident">field1</span>: <span class="number">42.0</span>,
+    <span class="ident">field2</span>: <span class="string">&quot;blah&quot;</span>.<span class="ident">to_string</span>(),
+    <span class="ident">etc</span>: <span class="bool-val">true</span>,
+};</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astruct%20Foo%20%7B%20field1%3A%20f32%2C%20field2%3A%20String%2C%20etc%3A%20bool%20%7D%0Alet%20example%20%3D%20Foo%20%7B%0A%20%20%20%20field1%3A%2042.0%2C%0A%20%20%20%20field2%3A%20%22blah%22.to_string()%2C%0A%20%20%20%20etc%3A%20true%2C%0A%7D%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>当您对结构体的所有字段都可见时，才可以使用结构体字面量语法直接实例化结构体。</p>
+<p>提供了一些快捷方式，以使编写构造函数更加方便，其中最常见的是缩写词初始化简写语法。
+当变量和字段具有相同的名称时，可以将分配从 <code>field: field</code> 简化为 <code>field</code>。
+假设的构造函数的以下示例说明了这一点:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">struct</span> <span class="ident">User</span> {
+    <span class="ident">name</span>: <span class="ident">String</span>,
+    <span class="ident">admin</span>: <span class="ident">bool</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">User</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">name</span>,
+            <span class="ident">admin</span>: <span class="bool-val">false</span>,
+        }
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astruct%20User%20%7B%0A%20%20%20%20name%3A%20String%2C%0A%20%20%20%20admin%3A%20bool%2C%0A%7D%0A%0Aimpl%20User%20%7B%0A%20%20%20%20pub%20fn%20new(name%3A%20String)%20-%3E%20Self%20%7B%0A%20%20%20%20%20%20%20%20Self%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20name%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20admin%3A%20false%2C%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>结构体实例化的另一种快捷方式是可用的，当您需要制作一个具有与大多数以前相同类型的结构体相同的值的新结构体时，可以使用该快捷方式，称为结构体更新语法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">updated_thing</span> <span class="op">=</span> <span class="ident">Foo</span> {
+    <span class="ident">field1</span>: <span class="string">&quot;a new value&quot;</span>.<span class="ident">to_string</span>(),
+    ..<span class="ident">thing</span>
+};</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astruct%20Foo%20%7B%20field1%3A%20String%2C%20field2%3A%20()%20%7D%0Alet%20thing%20%3D%20Foo%20%7B%20field1%3A%20%22%22.to_string()%2C%20field2%3A%20()%20%7D%3B%0Alet%20updated_thing%20%3D%20Foo%20%7B%0A%20%20%20%20field1%3A%20%22a%20new%20value%22.to_string()%2C%0A%20%20%20%20..thing%0A%7D%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>元组结构体以与元组本身相同的方式实例化，不同之处在于结构体的名称为前缀: <code>Foo(123, false, 0.1)</code>.</p>
+<p>空结构体仅用其名称实例化，不需要其他任何东西。<code>let thing = EmptyStruct;</code></p>
+<h1 id="样式约定" class="section-header"><a href="#样式约定">样式约定</a></h1>
+<p>结构体总是用骆驼命名法编写的，只有少数例外。
+虽然可以省略结构体的字段列表中的结尾逗号，但为了方便在行中添加和删除字段，通常将其保留下来。</p>
+<p>有关结构体的更多信息，请查看 <a href="../book/ch05-01-defining-structs.html">Rust 书</a> 或 <a href="../reference/items/structs.html">reference</a>。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

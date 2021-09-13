@@ -1,0 +1,42 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="保持条件时循环播放。"><meta name="keywords" content="rust, rustlang, rust-lang, while"><title>while - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="while" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">while</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#855" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>保持条件时循环播放。</p>
+<p><code>while</code> 表达式用于谓词循环。
+<code>while</code> 表达式在运行循环主体之前先运行条件表达式，然后在条件表达式的计算结果为 <code>true</code> 时运行循环主体，否则退出循环。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">counter</span> <span class="op">=</span> <span class="number">0</span>;
+
+<span class="kw">while</span> <span class="ident">counter</span> <span class="op">&lt;</span> <span class="number">10</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">counter</span>);
+    <span class="ident">counter</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20counter%20%3D%200%3B%0A%0Awhile%20counter%20%3C%2010%20%7B%0A%20%20%20%20println!(%22%7B%7D%22%2C%20counter)%3B%0A%20%20%20%20counter%20%2B%3D%201%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>像 <a href="keyword.for.html"><code>for</code></a> 表达式一样，我们可以使用 <code>break</code> 和 <code>continue</code>。<code>while</code> 表达式不能用值中断，并且总是与 <a href="keyword.loop.html"><code>loop</code></a> 不同而求值为 <code>()</code>。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">1</span>;
+
+<span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="number">100</span> {
+    <span class="ident">i</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">2</span>;
+    <span class="kw">if</span> <span class="ident">i</span> <span class="op">=</span><span class="op">=</span> <span class="number">64</span> {
+        <span class="kw">break</span>; <span class="comment">// `i` 为 64 时退出。</span>
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20i%20%3D%201%3B%0A%0Awhile%20i%20%3C%20100%20%7B%0A%20%20%20%20i%20*%3D%202%3B%0A%20%20%20%20if%20i%20%3D%3D%2064%20%7B%0A%20%20%20%20%20%20%20%20break%3B%20%2F%2F%20%60i%60%20%E4%B8%BA%2064%20%E6%97%B6%E9%80%80%E5%87%BA%E3%80%82%0A%20%20%20%20%7D%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于 <code>if</code> 表达式在 <code>if let</code> 中具有其模式匹配成员，因此 <code>while</code> 表达式与 <code>while let</code> 也是如此。
+<code>while let</code> 表达式将模式与该表达式进行匹配，如果模式匹配成功，则运行循环主体，否则退出循环。
+就像在 <code>while</code> 中一样，我们可以在 <code>while let</code> 表达式中使用 <code>break</code> 和 <code>continue</code>。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">counter</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="number">0</span>);
+
+<span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>) <span class="op">=</span> <span class="ident">counter</span> {
+    <span class="kw">if</span> <span class="ident">i</span> <span class="op">=</span><span class="op">=</span> <span class="number">10</span> {
+        <span class="ident">counter</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    } <span class="kw">else</span> {
+        <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">i</span>);
+        <span class="ident">counter</span> <span class="op">=</span> <span class="prelude-val">Some</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>);
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20counter%20%3D%20Some(0)%3B%0A%0Awhile%20let%20Some(i)%20%3D%20counter%20%7B%0A%20%20%20%20if%20i%20%3D%3D%2010%20%7B%0A%20%20%20%20%20%20%20%20counter%20%3D%20None%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20%20%20println!(%22%7B%7D%22%2C%20i)%3B%0A%20%20%20%20%20%20%20%20counter%20%3D%20Some%20(i%20%2B%201)%3B%0A%20%20%20%20%7D%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>有关 <code>while</code> 和常规循环的更多信息，请参见 <a href="../reference/expressions/loop-expr.html#predicate-loops">reference</a>。</p>
+<p>另请参见 <a href="keyword.for.html"><code>for</code></a>， <a href="keyword.loop.html"><code>loop</code></a>.</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

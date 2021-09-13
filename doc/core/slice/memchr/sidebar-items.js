@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["memchr","返回与 `text` 中的字节 `x` 匹配的第一个索引。"],["memrchr","返回与 `text` 中的字节 `x` 匹配的最后一个索引。"]]});

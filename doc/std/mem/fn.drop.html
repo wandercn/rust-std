@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="处理一个值。"><meta name="keywords" content="rust, rustlang, rust-lang, drop"><title>drop in std::mem - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">std</a>::<wbr><a href="index.html">mem</a></h2><div id="sidebar-vars" data-name="drop" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">std</a>::<wbr><a href="index.html">mem</a>::<wbr><a class="fn" href="#">drop</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/mem/mod.rs.html#896" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub fn drop&lt;T&gt;(_x: T)</pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>处理一个值。</p>
+<p>通过调用 <a href="../ops/trait.Drop.html"><code>Drop</code></a> 的参数实现来实现。</p>
+<p>这对于实现 <code>Copy</code> 的类型实际上不起作用，例如
+integers.
+这样的值被复制并将 <em>then</em> 移到函数中，因此该值在此函数调用之后仍然存在。</p>
+<p>这个功能并不神奇。它的字面定义为</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">_x</span>: <span class="ident">T</span>) { }</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Apub%20fn%20drop%3CT%3E(_x%3A%20T)%20%7B%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于 <code>_x</code> 已移入函数，因此它会在函数返回之前自动丢弃。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>基本用法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+
+<span class="ident">drop</span>(<span class="ident">v</span>); <span class="comment">// 显式丢弃 vector</span></pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B1%2C%202%2C%203%5D%3B%0A%0Adrop(v)%3B%20%2F%2F%20%E6%98%BE%E5%BC%8F%E4%B8%A2%E5%BC%83%20vector%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于 <a href="../cell/struct.RefCell.html"><code>RefCell</code></a> 在运行时强制执行借用规则，因此 <code>drop</code> 可以发布 <a href="../cell/struct.RefCell.html"><code>RefCell</code></a> 借用:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::cell::RefCell</span>;
+
+<span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">RefCell::new</span>(<span class="number">1</span>);
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mutable_borrow</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">borrow_mut</span>();
+<span class="kw-2">*</span><span class="ident">mutable_borrow</span> <span class="op">=</span> <span class="number">1</span>;
+
+<span class="ident">drop</span>(<span class="ident">mutable_borrow</span>); <span class="comment">// 放弃该插槽上的可变借用</span>
+
+<span class="kw">let</span> <span class="ident">borrow</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">borrow</span>();
+<span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="kw-2">*</span><span class="ident">borrow</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Acell%3A%3ARefCell%3B%0A%0Alet%20x%20%3D%20RefCell%3A%3Anew(1)%3B%0A%0Alet%20mut%20mutable_borrow%20%3D%20x.borrow_mut()%3B%0A*mutable_borrow%20%3D%201%3B%0A%0Adrop(mutable_borrow)%3B%20%2F%2F%20%E6%94%BE%E5%BC%83%E8%AF%A5%E6%8F%92%E6%A7%BD%E4%B8%8A%E7%9A%84%E5%8F%AF%E5%8F%98%E5%80%9F%E7%94%A8%0A%0Alet%20borrow%20%3D%20x.borrow()%3B%0Aprintln!(%22%7B%7D%22%2C%20*borrow)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>实现 <a href="../marker/trait.Copy.html" title="Copy"><code>Copy</code></a> 的整数和其他类型不受 <code>drop</code> 的影响。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Foo</span>(<span class="ident">u8</span>);
+
+<span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="number">1</span>;
+<span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="ident">Foo</span>(<span class="number">2</span>);
+<span class="ident">drop</span>(<span class="ident">x</span>); <span class="comment">// `x` 的副本已移动并丢弃</span>
+<span class="ident">drop</span>(<span class="ident">y</span>); <span class="comment">// `y` 的副本已移动并丢弃</span>
+
+<span class="macro">println!</span>(<span class="string">&quot;x: {}, y: {}&quot;</span>, <span class="ident">x</span>, <span class="ident">y</span>.<span class="number">0</span>); <span class="comment">// 仍然可用</span></pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0A%23%5Bderive(Copy%2C%20Clone)%5D%0Astruct%20Foo(u8)%3B%0A%0Alet%20x%20%3D%201%3B%0Alet%20y%20%3D%20Foo(2)%3B%0Adrop(x)%3B%20%2F%2F%20%60x%60%20%E7%9A%84%E5%89%AF%E6%9C%AC%E5%B7%B2%E7%A7%BB%E5%8A%A8%E5%B9%B6%E4%B8%A2%E5%BC%83%0Adrop(y)%3B%20%2F%2F%20%60y%60%20%E7%9A%84%E5%89%AF%E6%9C%AC%E5%B7%B2%E7%A7%BB%E5%8A%A8%E5%B9%B6%E4%B8%A2%E5%BC%83%0A%0Aprintln!(%22x%3A%20%7B%7D%2C%20y%3A%20%7B%7D%22%2C%20x%2C%20y.0)%3B%20%2F%2F%20%E4%BB%8D%E7%84%B6%E5%8F%AF%E7%94%A8%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

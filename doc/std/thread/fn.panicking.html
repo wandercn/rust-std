@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="确定当前线程是否由于 panic 而处于展开状态。"><meta name="keywords" content="rust, rustlang, rust-lang, panicking"><title>panicking in std::thread - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">std</a>::<wbr><a href="index.html">thread</a></h2><div id="sidebar-vars" data-name="panicking" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">std</a>::<wbr><a href="index.html">thread</a>::<wbr><a class="fn" href="#">panicking</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/std/thread/mod.rs.html#733-735" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub fn panicking() -&gt; <a class="primitive" href="../primitive.bool.html">bool</a></pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>确定当前线程是否由于 panic 而处于展开状态。</p>
+<p>此功能的一个常见用途是在编写不安全代码时毒害共享资源，方法是在调用 <code>drop</code> 时检查 <code>panic</code>。</p>
+<p>编写安全代码时通常不需要这样做，因为当线程在持有锁时 panic，<a href="../sync/struct.Mutex.html"><code>Mutex</code></a> 已经中毒了。</p>
+<p>这也可以在多线程应用程序中使用，以便向其他线程发送消息，警告某个线程已发生 panic (例如，出于监视目的)。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<div class='information'><div class='tooltip should_panic'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered should_panic">
+<span class="kw">use</span> <span class="ident">std::thread</span>;
+
+<span class="kw">struct</span> <span class="ident">SomeStruct</span>;
+
+<span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SomeStruct</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">if</span> <span class="ident">thread::panicking</span>() {
+            <span class="macro">println!</span>(<span class="string">&quot;dropped while unwinding&quot;</span>);
+        } <span class="kw">else</span> {
+            <span class="macro">println!</span>(<span class="string">&quot;dropped while not unwinding&quot;</span>);
+        }
+    }
+}
+
+{
+    <span class="macro">print!</span>(<span class="string">&quot;a: &quot;</span>);
+    <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">SomeStruct</span>;
+}
+
+{
+    <span class="macro">print!</span>(<span class="string">&quot;b: &quot;</span>);
+    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">SomeStruct</span>;
+    <span class="macro">panic!</span>()
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Athread%3B%0A%0Astruct%20SomeStruct%3B%0A%0Aimpl%20Drop%20for%20SomeStruct%20%7B%0A%20%20%20%20fn%20drop(%26mut%20self)%20%7B%0A%20%20%20%20%20%20%20%20if%20thread%3A%3Apanicking()%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20println!(%22dropped%20while%20unwinding%22)%3B%0A%20%20%20%20%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20println!(%22dropped%20while%20not%20unwinding%22)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%7D%0A%0A%7B%0A%20%20%20%20print!(%22a%3A%20%22)%3B%0A%20%20%20%20let%20a%20%3D%20SomeStruct%3B%0A%7D%0A%0A%7B%0A%20%20%20%20print!(%22b%3A%20%22)%3B%0A%20%20%20%20let%20b%20%3D%20SomeStruct%3B%0A%20%20%20%20panic!()%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

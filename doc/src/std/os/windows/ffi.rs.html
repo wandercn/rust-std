@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\os\.\windows\ffi.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ffi.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../std/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+</pre><pre class="rust">
+<span class="doccomment">//! `std::ffi` 模块中原语的 Windows 特定扩展。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Overview</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 由于历史原因，Windows API 对字符串使用了一种格式可能不正确的 UTF-16 编码。具体来说，Windows 字符串中的 16 位代码单元可能包含 [未配对在一起的孤立代理代码点][ill-formed-utf-16]。</span>
+<span class="doccomment">//! Unicode 标准要求代理代码点 (在 U+D800 到 U+DFFF 范围内的代码点) 总是成对的，因为在 UTF-16 编码中，*surrogate code 单元对 `*` 用于编码单个字符。</span>
+<span class="doccomment">//! 为了与不强制执行这些配对的代码兼容，Windows 也不强制执行它们。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 虽然不一定总是可以无损地将这样的字符串转换为有效的 UTF-16 字符串 (甚至 UTF-8)，但是通常希望能够无损地将这样的字符串往返于 Windows API 之间。</span>
+<span class="doccomment">//! 例如，某些 Rust 代码可能与某些 Windows API 一起成为 &quot;bridging&quot;，仅在这些 API 之间传递 `WCHAR` 字符串，而无需真正研究这些字符串。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 如果确实需要 Rust 代码查看这些字符串，则可以通过用 [`U+FFFD REPLACEMENT CHARACTER`][U+FFFD] 替换无效的序列来将它们转换为有效的 UTF-8，这可能是有损的，就像在其他处理字符串编码的 Rust API 中所做的那样。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # `OsStringExt` 和 `OsStrExt`</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`OsString`] 是操作系统的首选表示形式中所拥有的字符串的 Rust 包装器。</span>
+<span class="doccomment">//! 在 Windows 上，此结构体通过 [`OsStringExt`] trait 的实现得到增强，该实现具有 [`OsStringExt::from_wide`] 方法。这使您可以从 `&amp;[u16]` 切片创建 [`OsString`]。大概是从 `WCHAR` Windows API 中得到的切片。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 同样，[`OsStr`] 是 Rust 包装器，用于从操作系统的首选表示形式中借用字符串。在 Windows 上，[`OsStrExt`] trait 提供了 [`OsStrExt::encode_wide`] 方法，该方法输出 [`EncodeWide`] 迭代器。</span>
+<span class="doccomment">//! 例如，您可以 [`collect`] 这个迭代器，以获得一个 `Vec&lt;u16&gt;`; 您以后可以获取指向此 vector 内容的指针，并将其提供给 Windows API。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 这些 traits 与 [`OsString`] 和 [`OsStr`] 一起工作，这样就可以在 Windows 和后面往返字符串，而不会丢失数据，即使字符串是格式错误的 UTF-16。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [ill-formed-utf-16]: https://simonsapin.github.io/wtf-8/#ill-formed-utf-16</span>
+<span class="doccomment">//! [`collect`]: crate::iter::Iterator::collect</span>
+<span class="doccomment">//! [U+FFFD]: crate::char::REPLACEMENT_CHARACTER</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+
+<span class="attribute">#![<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ffi</span>::{<span class="ident">OsStr</span>, <span class="ident">OsString</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sealed::Sealed</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::os_str::Buf</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys_common::wtf8::Wtf8Buf</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys_common</span>::{<span class="ident">AsInner</span>, <span class="ident">FromInner</span>};
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys_common::wtf8::EncodeWide</span>;
+
+<span class="doccomment">/// Windows 特定于 [`OsString`] 的扩展。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// trait 是密封的: 不能在标准库之外实现。</span>
+<span class="doccomment">/// 这是为了将来的附加方法不会破坏更改。</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">OsStringExt</span>: <span class="ident">Sealed</span> {
+    <span class="doccomment">/// 从可能是格式不正确的 UTF-16 切片创建 `OsString`</span>
+    <span class="doccomment">/// 16 位代码单元。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这是无损的: 在结果字符串上调用 [`OsStrExt::encode_wide`] 将始终返回原始代码单元。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::ffi::OsString;</span>
+    <span class="doccomment">/// use std::os::windows::prelude::*;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // UTF-16 &quot;Unicode&quot; 的编码。</span>
+    <span class="doccomment">/// let source = [0x0055, 0x006E, 0x0069, 0x0063, 0x006F, 0x0064, 0x0065];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let string = OsString::from_wide(&amp;source[..]);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">from_wide</span>(<span class="ident">wide</span>: <span class="kw-2">&amp;</span>[<span class="ident">u16</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">OsStringExt</span> <span class="kw">for</span> <span class="ident">OsString</span> {
+    <span class="kw">fn</span> <span class="ident">from_wide</span>(<span class="ident">wide</span>: <span class="kw-2">&amp;</span>[<span class="ident">u16</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OsString</span> {
+        <span class="ident">FromInner::from_inner</span>(<span class="ident">Buf</span> { <span class="ident">inner</span>: <span class="ident">Wtf8Buf::from_wide</span>(<span class="ident">wide</span>) })
+    }
+}
+
+<span class="doccomment">/// Windows 特定于 [`OsStr`] 的扩展。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// trait 是密封的: 不能在标准库之外实现。</span>
+<span class="doccomment">/// 这是为了将来的附加方法不会破坏更改。</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">OsStrExt</span>: <span class="ident">Sealed</span> {
+    <span class="doccomment">/// 将 `OsStr` 重新编码为宽字符序列，即可能格式不正确的 UTF-16。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这是无损的: 在结果上调用 [`OsStringExt::from_wide`]，然后调用 `encode_wide`，将产生原始代码单元。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 请注意，编码不会添加最终的空终止符。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::ffi::OsString;</span>
+    <span class="doccomment">/// use std::os::windows::prelude::*;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // UTF-16 &quot;Unicode&quot; 的编码。</span>
+    <span class="doccomment">/// let source = [0x0055, 0x006E, 0x0069, 0x0063, 0x006F, 0x0064, 0x0065];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let string = OsString::from_wide(&amp;source[..]);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let result: Vec&lt;u16&gt; = string.encode_wide().collect();</span>
+    <span class="doccomment">/// assert_eq!(&amp;source[..], &amp;result[..]);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">encode_wide</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EncodeWide</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>;
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">OsStrExt</span> <span class="kw">for</span> <span class="ident">OsStr</span> {
+    <span class="kw">fn</span> <span class="ident">encode_wide</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EncodeWide</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">as_inner</span>().<span class="ident">inner</span>.<span class="ident">encode_wide</span>()
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="std" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Arc","线程安全的引用计数指针。`Arc` 代表原子引用计数。"],["Weak","`Weak` 是 [`Arc`] 的版本，该版本对托管分配具有非所有权引用。 通过调用 `Weak` 指针上的 `upgrade` 来访问该分配，该指针返回 [`Option`]`<`[`Arc`]`<T>>`。"]]});

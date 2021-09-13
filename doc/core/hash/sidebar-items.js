@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["Hash","派生宏，生成 `Hash` trait 的实现。"]],"struct":[["BuildHasherDefault","用于为实现 [`Hasher`] 和 [`Default`] 的类型创建默认的 [`BuildHasher`] 实例。"],["SipHasher","SipHash 2-4 的实现。"]],"trait":[["BuildHasher","用于创建 [`Hasher`] 实例的 trait。"],["Hash","可散列的类型。"],["Hasher","trait，用于散列任意字节流。"]]});

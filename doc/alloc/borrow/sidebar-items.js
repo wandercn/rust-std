@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Cow","写入时克隆智能指针。"]],"trait":[["Borrow","借用数据的 trait。"],["BorrowMut","用于可变借用数据的 trait。"],["ToOwned","`Clone` 到借用数据的一般化。"]]});

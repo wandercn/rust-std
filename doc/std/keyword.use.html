@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="从其他 crates 或模块导入或重命名项。"><meta name="keywords" content="rust, rustlang, rust-lang, use"><title>use - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="use" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">use</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#2098" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>从其他 crates 或模块导入或重命名项。</p>
+<p>通常，使用 <code>use</code> 关键字来缩短引用模块项所需的路径。
+关键字可能出现在模块，块甚至函数中，通常在顶部。</p>
+<p>关键字最基本的用法是 <code>use path::to::item;</code>，尽管支持许多便捷的快捷方式:</p>
+<ul>
+<li>
+<p>使用类似 glob 的大括号语法 <code>use a::b::{c, d, e::f, g::h::i};</code> 同时绑定具有公共前缀的路径列表</p>
+</li>
+<li>
+<p>使用 <a href="keyword.self.html"><code>self</code></a> 关键字 (例如 <code>use a::b::{self, c, d::e};</code>) 同时绑定具有公共前缀的路径列表及其公共父模块</p>
+</li>
+<li>
+<p>使用语法 <code>use p::q::r as x;</code> 将目标名称重新绑定为新的本地名称。
+这也可以与最后两个功能一起使用: <code>use a::b::{self as ab, c as abc}</code>.</p>
+</li>
+<li>
+<p>使用星号通配符语法 <code>use a::b::*;</code> 绑定与给定前缀匹配的所有路径。</p>
+</li>
+<li>
+<p>多次嵌套先前功能的组，例如 <code>use a::b::{self as ab, c, d::{*, e::f}};</code></p>
+</li>
+<li>
+<p>使用可见性修改器 (例如 <code>pub use a::b;</code>) 进行重导出</p>
+</li>
+<li>
+<p>使用 <code>_</code> 导入仅导入 trait 的方法而不将其绑定到名称 (例如，避免冲突) : <code>use ::std::io::Read as _;</code>.</p>
+</li>
+</ul>
+<p>支持使用 <a href="keyword.crate.html"><code>crate</code></a>，<a href="keyword.super.html"><code>super</code></a> 或 <a href="keyword.self.html"><code>self</code></a> 之类的路径限定符: <code>use crate::a::b;</code>.</p>
+<p>注意，当在类型上使用通配符 <code>*</code> 时，它不会导入其方法 (尽管对于 <code>enum</code> 而言，它会导入成员，如下例所示)。</p>
+
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<span class="kw">enum</span> <span class="ident">ExampleEnum</span> {
+    <span class="ident">VariantA</span>,
+    <span class="ident">VariantB</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">ExampleEnum</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span><span class="ident">::VariantA</span>
+    }
+}
+
+<span class="kw">use</span> <span class="ident">ExampleEnum</span>::<span class="kw-2">*</span>;
+
+<span class="comment">// Compiles.</span>
+<span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">VariantA</span>;
+
+<span class="comment">// 不编译!</span>
+<span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">new</span>();</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Aenum%20ExampleEnum%20%7B%0A%20%20%20%20VariantA%2C%0A%20%20%20%20VariantB%2C%0A%7D%0A%0Aimpl%20ExampleEnum%20%7B%0A%20%20%20%20fn%20new()%20-%3E%20Self%20%7B%0A%20%20%20%20%20%20%20%20Self%3A%3AVariantA%0A%20%20%20%20%7D%0A%7D%0A%0Ause%20ExampleEnum%3A%3A*%3B%0A%0A%2F%2F%20Compiles.%0Alet%20_%20%3D%20VariantA%3B%0A%0A%2F%2F%20%E4%B8%8D%E7%BC%96%E8%AF%91!%0Alet%20n%20%3D%20new()%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>有关 <code>use</code> 和常规路径的更多信息，请参见 <a href="../reference/items/use-declarations.html">Reference</a>。</p>
+<p>也可以在 <a href="../reference/items/use-declarations.html">Reference</a> 中找到有关 2015 年版本和 2018 年版本之间的路径和 <code>use</code> 关键字的差异。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

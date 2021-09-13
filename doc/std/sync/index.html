@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="有用的同步原语。"><meta name="keywords" content="rust, rustlang, rust-lang, sync"><title>std::sync - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module sync</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#types">Type Definitions</a></li></ul></div><div id="sidebar-vars" data-name="sync" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">std</a>::<wbr><a class="mod" href="#">sync</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/std/sync/mod.rs.html#1-180" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>有用的同步原语。</p>
+<h2 id="需要同步" class="section-header"><a href="#需要同步">需要同步</a></h2>
+<p>从概念上讲，Rust 程序是将在计算机上执行的一系列操作。程序中发生的事件的时间线与代码中操作的顺序一致。</p>
+<p>考虑下面的代码，对某些静态变量进行操作:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">A</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">B</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">C</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">unsafe</span> {
+        <span class="ident">A</span> <span class="op">=</span> <span class="number">3</span>;
+        <span class="ident">B</span> <span class="op">=</span> <span class="number">4</span>;
+        <span class="ident">A</span> <span class="op">=</span> <span class="ident">A</span> <span class="op">+</span> <span class="ident">B</span>;
+        <span class="ident">C</span> <span class="op">=</span> <span class="ident">B</span>;
+        <span class="macro">println!</span>(<span class="string">&quot;{} {} {}&quot;</span>, <span class="ident">A</span>, <span class="ident">B</span>, <span class="ident">C</span>);
+        <span class="ident">C</span> <span class="op">=</span> <span class="ident">A</span>;
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Astatic%20mut%20A%3A%20u32%20%3D%200%3B%0Astatic%20mut%20B%3A%20u32%20%3D%200%3B%0Astatic%20mut%20C%3A%20u32%20%3D%200%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20unsafe%20%7B%0A%20%20%20%20%20%20%20%20A%20%3D%203%3B%0A%20%20%20%20%20%20%20%20B%20%3D%204%3B%0A%20%20%20%20%20%20%20%20A%20%3D%20A%20%2B%20B%3B%0A%20%20%20%20%20%20%20%20C%20%3D%20B%3B%0A%20%20%20%20%20%20%20%20println!(%22%7B%7D%20%7B%7D%20%7B%7D%22%2C%20A%2C%20B%2C%20C)%3B%0A%20%20%20%20%20%20%20%20C%20%3D%20A%3B%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>似乎存储在存储器中的某些变量已更改，执行了加法运算，结果存储在 <code>A</code> 中，并且变量 <code>C</code> 被修改了两次。</p>
+<p>当仅涉及单个线程时，结果如预期的那样:
+<code>7 4 4</code> 行被打印。</p>
+<p>至于幕后发生的情况，启用优化后，最终生成的机器代码可能看起来与代码有很大不同:</p>
+<ul>
+<li>
+<p><code>C</code> 的第一个存储区可能在存储区移至 <code>A</code> 或 <code>B</code> 之前已被移至 <em>as if</em>。</p>
+</li>
+<li>
+<p>可以删除 <code>A + B</code> 到 <code>A</code> 的分配，因为总和可以存储在一个临时位置，直到打印出来为止，并且变量永远不会更新。</p>
+</li>
+<li>
+<p>最终结果可以仅通过在编译时查看代码来确定，因此 <a href="https://en.wikipedia.org/wiki/Constant_folding">constant folding</a> 可能会将整个块变成一个简单的 <code>println!(&quot;7 4 4&quot;)</code>。</p>
+</li>
+</ul>
+<p>只要最终的优化代码在执行时产生的结果与没有优化的结果相同，编译器就可以执行这些优化的任何组合。</p>
+<p>由于现代计算机中使用了 <a href="https://en.wikipedia.org/wiki/Concurrency_(computer_science)">并发</a>，因此有关程序执行顺序的假设通常是错误的。
+即使禁用了编译器优化，<strong>访问变量变量也可能导致不确定的结果，</strong> 仍然可能 ** 引入同步错误。</p>
+<p>请注意，由于 Rust 的安全保证，假设我们在此模块中未使用任何同步原语，则访问 (static) 变量需要 <code>unsafe</code> 代码。</p>
+<h2 id="乱序执行" class="section-header"><a href="#乱序执行">乱序执行</a></h2>
+<p>由于多种原因，指令的执行顺序与我们定义的顺序可以不同:</p>
+<ul>
+<li>
+<p><strong>编译器</strong> 重新排序指令: 如果编译器可以在较早的时候发出指令，它将尝试这样做。
+例如，它可能会在代码块的顶部提升内存负载，以便 CPU 可以从内存中启动 <a href="https://en.wikipedia.org/wiki/Cache_prefetching">预取</a> 值。</p>
+<p>在单线程方案中，这可能会在编写信号处理程序或某些类型的代码时引起问题。
+使用 <a href="atomic/fn.compiler_fence.html">compiler fences</a> 防止此重新排序。</p>
+</li>
+<li>
+<p>一个单处理器 ** 执行指令 <a href="https://en.wikipedia.org/wiki/Out-of-order_execution">out-of-order</a>:
+现代的 CPU 能够执行 <a href="https://en.wikipedia.org/wiki/Superscalar_processor">超标量</a>，也就是说，多个指令可能同时执行，即使机器代码描述的是一个顺序过程。</p>
+<p>这种重新排序由 CPU 透明地处理。</p>
+</li>
+<li>
+<p>同时执行多个硬件线程的 <strong>多处理器</strong> 系统: 在多线程方案中，可以使用两种原语来处理同步:</p>
+<ul>
+<li><a href="atomic/fn.fence.html">memory fences</a> 确保以正确的顺序使内存访问对其他 CPU 可见。</li>
+<li><a href="atomic/index.html">atomic operations</a> 确保同时访问同一内存位置不会导致未定义的行为。</li>
+</ul>
+</li>
+</ul>
+<h2 id="更高级别的同步对象" class="section-header"><a href="#更高级别的同步对象">更高级别的同步对象</a></h2>
+<p>大多数同步原语都非常容易出错，使用起来也不方便，这就是为什么标准库还公开了一些更高级别的同步对象的原因。</p>
+<p>这些抽象可以在较低级别的原语基础上构建。
+为了提高效率，标准库中的同步对象通常是在操作系统内核的帮助下实现的，该内核可以在线程被锁定而被阻塞时重新安排线程的时间。</p>
+<p>以下是可用的同步对象的概述:</p>
+<ul>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li>
+<p><a href="struct.RwLock.html"><code>RwLock</code></a>: 提供一种互斥机制，该机制同时允许多个 readers，而一次仅允许一个 writer。在某些情况下，这可能比互斥锁更有效。</p>
+</li>
+</ul>
+</div></details><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="atomic/index.html" title="std::sync::atomic mod">atomic</a></td><td class="docblock-short"><p>原子类型</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="mpsc/index.html" title="std::sync::mpsc mod">mpsc</a></td><td class="docblock-short"><p>多生产者，单消费者 FIFO 队列通信原语。</p>
+</td></tr></table><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.Arc.html" title="std::sync::Arc struct">Arc</a></td><td class="docblock-short"><p>线程安全的引用计数指针。<code>Arc</code> 代表原子引用计数。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Barrier.html" title="std::sync::Barrier struct">Barrier</a></td><td class="docblock-short"><p>屏障使多个线程能够同步某些计算的开始。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.BarrierWaitResult.html" title="std::sync::BarrierWaitResult struct">BarrierWaitResult</a></td><td class="docblock-short"><p>当 <a href="struct.Barrier.html" title="Barrier"><code>Barrier</code></a> 中的所有线程都汇合时，<a href="struct.Barrier.html#method.wait" title="Barrier::wait()"><code>Barrier::wait()</code></a> 将返回 <code>BarrierWaitResult</code>。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Condvar.html" title="std::sync::Condvar struct">Condvar</a></td><td class="docblock-short"><p>条件变量</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Mutex.html" title="std::sync::Mutex struct">Mutex</a></td><td class="docblock-short"><p>互斥原语可用于保护共享数据</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.MutexGuard.html" title="std::sync::MutexGuard struct">MutexGuard</a></td><td class="docblock-short"><p>互斥锁的 “scoped lock” 的 RAII 实现。
+当此结构体被丢弃 (离开作用域) 时，这个锁将被解锁。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Once.html" title="std::sync::Once struct">Once</a></td><td class="docblock-short"><p>同步原语，可用于运行一次性初始化。
+对于 FFI 或相关功能的一次性初始化很有用。
+该类型只能用 <a href="struct.Once.html#method.new" title="Once::new()"><code>Once::new()</code></a> 构造。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.OnceState.html" title="std::sync::OnceState struct">OnceState</a></td><td class="docblock-short"><p>状态产生于 [<code>Once::call_once_force () </code>] 的闭包参数。
+该状态可用于查询 <a href="struct.Once.html" title="Once"><code>Once</code></a> 的中毒状态。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.PoisonError.html" title="std::sync::PoisonError struct">PoisonError</a></td><td class="docblock-short"><p>一种错误类型，每当获取锁时都可以返回该错误。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.RwLock.html" title="std::sync::RwLock struct">RwLock</a></td><td class="docblock-short"><p>reader-writer 锁</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.RwLockReadGuard.html" title="std::sync::RwLockReadGuard struct">RwLockReadGuard</a></td><td class="docblock-short"><p>RAII 结构，用于在丢弃锁时释放锁的共享读取访问。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.RwLockWriteGuard.html" title="std::sync::RwLockWriteGuard struct">RwLockWriteGuard</a></td><td class="docblock-short"><p>RAII 结构，用于在锁被丢弃时释放对锁的独占写访问。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.WaitTimeoutResult.html" title="std::sync::WaitTimeoutResult struct">WaitTimeoutResult</a></td><td class="docblock-short"><p>指示是否因超时而返回的条件变量的定时等待的类型。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Weak.html" title="std::sync::Weak struct">Weak</a></td><td class="docblock-short"><p><code>Weak</code> 是 <a href="struct.Arc.html" title="Arc"><code>Arc</code></a> 的版本，该版本对托管分配具有非所有权引用。
+通过调用 <code>Weak</code> 指针上的 <a href="struct.Weak.html#method.upgrade"><code>upgrade</code></a> 来访问该分配，该指针返回 <a href="../option/enum.Option.html" title="Option"><code>Option</code></a><code>&lt;</code><a href="struct.Arc.html" title="Arc"><code>Arc</code></a><code>&lt;T&gt;&gt;</code>。</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.TryLockError.html" title="std::sync::TryLockError enum">TryLockError</a></td><td class="docblock-short"><p>枚举可能与 <a href="type.TryLockResult.html" title="TryLockResult"><code>TryLockResult</code></a> 相关的错误，这些错误可能是从 <a href="struct.Mutex.html"><code>Mutex</code></a> 上的 <a href="struct.Mutex.html#method.try_lock"><code>try_lock</code></a> 方法或 <a href="struct.RwLock.html"><code>RwLock</code></a> 上的 <a href="struct.RwLock.html#method.try_read"><code>try_read</code></a> 和 <a href="struct.RwLock.html#method.try_write"><code>try_write</code></a> 方法获取锁时发生的。</p>
+</td></tr></table><h2 id="constants" class="section-header"><a href="#constants">Constants</a></h2>
+<table><tr class="deprecated module-item"><td><a class="constant" href="constant.ONCE_INIT.html" title="std::sync::ONCE_INIT constant">ONCE_INIT</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecated</span><p>静态 <a href="struct.Once.html" title="Once"><code>Once</code></a> 值的初始化值。</p>
+</td></tr></table><h2 id="types" class="section-header"><a href="#types">Type Definitions</a></h2>
+<table><tr class="module-item"><td><a class="type" href="type.LockResult.html" title="std::sync::LockResult type">LockResult</a></td><td class="docblock-short"><p>一种类型别名，用于可能导致中毒的锁定方法。</p>
+</td></tr><tr class="module-item"><td><a class="type" href="type.TryLockResult.html" title="std::sync::TryLockResult type">TryLockResult</a></td><td class="docblock-short"><p>一种非别名锁定方法结果的类型别名。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

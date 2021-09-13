@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="身份函数。"><meta name="keywords" content="rust, rustlang, rust-lang, identity"><title>identity in std::convert - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">std</a>::<wbr><a href="index.html">convert</a></h2><div id="sidebar-vars" data-name="identity" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">std</a>::<wbr><a href="index.html">convert</a>::<wbr><a class="fn" href="#">identity</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.33.0, const since 1.33.0">1.33.0 (const: 1.33.0)</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/convert/mod.rs.html#101" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub const fn identity&lt;T&gt;(x: T) -&gt; T</pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>身份函数。</p>
+<p>关于此函数，有两点需要注意:</p>
+<ul>
+<li>
+<p>它并不总是等同于 <code>|x| x</code> 之类的闭包，因为闭包可能会将 <code>x</code> 强制转换为其他类型。</p>
+</li>
+<li>
+<p>它将输入 <code>x</code> 传递给函数。</p>
+</li>
+</ul>
+<p>虽然有一个只返回输入的函数似乎很奇怪，但是有一些有趣的用法。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>使用 <code>identity</code> 在其他有趣的函数序列中什么也不做:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::convert::identity</span>;
+
+<span class="kw">fn</span> <span class="ident">manipulation</span>(<span class="ident">x</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span> {
+    <span class="comment">// 让我们假设添加一个是一个有趣的函数。</span>
+    <span class="ident">x</span> <span class="op">+</span> <span class="number">1</span>
+}
+
+<span class="kw">let</span> <span class="ident">_arr</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">identity</span>, <span class="ident">manipulation</span>];</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aconvert%3A%3Aidentity%3B%0A%0Afn%20manipulation(x%3A%20u32)%20-%3E%20u32%20%7B%0A%20%20%20%20%2F%2F%20%E8%AE%A9%E6%88%91%E4%BB%AC%E5%81%87%E8%AE%BE%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA%E6%98%AF%E4%B8%80%E4%B8%AA%E6%9C%89%E8%B6%A3%E7%9A%84%E5%87%BD%E6%95%B0%E3%80%82%0A%20%20%20%20x%20%2B%201%0A%7D%0A%0Alet%20_arr%20%3D%20%26%5Bidentity%2C%20manipulation%5D%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>在条件中将 <code>identity</code> 用作 “do nothing” 终止条件:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::convert::identity</span>;
+
+<span class="kw">let</span> <span class="ident">do_stuff</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">condition</span> { <span class="ident">manipulation</span> } <span class="kw">else</span> { <span class="ident">identity</span> };
+
+<span class="comment">// 做更多有趣的事情...</span>
+
+<span class="kw">let</span> <span class="ident">_results</span> <span class="op">=</span> <span class="ident">do_stuff</span>(<span class="number">42</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aconvert%3A%3Aidentity%3B%0A%0Alet%20condition%20%3D%20true%3B%0A%0Afn%20manipulation(x%3A%20u32)%20-%3E%20u32%20%7B%20x%20%2B%201%20%7D%0A%0Alet%20do_stuff%20%3D%20if%20condition%20%7B%20manipulation%20%7D%20else%20%7B%20identity%20%7D%3B%0A%0A%2F%2F%20%E5%81%9A%E6%9B%B4%E5%A4%9A%E6%9C%89%E8%B6%A3%E7%9A%84%E4%BA%8B%E6%83%85...%0A%0Alet%20_results%20%3D%20do_stuff(42)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>使用 <code>identity</code> 保留 <code>Option&lt;T&gt;</code> 迭代器的 <code>Some</code> 成员:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::convert::identity</span>;
+
+<span class="kw">let</span> <span class="ident">iter</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">1</span>), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">3</span>)].<span class="ident">into_iter</span>();
+<span class="kw">let</span> <span class="ident">filtered</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">filter_map</span>(<span class="ident">identity</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+<span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">3</span>], <span class="ident">filtered</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aconvert%3A%3Aidentity%3B%0A%0Alet%20iter%20%3D%20vec!%5BSome(1)%2C%20None%2C%20Some(3)%5D.into_iter()%3B%0Alet%20filtered%20%3D%20iter.filter_map(identity).collect%3A%3A%3CVec%3C_%3E%3E()%3B%0Aassert_eq!(vec!%5B1%2C%203%5D%2C%20filtered)%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

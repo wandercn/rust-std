@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Box","堆分配的指针类型。"]]});

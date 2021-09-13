@@ -1,0 +1,1288 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\time.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>time.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+</pre><pre class="rust">
+<span class="doccomment">//! 时间量化。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Example:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use std::time::Duration;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let five_seconds = Duration::new(5, 0);</span>
+<span class="doccomment">//! // 这两个声明是等效的</span>
+<span class="doccomment">//! assert_eq!(Duration::new(5, 0), Duration::from_secs(5));</span>
+<span class="doccomment">//! ```</span>
+
+<span class="attribute">#![<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.3.0&quot;</span>)]</span>
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span>;
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::cmp</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::error::Error</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::fmt</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ops</span>::{<span class="ident">Add</span>, <span class="ident">AddAssign</span>, <span class="ident">Sub</span>, <span class="ident">SubAssign</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::time</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys_common::mutex::StaticMutex</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys_common::FromInner</span>;
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.3.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+
+<span class="doccomment">/// 单调非递减时钟的度量。</span>
+<span class="doccomment">/// 不透明，仅对 `Duration` 有用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 创建时始终保证瞬时不小于任何先前测量的瞬时，并且对于执行诸如测量基准或计时操作花费多长时间等任务通常很有用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 但是请注意，不能保证瞬间稳定。换句话说，基础时钟的每个刻度可能不一样长 (例如</span>
+<span class="doccomment">/// 几秒钟可能比其他更长)。瞬间可能会向前跳跃或经历时间膨胀 (减速或加速)，但永远不会向后退。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 即时消息是不透明的类型，只能相互比较。没有方法可以立即获取 &quot;the number of seconds&quot;。</span>
+<span class="doccomment">/// 相反，它仅允许测量两个瞬间之间的持续时间 (或比较两个瞬间)。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `Instant` 结构体的大小可能会因目标操作系统而异。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Example:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```no_run</span>
+<span class="doccomment">/// use std::time::{Duration, Instant};</span>
+<span class="doccomment">/// use std::thread::sleep;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// fn main() {</span>
+<span class="doccomment">///    let now = Instant::now();</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///    // 我们睡了 2 秒钟</span>
+<span class="doccomment">///    sleep(Duration::new(2, 0));</span>
+<span class="doccomment">///    // 它打印 &#39;2&#39;</span>
+<span class="doccomment">///    println!(&quot;{}&quot;, now.elapsed().as_secs());</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 特定于操作系统的行为</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `Instant` 是系统特定类型的包装，并且其行为可能取决于基础操作系统。</span>
+<span class="doccomment">/// 例如，以下代码段在 Linux 上很好，但在 macOS 上为 panics:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```no_run</span>
+<span class="doccomment">/// use std::time::{Instant, Duration};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let now = Instant::now();</span>
+<span class="doccomment">/// let max_nanoseconds = u64::MAX / 1_000_000_000;</span>
+<span class="doccomment">/// let duration = Duration::new(max_nanoseconds, 0);</span>
+<span class="doccomment">/// println!(&quot;{:?}&quot;, now + duration);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 底层系统调用</span>
+<span class="doccomment">/// 当前，正在使用以下系统调用来使用 `now()` 获取当前时间:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// |  Platform |               System call                                            |</span>
+<span class="doccomment">/// |-----------|----------------------------------------------------------------------|</span>
+<span class="doccomment">/// | SGX       | [`insecure_time` usercall]. More information on [timekeeping in SGX] |</span>
+<span class="doccomment">/// | UNIX      | [clock_gettime (Monotonic Clock)]                                    |</span>
+<span class="doccomment">/// | Darwin    | [mach_absolute_time]                                                 |</span>
+<span class="doccomment">/// | VXWorks   | [clock_gettime (Monotonic Clock)]                                    |</span>
+<span class="doccomment">/// | WASI      | [__wasi_clock_time_get (Monotonic Clock)]                            |</span>
+<span class="doccomment">/// | Windows   | [QueryPerformanceCounter]                                            |</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [QueryPerformanceCounter]: https://docs.microsoft.com/en-us/windows/win32/api/profileapi/nf-profileapi-queryperformancecounter</span>
+<span class="doccomment">/// [`insecure_time` usercall]: https://edp.fortanix.com/docs/api/fortanix_sgx_abi/struct.Usercalls.html#method.insecure_time</span>
+<span class="doccomment">/// [timekeeping in SGX]: https://edp.fortanix.com/docs/concepts/rust-std/#codestdtimecode</span>
+<span class="doccomment">/// [__wasi_clock_time_get (Monotonic Clock)]: https://github.com/WebAssembly/WASI/blob/master/phases/snapshot/docs.md#clock_time_get</span>
+<span class="doccomment">/// [clock_gettime (Monotonic Clock)]: https://linux.die.net/man/3/clock_gettime</span>
+<span class="doccomment">/// [mach_absolute_time]: https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/services/services.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **免责声明:** 这些系统调用可能会随时间变化。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// &gt; Note: 如果 [`add`] 的数学运算可能是 panic</span>
+<span class="doccomment">/// &gt; 结构体不能代表新的时间点。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`add`]: Instant::add</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Instant</span>(<span class="ident">time::Instant</span>);
+
+<span class="doccomment">/// 系统时钟的度量，对于与文件系统或其他进程之类的外部实体进行通信很有用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 与 [`Instant`] 类型不同，这次的测量 **不是单调的**。</span>
+<span class="doccomment">/// 这意味着您可以将文件保存到文件系统，然后再将另一个文件保存到文件系统，**并且第二个文件的 `SystemTime` 测量值比第一个文件早**。</span>
+<span class="doccomment">/// 换句话说，在另一个实时操作之后实时发生的操作可能具有更早的 `SystemTime`!</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 因此，比较两个 `SystemTime` 实例以了解它们之间的持续时间将返回 [`Result`] 而不是绝对的 [`Duration`]，以指示这种时间漂移可能发生并且需要处理。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 尽管无法直接检查 `SystemTime`，但此模块中提供了 [`UNIX_EPOCH`] 常量作为及时了解有关 `SystemTime` 信息的锚点。</span>
+<span class="doccomment">/// 通过从该固定时间点计算持续时间，可以将 `SystemTime` 转换为人类可读的时间，或者转换为其他字符串表示形式。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `SystemTime` 结构体的大小可能会因目标操作系统而异。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Example:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```no_run</span>
+<span class="doccomment">/// use std::time::{Duration, SystemTime};</span>
+<span class="doccomment">/// use std::thread::sleep;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// fn main() {</span>
+<span class="doccomment">///    let now = SystemTime::now();</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///    // 我们睡了 2 秒钟</span>
+<span class="doccomment">///    sleep(Duration::new(2, 0));</span>
+<span class="doccomment">///    match now.elapsed() {</span>
+<span class="doccomment">///        Ok(elapsed) =&gt; {</span>
+<span class="doccomment">///            // 它打印 &#39;2&#39;</span>
+<span class="doccomment">///            println!(&quot;{}&quot;, elapsed.as_secs());</span>
+<span class="doccomment">///        }</span>
+<span class="doccomment">///        Err(e) =&gt; {</span>
+<span class="doccomment">///            // 发生错误!</span>
+<span class="doccomment">///            println!(&quot;Error: {:?}&quot;, e);</span>
+<span class="doccomment">///        }</span>
+<span class="doccomment">///    }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 底层系统调用</span>
+<span class="doccomment">/// 当前，正在使用以下系统调用来使用 `now()` 获取当前时间:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// |  Platform |               System call                                            |</span>
+<span class="doccomment">/// |-----------|----------------------------------------------------------------------|</span>
+<span class="doccomment">/// | SGX       | [`insecure_time` usercall]. More information on [timekeeping in SGX] |</span>
+<span class="doccomment">/// | UNIX      | [clock_gettime (Realtime Clock)]                                     |</span>
+<span class="doccomment">/// | Darwin    | [gettimeofday]                                                       |</span>
+<span class="doccomment">/// | VXWorks   | [clock_gettime (Realtime Clock)]                                     |</span>
+<span class="doccomment">/// | WASI      | [__wasi_clock_time_get (Realtime Clock)]                             |</span>
+<span class="doccomment">/// | Windows   | [GetSystemTimePreciseAsFileTime] / [GetSystemTimeAsFileTime]         |</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`insecure_time` usercall]: https://edp.fortanix.com/docs/api/fortanix_sgx_abi/struct.Usercalls.html#method.insecure_time</span>
+<span class="doccomment">/// [timekeeping in SGX]: https://edp.fortanix.com/docs/concepts/rust-std/#codestdtimecode</span>
+<span class="doccomment">/// [gettimeofday]: https://man7.org/linux/man-pages/man2/gettimeofday.2.html</span>
+<span class="doccomment">/// [clock_gettime (Realtime Clock)]: https://linux.die.net/man/3/clock_gettime</span>
+<span class="doccomment">/// [__wasi_clock_time_get (Realtime Clock)]: https://github.com/WebAssembly/WASI/blob/master/phases/snapshot/docs.md#clock_time_get</span>
+<span class="doccomment">/// [GetSystemTimePreciseAsFileTime]: https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemtimepreciseasfiletime</span>
+<span class="doccomment">/// [GetSystemTimeAsFileTime]: https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemtimeasfiletime</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **免责声明:** 这些系统调用可能会随时间变化。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// &gt; Note: 如果 [`add`] 的数学运算可能是 panic</span>
+<span class="doccomment">/// &gt; 结构体不能代表新的时间点。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`add`]: SystemTime::add</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SystemTime</span>(<span class="ident">time::SystemTime</span>);
+
+<span class="doccomment">/// `SystemTime` 的 `duration_since` 和 `elapsed` 方法返回的错误，用于了解系统时间在相反方向上的距离。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```no_run</span>
+<span class="doccomment">/// use std::thread::sleep;</span>
+<span class="doccomment">/// use std::time::{Duration, SystemTime};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let sys_time = SystemTime::now();</span>
+<span class="doccomment">/// sleep(Duration::from_secs(1));</span>
+<span class="doccomment">/// let new_sys_time = SystemTime::now();</span>
+<span class="doccomment">/// match sys_time.duration_since(new_sys_time) {</span>
+<span class="doccomment">///     Ok(_) =&gt; {}</span>
+<span class="doccomment">///     Err(e) =&gt; println!(&quot;SystemTimeError difference: {:?}&quot;, e.duration()),</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SystemTimeError</span>(<span class="ident">Duration</span>);
+
+<span class="kw">impl</span> <span class="ident">Instant</span> {
+    <span class="doccomment">/// 返回对应于 &quot;now&quot; 的瞬间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::time::Instant;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let now = Instant::now();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">now</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Instant</span> {
+        <span class="kw">let</span> <span class="ident">os_now</span> <span class="op">=</span> <span class="ident">time::Instant::now</span>();
+
+        <span class="comment">// 在这里，我们遇到了一种悲惨的状况。`Instant` 的全部要点是它是单调递增的。但是，我们发现在野外它实际上并不是由于一个或另一个原因而单调增加。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 这些似乎是操作系统和硬件级别的错误，我们实际上并不能做很多事情。以下是我们发现的内容:</span>
+        <span class="comment">//</span>
+        <span class="comment">// * #48514 - OpenBSD, x86_64</span>
+        <span class="comment">// * #49281 - linux arm64 和 s390x</span>
+        <span class="comment">// * #51648 - windows, x86</span>
+        <span class="comment">// * #56560 - windows, x86_64, AWS</span>
+        <span class="comment">// * #56612 - windows，x86，VM (?)</span>
+        <span class="comment">// * #56940 - linux, arm64</span>
+        <span class="comment">// * https://bugzilla.mozilla.org/show_bug.cgi?id=1487778-asimilarFirefoxbug</span>
+        <span class="comment">//</span>
+        <span class="comment">// 似乎这在野外经常发生。</span>
+        <span class="comment">// 我们正在各种平台上看到 panics，在这些平台上，通过 `elapsed` 函数对 `Instant::now` 的连续调用在向后倒退时会感到恐慌。</span>
+        <span class="comment">// 此处放置的是最后一滴尝试以解决问题的方法。</span>
+        <span class="comment">// 我们保留一个 &quot;latest now&quot; 实例，如果 OS 向后运行，则返回该实例，而不是 OS 所说的。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 为了希望减轻这种影响，&quot;these at least haven&#39;t gone backwards yet&quot; 排除了一些平台。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="ident">time::Instant::actually_monotonic</span>() {
+            <span class="kw">return</span> <span class="ident">Instant</span>(<span class="ident">os_now</span>);
+        }
+
+        <span class="kw">static</span> <span class="ident">LOCK</span>: <span class="ident">StaticMutex</span> <span class="op">=</span> <span class="ident">StaticMutex::new</span>();
+        <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">LAST_NOW</span>: <span class="ident">time::Instant</span> <span class="op">=</span> <span class="ident">time::Instant::zero</span>();
+        <span class="kw">unsafe</span> {
+            <span class="kw">let</span> <span class="ident">_lock</span> <span class="op">=</span> <span class="ident">LOCK</span>.<span class="ident">lock</span>();
+            <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">cmp::max</span>(<span class="ident">LAST_NOW</span>, <span class="ident">os_now</span>);
+            <span class="ident">LAST_NOW</span> <span class="op">=</span> <span class="ident">now</span>;
+            <span class="ident">Instant</span>(<span class="ident">now</span>)
+        }
+    }
+
+    <span class="doccomment">/// 返回从另一个时刻到该时刻所经过的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果 `earlier` 晚于 `self`，则此函数将为 panic。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::time::{Duration, Instant};</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let now = Instant::now();</span>
+    <span class="doccomment">/// sleep(Duration::new(1, 0));</span>
+    <span class="doccomment">/// let new_now = Instant::now();</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, new_now.duration_since(now));</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duration_since</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">earlier</span>: <span class="ident">Instant</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_sub_instant</span>(<span class="kw-2">&amp;</span><span class="ident">earlier</span>.<span class="number">0</span>).<span class="ident">expect</span>(<span class="string">&quot;supplied instant is later than self&quot;</span>)
+    }
+
+    <span class="doccomment">/// 返回从另一个时刻到该时刻所经过的时间; 如果该时刻晚于该时刻，则返回 None。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::time::{Duration, Instant};</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let now = Instant::now();</span>
+    <span class="doccomment">/// sleep(Duration::new(1, 0));</span>
+    <span class="doccomment">/// let new_now = Instant::now();</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, new_now.checked_duration_since(now));</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, now.checked_duration_since(new_now)); // None</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;checked_duration_since&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.39.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_duration_since</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">earlier</span>: <span class="ident">Instant</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_sub_instant</span>(<span class="kw-2">&amp;</span><span class="ident">earlier</span>.<span class="number">0</span>)
+    }
+
+    <span class="doccomment">/// 返回从另一时刻到该时刻所经过的时间，如果该时刻晚于该时刻，则返回零持续时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::time::{Duration, Instant};</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let now = Instant::now();</span>
+    <span class="doccomment">/// sleep(Duration::new(1, 0));</span>
+    <span class="doccomment">/// let new_now = Instant::now();</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, new_now.saturating_duration_since(now));</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, now.saturating_duration_since(new_now)); // 0ns</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;checked_duration_since&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.39.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">saturating_duration_since</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">earlier</span>: <span class="ident">Instant</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span> {
+        <span class="self">self</span>.<span class="ident">checked_duration_since</span>(<span class="ident">earlier</span>).<span class="ident">unwrap_or_default</span>()
+    }
+
+    <span class="doccomment">/// 返回自创建此瞬间以来经过的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果当前时间早于此时刻，则此函数可能为 panic，如果 `Instant` 是综合生成的，则可能会发生这种情况。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">/// use std::time::{Duration, Instant};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let instant = Instant::now();</span>
+    <span class="doccomment">/// let three_secs = Duration::from_secs(3);</span>
+    <span class="doccomment">/// sleep(three_secs);</span>
+    <span class="doccomment">/// assert!(instant.elapsed() &gt;= three_secs);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">elapsed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span> {
+        <span class="ident">Instant::now</span>() <span class="op">-</span> <span class="kw-2">*</span><span class="self">self</span>
+    }
+
+    <span class="doccomment">/// 如果 `t` 可以表示为 `Instant` (表示它在基础数据结构体的边界之内)，则返回 `Some(t)`，其中 `t` 是 `self + duration` 的时间，否则返回 `None`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_checked_add&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_add</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">duration</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_add_duration</span>(<span class="kw-2">&amp;</span><span class="ident">duration</span>).<span class="ident">map</span>(<span class="ident">Instant</span>)
+    }
+
+    <span class="doccomment">/// 如果 `t` 可以表示为 `Instant` (表示它在基础数据结构体的边界之内)，则返回 `Some(t)`，其中 `t` 是 `self - duration` 的时间，否则返回 `None`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_checked_add&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_sub</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">duration</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_sub_duration</span>(<span class="kw-2">&amp;</span><span class="ident">duration</span>).<span class="ident">map</span>(<span class="ident">Instant</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Add</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Instant</span>;
+
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果结果时间点不能由基础数据结构体表示，则此函数可能为 panic。</span>
+    <span class="doccomment">/// 没有 panic 的版本，请参见 [`Instant::checked_add`]。</span>
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Instant</span> {
+        <span class="self">self</span>.<span class="ident">checked_add</span>(<span class="ident">other</span>).<span class="ident">expect</span>(<span class="string">&quot;overflow when adding duration to instant&quot;</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_augmented_assignment&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.9.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">AddAssign</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">fn</span> <span class="ident">add_assign</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) {
+        <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">+</span> <span class="ident">other</span>;
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Instant</span>;
+
+    <span class="kw">fn</span> <span class="ident">sub</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Instant</span> {
+        <span class="self">self</span>.<span class="ident">checked_sub</span>(<span class="ident">other</span>).<span class="ident">expect</span>(<span class="string">&quot;overflow when subtracting duration from instant&quot;</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_augmented_assignment&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.9.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">SubAssign</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">fn</span> <span class="ident">sub_assign</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) {
+        <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">-</span> <span class="ident">other</span>;
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Duration</span>;
+
+    <span class="kw">fn</span> <span class="ident">sub</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Instant</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span> {
+        <span class="self">self</span>.<span class="ident">duration_since</span>(<span class="ident">other</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Instant</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">SystemTime</span> {
+    <span class="doccomment">/// 时间锚，可用于创建新的 `SystemTime` 实例或了解 `SystemTime` 的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 相对于系统时钟，此常量在所有系统上均定义为 &quot;1970-01-01 00:00:00 UTC&quot;。</span>
+    <span class="doccomment">/// 在现有的 `SystemTime` 实例上使用 `duration_since` 可以告诉您测量距离该时间点有多远，并且可以使用 `UNIX_EPOCH + duration` 创建一个 `SystemTime` 实例来表示另一个固定的时间点。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::time::SystemTime;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {</span>
+    <span class="doccomment">///     Ok(n) =&gt; println!(&quot;1970-01-01 00:00:00 UTC was {} seconds ago!&quot;, n.as_secs()),</span>
+    <span class="doccomment">///     Err(_) =&gt; panic!(&quot;SystemTime before UNIX EPOCH!&quot;),</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;assoc_unix_epoch&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.28.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UNIX_EPOCH</span>: <span class="ident">SystemTime</span> <span class="op">=</span> <span class="ident">UNIX_EPOCH</span>;
+
+    <span class="doccomment">/// 返回与 &quot;now&quot; 相对应的系统时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::time::SystemTime;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">now</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SystemTime</span> {
+        <span class="ident">SystemTime</span>(<span class="ident">time::SystemTime::now</span>())
+    }
+
+    <span class="doccomment">/// 返回从较早的时间点过去的时间量。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此函数可能会失败，因为不能保证早先进行的测量总是在以后进行之前 (由于异常，例如向前或向后调整系统时钟)。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`Instant`] 可以用来测量经过的时间，而不会出现这种失败的风险。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果成功，则返回 [`Ok`]`(`[`Duration`]`)`，其中持续时间表示从指定的度量到此度量所经过的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果 `earlier` 晚于 `self`，则返回 [`Err`]，并且该错误包含时间与 `self` 的距离。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::time::SystemTime;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// let new_sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// let difference = new_sys_time.duration_since(sys_time)</span>
+    <span class="doccomment">///     .expect(&quot;Clock may have gone backwards&quot;);</span>
+    <span class="doccomment">/// println!(&quot;{:?}&quot;, difference);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duration_since</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">earlier</span>: <span class="ident">SystemTime</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Duration</span>, <span class="ident">SystemTimeError</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">sub_time</span>(<span class="kw-2">&amp;</span><span class="ident">earlier</span>.<span class="number">0</span>).<span class="ident">map_err</span>(<span class="ident">SystemTimeError</span>)
+    }
+
+    <span class="doccomment">/// 返回创建此系统时间时的时钟时间与当前时钟时间之间的差。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 由于底层系统时钟易于漂移和更新 (例如，系统时钟可能倒退)，因此该函数可能会失败，因此此函数可能并不总是成功。</span>
+    <span class="doccomment">/// 如果成功，则返回 [`Ok`]`(`[`Duration`]`)`，其中持续时间表示从该时间测量到当前时间所经过的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 为了可靠地测量经过时间，请改用 [`Instant`]。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果 `self` 晚于当前系统时间，则返回 [`Err`]，并且错误包含距当前系统时间 `self` 多远的时间。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">/// use std::time::{Duration, SystemTime};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// let one_sec = Duration::from_secs(1);</span>
+    <span class="doccomment">/// sleep(one_sec);</span>
+    <span class="doccomment">/// assert!(sys_time.elapsed().unwrap() &gt;= one_sec);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">elapsed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Duration</span>, <span class="ident">SystemTimeError</span><span class="op">&gt;</span> {
+        <span class="ident">SystemTime::now</span>().<span class="ident">duration_since</span>(<span class="kw-2">*</span><span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// 如果 `t` 可以表示为 `SystemTime` (表示它在基础数据结构体的边界之内)，则返回 `Some(t)`，其中 `t` 是 `self + duration` 的时间，否则返回 `None`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_checked_add&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_add</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">duration</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SystemTime</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_add_duration</span>(<span class="kw-2">&amp;</span><span class="ident">duration</span>).<span class="ident">map</span>(<span class="ident">SystemTime</span>)
+    }
+
+    <span class="doccomment">/// 如果 `t` 可以表示为 `SystemTime` (表示它在基础数据结构体的边界之内)，则返回 `Some(t)`，其中 `t` 是 `self - duration` 的时间，否则返回 `None`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_checked_add&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_sub</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">duration</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SystemTime</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_sub_duration</span>(<span class="kw-2">&amp;</span><span class="ident">duration</span>).<span class="ident">map</span>(<span class="ident">SystemTime</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Add</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">SystemTime</span>;
+
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果结果时间点不能由基础数据结构体表示，则此函数可能为 panic。</span>
+    <span class="doccomment">/// 没有 panic 的版本，请参见 [`SystemTime::checked_add`]。</span>
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">dur</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SystemTime</span> {
+        <span class="self">self</span>.<span class="ident">checked_add</span>(<span class="ident">dur</span>).<span class="ident">expect</span>(<span class="string">&quot;overflow when adding duration to instant&quot;</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_augmented_assignment&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.9.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">AddAssign</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">fn</span> <span class="ident">add_assign</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) {
+        <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">+</span> <span class="ident">other</span>;
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">SystemTime</span>;
+
+    <span class="kw">fn</span> <span class="ident">sub</span>(<span class="self">self</span>, <span class="ident">dur</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SystemTime</span> {
+        <span class="self">self</span>.<span class="ident">checked_sub</span>(<span class="ident">dur</span>).<span class="ident">expect</span>(<span class="string">&quot;overflow when subtracting duration from instant&quot;</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time_augmented_assignment&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.9.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">SubAssign</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">fn</span> <span class="ident">sub_assign</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="ident">Duration</span>) {
+        <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">-</span> <span class="ident">other</span>;
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
+    }
+}
+
+<span class="doccomment">/// 时间锚，可用于创建新的 `SystemTime` 实例或了解 `SystemTime` 的时间。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 相对于系统时钟，此常量在所有系统上均定义为 &quot;1970-01-01 00:00:00 UTC&quot;。</span>
+<span class="doccomment">/// 在现有的 [`SystemTime`] 实例上使用 `duration_since` 可以告诉您测量距离该时间点有多远，并且可以使用 `UNIX_EPOCH + duration` 创建一个 [`SystemTime`] 实例来表示另一个固定的时间点。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```no_run</span>
+<span class="doccomment">/// use std::time::{SystemTime, UNIX_EPOCH};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// match SystemTime::now().duration_since(UNIX_EPOCH) {</span>
+<span class="doccomment">///     Ok(n) =&gt; println!(&quot;1970-01-01 00:00:00 UTC was {} seconds ago!&quot;, n.as_secs()),</span>
+<span class="doccomment">///     Err(_) =&gt; panic!(&quot;SystemTime before UNIX EPOCH!&quot;),</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UNIX_EPOCH</span>: <span class="ident">SystemTime</span> <span class="op">=</span> <span class="ident">SystemTime</span>(<span class="ident">time::UNIX_EPOCH</span>);
+
+<span class="kw">impl</span> <span class="ident">SystemTimeError</span> {
+    <span class="doccomment">/// 返回正时长，它表示第二个系统时间与第一个系统时间相距多远。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 每当第二个系统时间表示的时间晚于调用方法的 `self` 的时间点时，就会从 [`SystemTime::duration_since`] 和 [`SystemTime::elapsed`] 方法返回 `SystemTimeError`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// use std::thread::sleep;</span>
+    <span class="doccomment">/// use std::time::{Duration, SystemTime};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// sleep(Duration::from_secs(1));</span>
+    <span class="doccomment">/// let new_sys_time = SystemTime::now();</span>
+    <span class="doccomment">/// match sys_time.duration_since(new_sys_time) {</span>
+    <span class="doccomment">///     Ok(_) =&gt; {}</span>
+    <span class="doccomment">///     Err(e) =&gt; println!(&quot;SystemTimeError difference: {:?}&quot;, e.duration()),</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duration</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Duration</span> {
+        <span class="self">self</span>.<span class="number">0</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Error</span> <span class="kw">for</span> <span class="ident">SystemTimeError</span> {
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">description</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
+        <span class="string">&quot;other time was not earlier than self&quot;</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;time2&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.8.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">SystemTimeError</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;second time provided was later than self&quot;</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">FromInner</span><span class="op">&lt;</span><span class="ident">time::SystemTime</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
+    <span class="kw">fn</span> <span class="ident">from_inner</span>(<span class="ident">time</span>: <span class="ident">time::SystemTime</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SystemTime</span> {
+        <span class="ident">SystemTime</span>(<span class="ident">time</span>)
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script><script src="../../source-script1.55.0.js"></script><script src="../../source-files1.55.0.js"></script></body></html>

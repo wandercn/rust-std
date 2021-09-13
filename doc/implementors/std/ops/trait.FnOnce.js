@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["std"] = [{"text":"impl&lt;R, F:&nbsp;<a class=\"trait\" href=\"std/ops/trait.FnOnce.html\" title=\"trait std::ops::FnOnce\">FnOnce</a>() -&gt; R&gt; <a class=\"trait\" href=\"std/ops/trait.FnOnce.html\" title=\"trait std::ops::FnOnce\">FnOnce</a>() for <a class=\"struct\" href=\"std/panic/struct.AssertUnwindSafe.html\" title=\"struct std::panic::AssertUnwindSafe\">AssertUnwindSafe</a>&lt;F&gt;","synthetic":false,"types":["std::panic::AssertUnwindSafe"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

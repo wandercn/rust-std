@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="在相同类型的两个可变位置交换值，而无需取消初始化任何一个。"><meta name="keywords" content="rust, rustlang, rust-lang, swap"><title>swap in core::ptr - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">core</a>::<wbr><a href="index.html">ptr</a></h2><div id="sidebar-vars" data-name="swap" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">core</a>::<wbr><a href="index.html">ptr</a>::<wbr><a class="fn" href="#">swap</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/ptr/mod.rs.html#365-380" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub unsafe fn swap&lt;T&gt;(x: *mut T, y: *mut T)</pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>在相同类型的两个可变位置交换值，而无需取消初始化任何一个。</p>
+<p>但是对于以下两个例外，此函数在语义上等效于 <a href="../mem/fn.swap.html" title="mem::swap"><code>mem::swap</code></a>:</p>
+<ul>
+<li>
+<p>它对裸指针而不是引用进行操作。
+如果引用可用，则应首选 <a href="../mem/fn.swap.html" title="mem::swap"><code>mem::swap</code></a>。</p>
+</li>
+<li>
+<p>两个指向的值可能会重叠。
+如果值确实重叠，则将使用 <code>x</code> 的内存重叠区域。
+在下面的第二个示例中对此进行了演示。</p>
+</li>
+</ul>
+<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<p>如果违反以下任一条件，则行为是未定义的:</p>
+<ul>
+<li>
+<p>对于读取和写入，<code>x</code> 和 <code>y</code> 都必须为 <a href="index.html#safety">有效</a> 的。</p>
+</li>
+<li>
+<p><code>x</code> 和 <code>y</code> 必须正确对齐。</p>
+</li>
+</ul>
+<p>请注意，即使 <code>T</code> 的大小为 <code>0</code>，指针也必须非空且正确对齐。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>交换两个不重叠的区域:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">array</span> <span class="op">=</span> [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+
+<span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">array</span>[<span class="number">0</span>..].<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">u32</span>; <span class="number">2</span>]; <span class="comment">// 这是 `array[0..2]`</span>
+<span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="ident">array</span>[<span class="number">2</span>..].<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">u32</span>; <span class="number">2</span>]; <span class="comment">// 这是 `array[2..4]`</span>
+
+<span class="kw">unsafe</span> {
+    <span class="ident">ptr::swap</span>(<span class="ident">x</span>, <span class="ident">y</span>);
+    <span class="macro">assert_eq!</span>([<span class="number">2</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="number">1</span>], <span class="ident">array</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aptr%3B%0A%0Alet%20mut%20array%20%3D%20%5B0%2C%201%2C%202%2C%203%5D%3B%0A%0Alet%20x%20%3D%20array%5B0..%5D.as_mut_ptr()%20as%20*mut%20%5Bu32%3B%202%5D%3B%20%2F%2F%20%E8%BF%99%E6%98%AF%20%60array%5B0..2%5D%60%0Alet%20y%20%3D%20array%5B2..%5D.as_mut_ptr()%20as%20*mut%20%5Bu32%3B%202%5D%3B%20%2F%2F%20%E8%BF%99%E6%98%AF%20%60array%5B2..4%5D%60%0A%0Aunsafe%20%7B%0A%20%20%20%20ptr%3A%3Aswap(x%2C%20y)%3B%0A%20%20%20%20assert_eq!(%5B2%2C%203%2C%200%2C%201%5D%2C%20array)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>交换两个重叠的区域:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">array</span>: [<span class="ident">i32</span>; <span class="number">4</span>] <span class="op">=</span> [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+
+<span class="kw">let</span> <span class="ident">array_ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">i32</span> <span class="op">=</span> <span class="ident">array</span>.<span class="ident">as_mut_ptr</span>();
+
+<span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">array_ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">i32</span>; <span class="number">3</span>]; <span class="comment">// 这是 `array[0..3]`</span>
+<span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">array_ptr</span>.<span class="ident">add</span>(<span class="number">1</span>) } <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">i32</span>; <span class="number">3</span>]; <span class="comment">// 这是 `array[1..4]`</span>
+
+<span class="kw">unsafe</span> {
+    <span class="ident">ptr::swap</span>(<span class="ident">x</span>, <span class="ident">y</span>);
+    <span class="comment">// 切片的索引 `1..3` 在 `x` 和 `y` 之间重叠。</span>
+    <span class="comment">// 合理的结果将是 `[2, 3]`，因此索引 `0..3` 为 `[1, 2, 3]` (与 `swap` 匹配的 `y`) ; 或将它们设为 `[0, 1]`，以使索引 `1..4` 为 `[0, 1, 2]` (与 `swap` 之前的 `x` 匹配)。</span>
+    <span class="comment">// 定义此实现是为了做出后一种选择。</span>
+    <span class="macro">assert_eq!</span>([<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>], <span class="ident">array</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aptr%3B%0A%0Alet%20mut%20array%3A%20%5Bi32%3B%204%5D%20%3D%20%5B0%2C%201%2C%202%2C%203%5D%3B%0A%0Alet%20array_ptr%3A%20*mut%20i32%20%3D%20array.as_mut_ptr()%3B%0A%0Alet%20x%20%3D%20array_ptr%20as%20*mut%20%5Bi32%3B%203%5D%3B%20%2F%2F%20%E8%BF%99%E6%98%AF%20%60array%5B0..3%5D%60%0Alet%20y%20%3D%20unsafe%20%7B%20array_ptr.add(1)%20%7D%20as%20*mut%20%5Bi32%3B%203%5D%3B%20%2F%2F%20%E8%BF%99%E6%98%AF%20%60array%5B1..4%5D%60%0A%0Aunsafe%20%7B%0A%20%20%20%20ptr%3A%3Aswap(x%2C%20y)%3B%0A%20%20%20%20%2F%2F%20%E5%88%87%E7%89%87%E7%9A%84%E7%B4%A2%E5%BC%95%20%601..3%60%20%E5%9C%A8%20%60x%60%20%E5%92%8C%20%60y%60%20%E4%B9%8B%E9%97%B4%E9%87%8D%E5%8F%A0%E3%80%82%0A%20%20%20%20%2F%2F%20%E5%90%88%E7%90%86%E7%9A%84%E7%BB%93%E6%9E%9C%E5%B0%86%E6%98%AF%20%60%5B2%2C%203%5D%60%EF%BC%8C%E5%9B%A0%E6%AD%A4%E7%B4%A2%E5%BC%95%20%600..3%60%20%E4%B8%BA%20%60%5B1%2C%202%2C%203%5D%60%20(%E4%B8%8E%20%60swap%60%20%E5%8C%B9%E9%85%8D%E7%9A%84%20%60y%60)%20%3B%20%E6%88%96%E5%B0%86%E5%AE%83%E4%BB%AC%E8%AE%BE%E4%B8%BA%20%60%5B0%2C%201%5D%60%EF%BC%8C%E4%BB%A5%E4%BD%BF%E7%B4%A2%E5%BC%95%20%601..4%60%20%E4%B8%BA%20%60%5B0%2C%201%2C%202%5D%60%20(%E4%B8%8E%20%60swap%60%20%E4%B9%8B%E5%89%8D%E7%9A%84%20%60x%60%20%E5%8C%B9%E9%85%8D)%E3%80%82%0A%20%20%20%20%2F%2F%20%E5%AE%9A%E4%B9%89%E6%AD%A4%E5%AE%9E%E7%8E%B0%E6%98%AF%E4%B8%BA%E4%BA%86%E5%81%9A%E5%87%BA%E5%90%8E%E4%B8%80%E7%A7%8D%E9%80%89%E6%8B%A9%E3%80%82%0A%20%20%20%20assert_eq!(%5B1%2C%200%2C%201%2C%202%5D%2C%20array)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

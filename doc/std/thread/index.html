@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="原生线程。"><meta name="keywords" content="rust, rustlang, rust-lang, thread"><title>std::thread - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module thread</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><div id="sidebar-vars" data-name="thread" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">std</a>::<wbr><a class="mod" href="#">thread</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/std/thread/mod.rs.html#1-1457" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>原生线程。</p>
+<h2 id="线程模型" class="section-header"><a href="#线程模型">线程模型</a></h2>
+<p>一个正在执行的 Rust 程序由一组原生操作系统线程组成​​，每个线程都有自己的栈和本地状态。线程可以被命名，并为底层同步提供一些内置支持。</p>
+<p>线程之间的通信可以通过 <a href="../sync/mpsc/index.html">channels</a>、Rust 的消息传递类型、以及 <a href="../../std/sync/index.html">其他形式的线程同步</a> 和共享内存数据结构来完成。
+特别是，保证线程安全的类型很容易在使用原子引用计数容器的线程之间共享， <a href="../sync/struct.Arc.html" title="Arc"><code>Arc</code></a>.</p>
+<p>Rust 中的致命逻辑错误导致 <em>线程 panic</em>，在此期间，线程将展开栈，运行析构函数并释放所拥有的资源。
+尽管不是 ‘try/catch’ 机制，但仍可以使用 <a href="../../std/panic/fn.catch_unwind.html"><code>catch_unwind</code></a> 捕获 Rust 中的 panics (除非使用 <code>panic=abort</code> 进行编译) 并从中恢复，或者使用 <a href="../../std/panic/fn.resume_unwind.html"><code>resume_unwind</code></a> 恢复。</p>
+<p>如果未捕获到 panic，则线程将退出，但是可以选择使用 <a href="struct.JoinHandle.html#method.join"><code>join</code></a> 从其他线程中检测到 panic。
+如果主线程 panic 而没有捕获 panic，应用程序将以非零退出码退出。</p>
+<p>当 Rust 程序的主线程终止时，整个程序将关闭，即使其他线程仍在运行也不例外。但是，该模块为自动等待子线程的终止 (即 join) 提供了便利的功能。</p>
+<h2 id="生成一个线程" class="section-header"><a href="#生成一个线程">生成一个线程</a></h2>
+<p>可以使用 <a href="fn.spawn.html" title="spawn"><code>thread::spawn</code></a> 函数来生成一个新线程:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::thread</span>;
+
+<span class="ident">thread::spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
+    <span class="comment">// 这里一些工作</span>
+});</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Athread%3B%0A%0Athread%3A%3Aspawn(move%20%7C%7C%20%7B%0A%20%20%20%20%2F%2F%20%E8%BF%99%E9%87%8C%E4%B8%80%E4%BA%9B%E5%B7%A5%E4%BD%9C%0A%7D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>在这个例子中，衍生的线程是从当前线程分离出来的。这意味着它可以比它的父线程 (产生它的线程) 活得长，除非这个父线程是主线程。</p>
+<p>父线程也可以等待子线程的完成。调用 <a href="fn.spawn.html" title="spawn"><code>spawn</code></a> 会产生一个 <a href="struct.JoinHandle.html" title="JoinHandle"><code>JoinHandle</code></a>，它提供了一个用于等待的 <code>join</code> 方法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::thread</span>;
+
+<span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">thread::spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
+    <span class="comment">// 这里一些工作</span>
+});
+<span class="comment">// 这里一些工作</span>
+<span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">child</span>.<span class="ident">join</span>();</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Athread%3B%0A%0Alet%20child%20%3D%20thread%3A%3Aspawn(move%20%7C%7C%20%7B%0A%20%20%20%20%2F%2F%20%E8%BF%99%E9%87%8C%E4%B8%80%E4%BA%9B%E5%B7%A5%E4%BD%9C%0A%7D)%3B%0A%2F%2F%20%E8%BF%99%E9%87%8C%E4%B8%80%E4%BA%9B%E5%B7%A5%E4%BD%9C%0Alet%20res%20%3D%20child.join()%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="struct.JoinHandle.html#method.join"><code>join</code></a> 方法返回一个 <a href="type.Result.html"><code>thread::Result</code></a>，其中包含子线程产生的最终值 <a href="../result/enum.Result.html#variant.Ok"><code>Ok</code></a>，或者如果子进程 panic，则返回给调用 <a href="../macro.panic.html" title="panic!"><code>panic!</code></a> 的值的 <a href="../result/enum.Result.html#variant.Err"><code>Err</code></a>。</p>
+<h2 id="配置线程" class="section-header"><a href="#配置线程">配置线程</a></h2>
+<p>一个新线程可以在通过 <a href="struct.Builder.html" title="Builder"><code>Builder</code></a> 类型生成之前进行配置，它目前允许您设置子线程的名称和堆栈大小:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::thread</span>;
+
+<span class="ident">thread::Builder::new</span>().<span class="ident">name</span>(<span class="string">&quot;child1&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;Hello, world!&quot;</span>);
+});</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23!%5Ballow(unused_must_use)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Athread%3B%0A%0Athread%3A%3ABuilder%3A%3Anew().name(%22child1%22.to_string()).spawn(move%20%7C%7C%20%7B%0A%20%20%20%20println!(%22Hello%2C%20world!%22)%3B%0A%7D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<h2 id="thread-的类型" class="section-header"><a href="#thread-的类型"><code>Thread</code> 的类型</a></h2>
+<p>线程是通过 <a href="struct.Thread.html" title="Thread"><code>Thread</code></a> 类型来表示的，您可以通过以下两种方式之一获得该类型:</p>
+<ul>
+<li>通过生成一个新线程，例如使用 <a href="fn.spawn.html" title="spawn"><code>thread::spawn</code></a> 函数，并在 <a href="struct.JoinHandle.html" title="JoinHandle"><code>JoinHandle</code></a> 上调用 <a href="struct.JoinHandle.html#method.thread" title="JoinHandle::thread"><code>thread</code></a>。</li>
+<li>通过使用 <a href="fn.current.html"><code>thread::current</code></a> 函数来请求当前线程。</li>
+</ul>
+<p><a href="fn.current.html"><code>thread::current</code></a> 函数甚至可用于不是由该模块的 API 生成的线程。</p>
+<h2 id="线程本地存储" class="section-header"><a href="#线程本地存储">线程本地存储</a></h2>
+<p>该模块还为 Rust 程序提供了线程本地存储的实现。线程本地存储是一种将数据存储到全局变量的方法，程序中的每个线程都有自己的副本。
+线程不共享此数据，因此不需要同步访问。</p>
+<p>线程本地键拥有它所包含的值，并在线程退出时销毁该值。它是使用 <a href="../macro.thread_local.html" title="thread_local!"><code>thread_local!</code></a> 宏创建的，可以包含 <code>'static</code> 的任何值 (没有借用指针)。
+它提供了一个访问器函数 <a href="struct.LocalKey.html#method.with"><code>with</code></a>，该访问器函数产生对指定闭包的值的共享引用。线程本地键只允许共享访问值，因为如果允许可变借用，就无法保证惟一性。
+大多数值都希望通过 <a href="../cell/struct.Cell.html"><code>Cell</code></a> 或 <a href="../cell/struct.RefCell.html"><code>RefCell</code></a> 类型使用某种形式的 <strong>内部可变性</strong>。</p>
+<h2 id="命名线程" class="section-header"><a href="#命名线程">命名线程</a></h2>
+<p>出于识别目的，线程可以有关联的名称。默认情况下，生成的线程是未命名的。要为线程指定名称，请使用 <a href="struct.Builder.html" title="Builder"><code>Builder</code></a> 构建该线程，然后将所需的线程名称传递给 <a href="struct.Builder.html#method.name" title="Builder::name"><code>Builder::name</code></a>。
+要从线程内检索线程名，请使用 <a href="struct.Thread.html#method.name" title="Thread::name"><code>Thread::name</code></a>。
+下面是使用线程名的几个例子:</p>
+<ul>
+<li>如果在命名线程中出现 panic，则线程名将显示在 panic 消息中。</li>
+<li>线程名在适用的情况下提供给操作系统 (例如，在类 Unix 平台中为 <code>pthread_setname_np</code>)。</li>
+</ul>
+<h2 id="栈大小" class="section-header"><a href="#栈大小">栈大小</a></h2>
+<p>衍生线程的默认栈大小为 2 MiB，尽管这个特定的堆栈大小会在将来发生改变。有两种方法可以手动指定衍生线程的栈大小:</p>
+<ul>
+<li>使用 <a href="struct.Builder.html" title="Builder"><code>Builder</code></a> 构建线程，并将所需的栈大小传递给 <a href="struct.Builder.html#method.stack_size" title="Builder::stack_size"><code>Builder::stack_size</code></a>。</li>
+<li>将 <code>RUST_MIN_STACK</code> 环境变量设置为代表所需栈大小 (以字节为单位) 的整数。请注意，设置 <a href="struct.Builder.html#method.stack_size" title="Builder::stack_size"><code>Builder::stack_size</code></a> 将覆盖此设置。</li>
+</ul>
+<p>注意，主线程的栈大小不是由 Rust 决定的。</p>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.AccessError.html" title="std::thread::AccessError struct">AccessError</a></td><td class="docblock-short"><p><a href="struct.LocalKey.html#method.try_with"><code>LocalKey::try_with</code></a> 返回的错误。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Builder.html" title="std::thread::Builder struct">Builder</a></td><td class="docblock-short"><p>线程工厂，可用于配置新线程的属性。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.JoinHandle.html" title="std::thread::JoinHandle struct">JoinHandle</a></td><td class="docblock-short"><p>拥有加入线程的权限 (在线程终止时阻止)。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.LocalKey.html" title="std::thread::LocalKey struct">LocalKey</a></td><td class="docblock-short"><p>拥有其内容的线程本地存储密钥。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Thread.html" title="std::thread::Thread struct">Thread</a></td><td class="docblock-short"><p>线程的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.ThreadId.html" title="std::thread::ThreadId struct">ThreadId</a></td><td class="docblock-short"><p>正在运行的线程的唯一标识符。</p>
+</td></tr></table><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<table><tr class="unstable module-item"><td><a class="fn" href="fn.available_concurrency.html" title="std::thread::available_concurrency fn">available_concurrency</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>返回程序可用的硬件线程数。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.current.html" title="std::thread::current fn">current</a></td><td class="docblock-short"><p>获取调用它的线程的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.panicking.html" title="std::thread::panicking fn">panicking</a></td><td class="docblock-short"><p>确定当前线程是否由于 panic 而处于展开状态。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.park.html" title="std::thread::park fn">park</a></td><td class="docblock-short"><p>阻塞，除非或直到当前线程的 token 可用为止。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.park_timeout.html" title="std::thread::park_timeout fn">park_timeout</a></td><td class="docblock-short"><p>除非直到当前线程的 token 可用或达到指定的持续时间 (否则可能会虚假唤醒)，否则将阻塞。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="fn" href="fn.park_timeout_ms.html" title="std::thread::park_timeout_ms fn">park_timeout_ms</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecated</span><p>使用 <a href="fn.park_timeout.html" title="park_timeout"><code>park_timeout</code></a>。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.sleep.html" title="std::thread::sleep fn">sleep</a></td><td class="docblock-short"><p>使当前线程休眠至少指定的时间。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="fn" href="fn.sleep_ms.html" title="std::thread::sleep_ms fn">sleep_ms</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecated</span><p>使当前线程休眠至少指定的时间。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.spawn.html" title="std::thread::spawn fn">spawn</a></td><td class="docblock-short"><p>产生一个新线程，为其返回 <a href="struct.JoinHandle.html" title="JoinHandle"><code>JoinHandle</code></a>。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.yield_now.html" title="std::thread::yield_now fn">yield_now</a></td><td class="docblock-short"><p>合作地将一个时间片交给操作系统调度程序。</p>
+</td></tr></table><h2 id="types" class="section-header"><a href="#types">Type Definitions</a></h2>
+<table><tr class="module-item"><td><a class="type" href="type.Result.html" title="std::thread::Result type">Result</a></td><td class="docblock-short"><p>线程专用的 <a href="../result/enum.Result.html"><code>Result</code></a> 类型。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

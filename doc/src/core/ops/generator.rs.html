@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\ops\generator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>generator.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::marker::Unpin</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::pin::Pin</span>;
+
+<span class="doccomment">/// 恢复生成器的结果。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 该枚举从 `Generator::resume` 方法返回，并指示生成器的可能返回值。</span>
+<span class="doccomment">/// 当前，这对应于悬挂点 (`Yielded`) 或终止点 (`Complete`)。</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Eq</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;generator_state&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;generator_trait&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;43122&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">GeneratorState</span><span class="op">&lt;</span><span class="ident">Y</span>, <span class="ident">R</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 生成器挂起了一个值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此状态表明生成器已被挂起，并且通常对应于 `yield` 语句。</span>
+    <span class="doccomment">/// 该成员中提供的值对应于传递给 `yield` 的表达式，并允许生成器在每次产生时提供一个值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="ident">Yielded</span>(<span class="ident">Y</span>),
+
+    <span class="doccomment">/// 生成器完成并返回一个值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此状态表明生成器已使用提供的值完成了执行。</span>
+    <span class="doccomment">/// 生成器返回 `Complete` 后，再次调用 `resume` 将被视为程序员错误。</span>
+    <span class="doccomment">///</span>
+    <span class="ident">Complete</span>(<span class="ident">R</span>),
+}
+
+<span class="doccomment">/// 由内置生成器类型实现的 trait。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 生成器 (通常也称为协程) 是 Rust 中的一种实验语言功能。</span>
+<span class="doccomment">/// [RFC 2033] 中添加的生成器目前主要用于为 async/await 语法提供构建块，但可能会扩展为还为迭代器和其他原语提供符合人体工程学的定义。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 生成器的语法和语义不稳定，将需要进一步的 RFC 来稳定。但是，此时的语法类似于闭包:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// #![feature(generators, generator_trait)]</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// use std::ops::{Generator, GeneratorState};</span>
+<span class="doccomment">/// use std::pin::Pin;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// fn main() {</span>
+<span class="doccomment">///     let mut generator = || {</span>
+<span class="doccomment">///         yield 1;</span>
+<span class="doccomment">///         return &quot;foo&quot;</span>
+<span class="doccomment">///     };</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     match Pin::new(&amp;mut generator).resume(()) {</span>
+<span class="doccomment">///         GeneratorState::Yielded(1) =&gt; {}</span>
+<span class="doccomment">///         _ =&gt; panic!(&quot;unexpected return from resume&quot;),</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">///     match Pin::new(&amp;mut generator).resume(()) {</span>
+<span class="doccomment">///         GeneratorState::Complete(&quot;foo&quot;) =&gt; {}</span>
+<span class="doccomment">///         _ =&gt; panic!(&quot;unexpected return from resume&quot;),</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在不稳定的书中可以找到有关生成器的更多文档。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [RFC 2033]: https://github.com/rust-lang/rfcs/pull/2033</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;generator&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;generator_trait&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;43122&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">fundamental</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Generator</span><span class="op">&lt;</span><span class="ident">R</span> <span class="op">=</span> ()<span class="op">&gt;</span> {
+    <span class="doccomment">/// 此生成器产生的值的类型。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此关联类型对应于 `yield` 表达式以及每次生成器产生时都允许返回的值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 例如，作为一个迭代器的迭代器可能将这种类型作为 `T` 进行迭代。</span>
+    <span class="doccomment">///</span>
+    <span class="kw">type</span> <span class="ident">Yield</span>;
+
+    <span class="doccomment">/// 此生成器返回的值的类型。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这对应于使用 `return` 语句从生成器返回的类型，或隐式作为生成器字面量的最后一个表达式返回的类型。</span>
+    <span class="doccomment">/// 例如，futures 将其用作 `Result&lt;T, E&gt;`，因为它代表完整的 future。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="kw">type</span> <span class="ident">Return</span>;
+
+    <span class="doccomment">/// 恢复此生成器的执行。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此函数将恢复生成器的执行，如果尚未生成，则开始执行。</span>
+    <span class="doccomment">/// 该调用将返回到生成器的最后一个暂停点，从最新的 `yield` 恢复执行。</span>
+    <span class="doccomment">/// 生成器将继续执行，直到它屈服或返回为止，此时该函数将返回。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # 返回值</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 从此函数返回的 `GeneratorState` 枚举指示生成器在返回时处于什么状态。</span>
+    <span class="doccomment">/// 如果返回了 `Yielded` 成员，则生成器已达到暂停点，并且已产生一个值。</span>
+    <span class="doccomment">/// 此状态下的生成器可在稍后恢复。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果返回 `Complete`，则生成器将完全完成所提供的值。再次恢复生成器是无效的。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果先前已返回 `Complete` 成员后调用此函数，则它可能为 panic。</span>
+    <span class="doccomment">/// 尽管在 `Complete` 之后恢复时，将语言中的生成器字面量保证为 panic，但对于 `Generator` trait 的所有实现均不能保证。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="kw">fn</span> <span class="ident">resume</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">arg</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">GeneratorState</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Yield</span>, <span class="self">Self</span><span class="ident">::Return</span><span class="op">&gt;</span>;
+}
+
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;generator_trait&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;43122&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Generator</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Generator</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">G</span><span class="op">&gt;</span> {
+    <span class="kw">type</span> <span class="ident">Yield</span> <span class="op">=</span> <span class="ident">G::Yield</span>;
+    <span class="kw">type</span> <span class="ident">Return</span> <span class="op">=</span> <span class="ident">G::Return</span>;
+
+    <span class="kw">fn</span> <span class="ident">resume</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">arg</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">GeneratorState</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Yield</span>, <span class="self">Self</span><span class="ident">::Return</span><span class="op">&gt;</span> {
+        <span class="ident">G::resume</span>((<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">as_mut</span>(), <span class="ident">arg</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;generator_trait&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;43122&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">G</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Generator</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Unpin</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Generator</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">G</span> {
+    <span class="kw">type</span> <span class="ident">Yield</span> <span class="op">=</span> <span class="ident">G::Yield</span>;
+    <span class="kw">type</span> <span class="ident">Return</span> <span class="op">=</span> <span class="ident">G::Return</span>;
+
+    <span class="kw">fn</span> <span class="ident">resume</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">arg</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">GeneratorState</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Yield</span>, <span class="self">Self</span><span class="ident">::Return</span><span class="op">&gt;</span> {
+        <span class="ident">G::resume</span>(<span class="ident">Pin::new</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>), <span class="ident">arg</span>)
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script><script src="../../../source-script1.55.0.js"></script><script src="../../../source-files1.55.0.js"></script></body></html>

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["BacktraceStatus","回溯的当前状态，指示它是否已捕获或由于其他原因而为空。"]],"struct":[["Backtrace","捕获的 OS 线程栈回溯。"],["BacktraceFrame","回溯的单个帧。"]]});

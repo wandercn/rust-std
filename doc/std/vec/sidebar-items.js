@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Drain","`Vec<T>` 的 draining 迭代器。"],["DrainFilter","使用闭包确定是否应删除元素的迭代器。"],["IntoIter","从 vector 移出的迭代器。"],["Splice","`Vec` 的拼接迭代器。"],["Vec","连续的可增长数组类型，写为 `Vec<T>`，发音为 ‘vector’。"]]});

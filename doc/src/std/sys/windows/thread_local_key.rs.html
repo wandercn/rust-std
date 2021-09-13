@@ -1,0 +1,476 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\sys\windows\thread_local_key.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread_local_key.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../std/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::mem::ManuallyDrop</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::atomic::AtomicPtr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::atomic::Ordering::SeqCst</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::c</span>;
+
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Key</span> <span class="op">=</span> <span class="ident">c::DWORD</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Dtor</span> <span class="op">=</span> <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span>(<span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>);
+
+<span class="comment">// 事实证明，与几乎所有内容一样，Windows 与 Unix 提供的功能非常接近，但略有不同! 对于 TLS，Windows 不提供 API 为 TLS 变量提供析构函数。</span>
+<span class="comment">//</span>
+<span class="comment">// 这最终对于实现非常关键，因此我们需要一种解决方法。</span>
+<span class="comment">//</span>
+<span class="comment">// 这里的解决方案最终有点晦涩难懂，但是请不要担心，互联网已经通知我 [1][2] 这个解决方案不是唯一的 (我也无法想到它! )。</span>
+<span class="comment">// 关键思想是在某个位置插入一些 hook 以便在线程终止时运行任意代码。</span>
+<span class="comment">// 有了这个，我们将能够运行任何我们喜欢的东西，包括所有 TLS 析构函数!</span>
+<span class="comment">//</span>
+<span class="comment">// 为了实现这一壮举，我们执行了许多线程，所有线程都包含在此模块中:</span>
+<span class="comment">//</span>
+<span class="comment">// * 所有 TLS 析构函数都由 *us* 而不是 windows 运行时跟踪。这意味着我们对每个已知的 TLS 密钥都有一个析构函数的列表。</span>
+<span class="comment">// * 当线程退出时，我们遍历整个列表并为所有非空键运行 dtor。在这方面，这试图匹配 Unix 语义。</span>
+<span class="comment">//</span>
+<span class="comment">// 最终，这将产生使用列表的开销，到处都有一些锁，并且通常只会增加一些代码膨胀。</span>
+<span class="comment">// 我们试图通过忘记没有析构函数的键来优化运行时，但这只能使我们走得更远。</span>
+<span class="comment">//</span>
+<span class="comment">// 有关更多细节和细节，请参见下面的代码部分!</span>
+<span class="comment">//</span>
+<span class="comment">// [1]: https://www.codeproject.com/Articles/8113/Thread-Local-Storage-The-C-Way</span>
+<span class="comment">// [2]: https://github.com/ChromiumWebApps/chromium/blob/master/base</span>
+<span class="comment">//                        /threading/thread_local_storage_win.cc#L42</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="comment">// -------------------------------------------------------------------------</span>
+<span class="comment">// 原生绑定</span>
+<span class="comment">//</span>
+<span class="comment">// 这部分只是 Windows 提供的原生函数的原始绑定。还有一些额外的调用来处理析构函数。</span>
+<span class="comment">//</span>
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">create</span>(<span class="ident">dtor</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Dtor</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Key</span> {
+    <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">c::TlsAlloc</span>();
+    <span class="macro">assert!</span>(<span class="ident">key</span> <span class="op">!</span><span class="op">=</span> <span class="ident">c::TLS_OUT_OF_INDEXES</span>);
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">f</span>) <span class="op">=</span> <span class="ident">dtor</span> {
+        <span class="ident">register_dtor</span>(<span class="ident">key</span>, <span class="ident">f</span>);
+    }
+    <span class="ident">key</span>
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">set</span>(<span class="ident">key</span>: <span class="ident">Key</span>, <span class="ident">value</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>) {
+    <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">c::TlsSetValue</span>(<span class="ident">key</span>, <span class="ident">value</span> <span class="kw">as</span> <span class="ident">c::LPVOID</span>);
+    <span class="macro">debug_assert!</span>(<span class="ident">r</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>);
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="ident">key</span>: <span class="ident">Key</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+    <span class="ident">c::TlsGetValue</span>(<span class="ident">key</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">destroy</span>(<span class="ident">_key</span>: <span class="ident">Key</span>) {
+    <span class="macro">rtabort!</span>(<span class="string">&quot;can&#39;t destroy tls keys on windows&quot;</span>)
+}
+
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">requires_synchronized_create</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="bool-val">true</span>
+}
+
+<span class="comment">// -------------------------------------------------------------------------</span>
+<span class="comment">// Dtor 注册</span>
+<span class="comment">//</span>
+<span class="comment">// Windows 没有对运行析构函数的原生支持，因此我们管理自己的析构函数列表以跟踪如何销毁密钥。</span>
+<span class="comment">// 然后，我们稍后安装一个回调，以便在线程退出时被调用，并运行所有适当的析构函数。</span>
+<span class="comment">//</span>
+<span class="comment">// 当前不支持从该列表中注销。析构函数可以注册，但不能取消注册。这样做有多种简化原因，其中最大的原因是:</span>
+<span class="comment">//</span>
+<span class="comment">// 1. 当前，我们甚至不支持释放 TLS 密钥，因此正常操作不需要释放析构函数。</span>
+<span class="comment">// 2. 我们没有时间知道可以注销析构函数，因为它总是可以被某个远程线程运行。</span>
+<span class="comment">//</span>
+<span class="comment">// 通常，进程具有一组静态已知的 TLS 密钥，该密钥非常小，并且无论如何，我们还是希望为整个进程保持活动状态的内存。</span>
+<span class="comment">//</span>
+<span class="comment">// 也许有一天我们可以将 `Box` 折叠成静态分配，扩展 `StaticKey` 结构体，使其不仅包含用于 TLS 密钥的插槽，而且还包含用于 windows 上的析构函数队列的插槽。</span>
+<span class="comment">// 改天再优化!</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="kw">static</span> <span class="ident">DTORS</span>: <span class="ident">AtomicPtr</span><span class="op">&lt;</span><span class="ident">Node</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">AtomicPtr::new</span>(<span class="ident">ptr::null_mut</span>());
+
+<span class="kw">struct</span> <span class="ident">Node</span> {
+    <span class="ident">dtor</span>: <span class="ident">Dtor</span>,
+    <span class="ident">key</span>: <span class="ident">Key</span>,
+    <span class="ident">next</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Node</span>,
+}
+
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">register_dtor</span>(<span class="ident">key</span>: <span class="ident">Key</span>, <span class="ident">dtor</span>: <span class="ident">Dtor</span>) {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">ManuallyDrop::new</span>(<span class="ident">Box::new</span>(<span class="ident">Node</span> { <span class="ident">key</span>, <span class="ident">dtor</span>, <span class="ident">next</span>: <span class="ident">ptr::null_mut</span>() }));
+
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">head</span> <span class="op">=</span> <span class="ident">DTORS</span>.<span class="ident">load</span>(<span class="ident">SeqCst</span>);
+    <span class="kw">loop</span> {
+        <span class="ident">node</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">head</span>;
+        <span class="kw">match</span> <span class="ident">DTORS</span>.<span class="ident">compare_exchange</span>(<span class="ident">head</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">node</span>, <span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span>, <span class="comment">// 没什么可丢弃的，我们已成功将节点添加到列表中</span>
+            <span class="prelude-val">Err</span>(<span class="ident">cur</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">head</span> <span class="op">=</span> <span class="ident">cur</span>,
+        }
+    }
+}
+
+<span class="comment">// -------------------------------------------------------------------------</span>
+<span class="comment">// Magic (TM) 发生的地方</span>
+<span class="comment">//</span>
+<span class="comment">// 如果您正在查看此代码，并且想知道 &quot;what is this doing?&quot;，您并不孤单! 我将尝试逐步解决此问题:</span>
+<span class="comment">//</span>
+<span class="comment">// # CRT $ XLB 怎么了?</span>
+<span class="comment">//</span>
+<span class="comment">// 对于 TLS 析构函数在 Windows 上运行的任何要求，我们必须能够在线程退出时运行 *something*。为此，我们将一个非常特殊的静态变量放置在一个非常特殊的位置。</span>
+<span class="comment">// 如果以正确的方式对此进行编码，则内核的加载器显然足够好，以便在线程退出时运行我们的某些函数! 内核真好!</span>
+<span class="comment">//</span>
+<span class="comment">// 可以在上面的源 [1] 中找到很多详细信息，但是要点是，这是利用了 Microsoft 的 PE 格式 (可执行格式) 的功能，该功能目前尚未被任何编译器实际使用。</span>
+<span class="comment">// 显然，这将转换为 &quot;.CRT$XLB&quot; 部分中在某些事件上运行的所有回调。</span>
+<span class="comment">//</span>
+<span class="comment">// 因此，毕竟，我们使用编译器的 #[link_section] 功能将回调指针放置到 magic 节中，以便最终被调用。</span>
+<span class="comment">//</span>
+<span class="comment">// # 这个回调是怎么回事?</span>
+<span class="comment">//</span>
+<span class="comment">// 指定的回调从... 接收许多参数。someone!</span>
+<span class="comment">// (内核? 运行时? 我不太确定! ) 有一些事件被调用，但是我们目前仅对线程或进程 &quot;detaches&quot; (exits) 感兴趣。</span>
+<span class="comment">// 进程部分发生在最后一个线程中，而线程部分发生在任何普通线程中。</span>
+<span class="comment">//</span>
+<span class="comment">// # 好的，运行所有这些析构函数是怎么回事?</span>
+<span class="comment">//</span>
+<span class="comment">// 随着时间的推移，这可能需要改进，但是此函数尝试使用 &quot;poor man&#39;s&quot; 析构函数回调系统。</span>
+<span class="comment">// 有了要运行的内容的列表后，我们将遍历所有键，检查它们的值，然后运行析构函数 (如果值原来不是非 null 的话) (事先将它们设置为 null)。</span>
+<span class="comment">// 我们循环执行几次以基本匹配 Unix 语义。</span>
+<span class="comment">// 如果不久之后我们没有达到一个固定的点，那么我们就不可避免地泄漏了最有可能发生的事情。</span>
+<span class="comment">//</span>
+<span class="comment">// # 文章提到了关于 &quot;/INCLUDE&quot; 的怪异东西?</span>
+<span class="comment">//</span>
+<span class="comment">// 当然可以! 具体来说，我们在谈论这个引用:</span>
+<span class="comment">//</span>
+<span class="comment">//      Microsoft 运行时库通过定义 TLS 目录的内存映像并为其赋予特殊名称 `__tls_used` (英特尔 x86 平台) 或 `_tls_used` (其他平台) 来简化此过程。</span>
+<span class="comment">//      链接器查找此内存映像，然后使用那里的数据创建 TLS 目录。</span>
+<span class="comment">//      其他支持 TLS 并与 Microsoft 链接器一起使用的编译器必须使用相同的技术。</span>
+<span class="comment">//</span>
+<span class="comment">// 基本上，这意味着如果我们要支持我们的 TLS destructors/our hook，那么我们需要确保链接器不会省略该符号。否则它将忽略它，并且我们的回调函数也不会连接。</span>
+<span class="comment">//</span>
+<span class="comment">// 我们实际上并没有像本文提到的那样在这里使用 `/INCLUDE` 链接器标志，因为 Rust 编译器不会传播链接器标志，而是使用 shim 函数，该函数从符号地址执行易失性 1 字节加载以确保它坚持。</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="attribute">#[<span class="ident">link_section</span> <span class="op">=</span> <span class="string">&quot;.CRT$XLB&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>, <span class="ident">unused_variables</span>)]</span>
+<span class="attribute">#[<span class="ident">used</span>]</span> <span class="comment">// 我们不希望 LLVM 由于任何原因消除此符号，并且</span>
+<span class="comment">// 当符号到达链接器时，链接器将接管</span>
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">p_thread_callback</span>: <span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;system&quot;</span> <span class="kw">fn</span>(<span class="ident">c::LPVOID</span>, <span class="ident">c::DWORD</span>, <span class="ident">c::LPVOID</span>) <span class="op">=</span>
+    <span class="ident">on_tls_callback</span>;
+
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>, <span class="ident">unused_variables</span>)]</span>
+<span class="kw">unsafe</span> <span class="kw">extern</span> <span class="string">&quot;system&quot;</span> <span class="kw">fn</span> <span class="ident">on_tls_callback</span>(<span class="ident">h</span>: <span class="ident">c::LPVOID</span>, <span class="ident">dwReason</span>: <span class="ident">c::DWORD</span>, <span class="ident">pv</span>: <span class="ident">c::LPVOID</span>) {
+    <span class="kw">if</span> <span class="ident">dwReason</span> <span class="op">=</span><span class="op">=</span> <span class="ident">c::DLL_THREAD_DETACH</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dwReason</span> <span class="op">=</span><span class="op">=</span> <span class="ident">c::DLL_PROCESS_DETACH</span> {
+        <span class="ident">run_dtors</span>();
+    }
+
+    <span class="comment">// 请参见上面的注释，以了解此操作。</span>
+    <span class="comment">// 请注意，仅在 MSVC 上，我们就不需要在 GNU windows 上使用这种技巧。</span>
+    <span class="ident">reference_tls_used</span>();
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;msvc&quot;</span>)]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">reference_tls_used</span>() {
+        <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
+            <span class="kw">static</span> <span class="ident">_tls_used</span>: <span class="ident">u8</span>;
+        }
+        <span class="kw">crate</span><span class="ident">::intrinsics::volatile_load</span>(<span class="kw-2">&amp;</span><span class="ident">_tls_used</span>);
+    }
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;msvc&quot;</span>))]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">reference_tls_used</span>() {}
+}
+
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span> <span class="comment">// 实际在上面</span>
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">run_dtors</span>() {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">any_run</span> <span class="op">=</span> <span class="bool-val">true</span>;
+    <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">5</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">any_run</span> {
+            <span class="kw">break</span>;
+        }
+        <span class="ident">any_run</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur</span> <span class="op">=</span> <span class="ident">DTORS</span>.<span class="ident">load</span>(<span class="ident">SeqCst</span>);
+        <span class="kw">while</span> <span class="op">!</span><span class="ident">cur</span>.<span class="ident">is_null</span>() {
+            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">c::TlsGetValue</span>((<span class="kw-2">*</span><span class="ident">cur</span>).<span class="ident">key</span>);
+
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">ptr</span>.<span class="ident">is_null</span>() {
+                <span class="ident">c::TlsSetValue</span>((<span class="kw-2">*</span><span class="ident">cur</span>).<span class="ident">key</span>, <span class="ident">ptr::null_mut</span>());
+                ((<span class="kw-2">*</span><span class="ident">cur</span>).<span class="ident">dtor</span>)(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>);
+                <span class="ident">any_run</span> <span class="op">=</span> <span class="bool-val">true</span>;
+            }
+
+            <span class="ident">cur</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">cur</span>).<span class="ident">next</span>;
+        }
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="std" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

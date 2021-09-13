@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="可变变量，引用或指针。"><meta name="keywords" content="rust, rustlang, rust-lang, mut"><title>mut - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="mut" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">mut</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#1098" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>可变变量，引用或指针。</p>
+<p><code>mut</code> 可以在几种情况下使用。
+第一个是变量变量，它可以在可以将值绑定到变量名称的任何地方使用。一些例子:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="comment">// 函数的参数列表中的可变变量。</span>
+<span class="kw">fn</span> <span class="ident">foo</span>(<span class="kw-2">mut</span> <span class="ident">x</span>: <span class="ident">u8</span>, <span class="ident">y</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
+    <span class="ident">x</span> <span class="op">+</span><span class="op">=</span> <span class="ident">y</span>;
+    <span class="ident">x</span>
+}
+
+<span class="comment">// 修改可变变量。</span>
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="number">5</span>;
+<span class="ident">a</span> <span class="op">=</span> <span class="number">6</span>;
+
+<span class="macro">assert_eq!</span>(<span class="ident">foo</span>(<span class="number">3</span>, <span class="number">4</span>), <span class="number">7</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">a</span>, <span class="number">6</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%2F%2F%20%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%82%E6%95%B0%E5%88%97%E8%A1%A8%E4%B8%AD%E7%9A%84%E5%8F%AF%E5%8F%98%E5%8F%98%E9%87%8F%E3%80%82%0Afn%20main()%20%7B%0Afn%20foo(mut%20x%3A%20u8%2C%20y%3A%20u8)%20-%3E%20u8%20%7B%0A%20%20%20%20x%20%2B%3D%20y%3B%0A%20%20%20%20x%0A%7D%0A%0A%2F%2F%20%E4%BF%AE%E6%94%B9%E5%8F%AF%E5%8F%98%E5%8F%98%E9%87%8F%E3%80%82%0A%23%5Ballow(unused_assignments)%5D%0Alet%20mut%20a%20%3D%205%3B%0Aa%20%3D%206%3B%0A%0Aassert_eq!(foo(3%2C%204)%2C%207)%3B%0Aassert_eq!(a%2C%206)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>第二个是可变引用。
+它们可以从 <code>mut</code> 变量创建，并且必须唯一: 其他变量不能具有变量引用，也不能具有共享引用。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="comment">// 采取可变引用。</span>
+<span class="kw">fn</span> <span class="ident">push_two</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) {
+    <span class="ident">v</span>.<span class="ident">push</span>(<span class="number">2</span>);
+}
+
+<span class="comment">// 可变引用不能用于非可变变量。</span>
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>];
+<span class="comment">// 通过可变引用。</span>
+<span class="ident">push_two</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span>);
+
+<span class="macro">assert_eq!</span>(<span class="ident">v</span>, <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%2F%2F%20%E9%87%87%E5%8F%96%E5%8F%AF%E5%8F%98%E5%BC%95%E7%94%A8%E3%80%82%0Afn%20main()%20%7B%0Afn%20push_two(v%3A%20%26mut%20Vec%3Cu8%3E)%20%7B%0A%20%20%20%20v.push(2)%3B%0A%7D%0A%0A%2F%2F%20%E5%8F%AF%E5%8F%98%E5%BC%95%E7%94%A8%E4%B8%8D%E8%83%BD%E7%94%A8%E4%BA%8E%E9%9D%9E%E5%8F%AF%E5%8F%98%E5%8F%98%E9%87%8F%E3%80%82%0Alet%20mut%20v%20%3D%20vec!%5B0%2C%201%5D%3B%0A%2F%2F%20%E9%80%9A%E8%BF%87%E5%8F%AF%E5%8F%98%E5%BC%95%E7%94%A8%E3%80%82%0Apush_two(%26mut%20v)%3B%0A%0Aassert_eq!(v%2C%20vec!%5B0%2C%201%2C%202%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>];
+<span class="kw">let</span> <span class="ident">mut_ref_v</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span>;
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
+<span class="kw">let</span> <span class="ident">ref_v</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">v</span>;
+<span class="ident">mut_ref_v</span>.<span class="ident">push</span>(<span class="number">2</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20v%20%3D%20vec!%5B0%2C%201%5D%3B%0Alet%20mut_ref_v%20%3D%20%26mut%20v%3B%0A%23%5Ballow(unused)%5D%0Alet%20ref_v%20%3D%20%26v%3B%0Amut_ref_v.push(2)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>可变裸指针的工作方式与可变引用非常相似，但有可能无法指向有效的 object。
+语法为 <code>*mut Type</code>。</p>
+<p>可以在 <a href="../reference/types/pointer.html#mutable-references-mut">Reference</a> 中找到更多关于资源 0 引用和指针的信息。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

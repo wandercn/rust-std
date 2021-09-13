@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="静态项是在程序的整个持续时间 (`&#39;static` 生命周期) 内有效的值。"><meta name="keywords" content="rust, rustlang, rust-lang, static"><title>static - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="static" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">static</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#1462" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>静态项是在程序的整个持续时间 (<code>'static</code> 生命周期) 内有效的值。</p>
+<p>从表面上看，<code>static</code> 项与 <a href="keyword.const.html"><code>const</code></a> 非常相似: 两者都包含一个值，都需要类型注解，并且都只能使用常量函数和值进行初始化。</p>
+<p>但是，<code>static</code> 与众不同之处在于它们表示内存中的一个位置。
+这意味着您可以引用 <code>static</code> 项，甚至可以对其进行修改，从而使它们本质上是变量。</p>
+<p>静态项不要在程序末尾调用 <a href="mem/fn.drop.html" title="drop"><code>drop</code></a>。</p>
+<p><code>static</code> 项有两种类型: 与 <a href="keyword.mut.html"><code>mut</code></a> 关键字关联声明的 <code>static</code> 项和没有 <a href="keyword.mut.html"><code>mut</code></a> 关键字的 <code>static</code> 项。</p>
+<p>静态项无法移动:</p>
+
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<span class="kw">static</span> <span class="ident">VEC</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+
+<span class="kw">fn</span> <span class="ident">move_vec</span>(<span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+    <span class="ident">v</span>
+}
+
+<span class="comment">// 该行导致错误</span>
+<span class="ident">move_vec</span>(<span class="ident">VEC</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astatic%20VEC%3A%20Vec%3Cu32%3E%20%3D%20vec!%5B%5D%3B%0A%0Afn%20move_vec(v%3A%20Vec%3Cu32%3E)%20-%3E%20Vec%3Cu32%3E%20%7B%0A%20%20%20%20v%0A%7D%0A%0A%2F%2F%20%E8%AF%A5%E8%A1%8C%E5%AF%BC%E8%87%B4%E9%94%99%E8%AF%AF%0Amove_vec(VEC)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<h1 id="简单的-static" class="section-header"><a href="#简单的-static">简单的 <code>static</code></a></h1>
+<p>访问非 <a href="keyword.mut.html"><code>mut</code></a> <code>static</code> 项被认为是安全的，但存在一些限制。
+最值得注意的是，<code>static</code> 值的类型需要实现 <a href="marker/trait.Sync.html" title="Sync"><code>Sync</code></a> trait，排除内部可变性容器 (如 <a href="cell/struct.RefCell.html"><code>RefCell</code></a>)。
+有关更多信息，请参见 <a href="../reference/items/static-items.html">Reference</a>。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">static</span> <span class="ident">FOO</span>: [<span class="ident">i32</span>; <span class="number">5</span>] <span class="op">=</span> [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="kw">let</span> <span class="ident">r1</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">FOO</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>;
+<span class="kw">let</span> <span class="ident">r2</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">FOO</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>;
+<span class="comment">// 对于严格只读的静态，引用将具有相同的地址</span>
+<span class="macro">assert_eq!</span>(<span class="ident">r1</span>, <span class="ident">r2</span>);
+<span class="comment">// 在许多情况下，可以像使用变量一样使用静态项</span>
+<span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">FOO</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astatic%20FOO%3A%20%5Bi32%3B%205%5D%20%3D%20%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0A%0Alet%20r1%20%3D%20%26FOO%20as%20*const%20_%3B%0Alet%20r2%20%3D%20%26FOO%20as%20*const%20_%3B%0A%2F%2F%20%E5%AF%B9%E4%BA%8E%E4%B8%A5%E6%A0%BC%E5%8F%AA%E8%AF%BB%E7%9A%84%E9%9D%99%E6%80%81%EF%BC%8C%E5%BC%95%E7%94%A8%E5%B0%86%E5%85%B7%E6%9C%89%E7%9B%B8%E5%90%8C%E7%9A%84%E5%9C%B0%E5%9D%80%0Aassert_eq!(r1%2C%20r2)%3B%0A%2F%2F%20%E5%9C%A8%E8%AE%B8%E5%A4%9A%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%83%8F%E4%BD%BF%E7%94%A8%E5%8F%98%E9%87%8F%E4%B8%80%E6%A0%B7%E4%BD%BF%E7%94%A8%E9%9D%99%E6%80%81%E9%A1%B9%0Aprintln!(%22%7B%3A%3F%7D%22%2C%20FOO)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<h1 id="可变-static" class="section-header"><a href="#可变-static">可变 <code>static</code></a></h1>
+<p>如果使用 <a href="keyword.mut.html"><code>mut</code></a> 关键字声明了 <code>static</code> 项，则程序允许对其进行修改。
+但是，访问可变的 <code>static</code> 可能以多种方式导致未定义的行为，例如由于多线程上下文中的数据竞争。
+因此，对可变 <code>static</code> 的所有访问都需要一个 <a href="keyword.unsafe.html"><code>unsafe</code></a> 块。</p>
+<p>尽管它们不安全，但是在许多情况下，可变的 static 是必需的:
+它们可用于表示整个程序共享的状态或在 <a href="keyword.extern.html"><code>extern</code></a> 块中绑定到 C 库中的变量。</p>
+<p>在 <a href="keyword.extern.html"><code>extern</code></a> 块中:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">extern</span> <span class="string">&quot;C&quot;</span> {
+    <span class="kw">static</span> <span class="kw-2">mut</span> <span class="ident">ERROR_MESSAGE</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">std::os::raw::c_char</span>;
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23!%5Ballow(dead_code)%5D%0Afn%20main()%20%7B%0Aextern%20%22C%22%20%7B%0A%20%20%20%20static%20mut%20ERROR_MESSAGE%3A%20*mut%20std%3A%3Aos%3A%3Araw%3A%3Ac_char%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>就像简单的静态变量一样，可变静态变量也有一些限制。有关更多信息，请参见 <a href="../reference/items/static-items.html">Reference</a>。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

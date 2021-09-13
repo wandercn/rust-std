@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="引用，共享和可变。"><meta name="keywords" content="rust, rustlang, rust-lang, reference"><title>reference - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc primitive"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Primitive Type reference</h2><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="reference" data-ty="primitive" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Primitive Type <a class="primitive" href="#">reference</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>引用，共享和可变。</p>
+<p>引用代表某种拥有值的借用。您可以通过在值上使用 <code>&amp;</code> 或 <code>&amp;mut</code> 运算符，或者使用 <code>ref</code> 或 <code>ref mut</code> 模式来获得一个。</p>
+<p>对于熟悉指针的人来说，引用只是假定为已对齐的指针，而不是 null，并且指向包含有效值 <code>T</code> 的内存 - 例如，<code>&amp;bool</code> 只能指向包含整数值 <code>1</code> (<code>true</code>) 或 <code>0</code> (<code>false</code>)，但是创建指向包含值 <code>3</code> 的分配的 <code>&amp;bool</code> 会导致未定义的行为。</p>
+<p>实际上，<code>Option&lt;&amp;T&gt;</code> 与可为空但对齐的指针具有相同的内存表示形式，因此可以跨 FFI 边界传递。</p>
+<p>在大多数情况下，引用可以像原始值一样使用。字段访问，方法调用和索引工作相同 (当然，要保留可变性规则)。另外，比较运算符透明地遵从引用对象的实现，从而允许将引用与拥有的值进行比较。</p>
+<p>引用具有附加的生命周期，代表借用有效的作用域。如果一个生命周期的代表作用域与另一个生命周期一样长或更长，则将其称为 “outlive”。<code>'static</code> 生命周期是最长的生命周期，它代表程序的总生命周期。
+例如，字符串字面量具有 <code>'static</code> 生命周期，因为文本数据嵌入到程序的二进制文件中，而不是嵌入在需要动态管理的分配中。</p>
+<p><code>&amp;mut T</code> 相同的引用类型可以将引用自由地强制为 <code>&amp;T</code>，较长生命周期的引用可以自由地强制为 <code>&amp;T</code>。</p>
+<p>通过地址引用相等，而不是比较所指向的值，是通过 <a href="ptr/fn.eq.html" title="ptr::eq"><code>ptr::eq</code></a> 通过隐式引用指针强制和裸指针相等来实现的，而 <a href="cmp/trait.PartialEq.html" title="PartialEq"><code>PartialEq</code></a> 则是对值进行比较。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+
+<span class="kw">let</span> <span class="ident">five</span> <span class="op">=</span> <span class="number">5</span>;
+<span class="kw">let</span> <span class="ident">other_five</span> <span class="op">=</span> <span class="number">5</span>;
+<span class="kw">let</span> <span class="ident">five_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">five</span>;
+<span class="kw">let</span> <span class="ident">same_five_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">five</span>;
+<span class="kw">let</span> <span class="ident">other_five_ref</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">other_five</span>;
+
+<span class="macro">assert!</span>(<span class="ident">five_ref</span> <span class="op">=</span><span class="op">=</span> <span class="ident">same_five_ref</span>);
+<span class="macro">assert!</span>(<span class="ident">five_ref</span> <span class="op">=</span><span class="op">=</span> <span class="ident">other_five_ref</span>);
+
+<span class="macro">assert!</span>(<span class="ident">ptr::eq</span>(<span class="ident">five_ref</span>, <span class="ident">same_five_ref</span>));
+<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">ptr::eq</span>(<span class="ident">five_ref</span>, <span class="ident">other_five_ref</span>));</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aptr%3B%0A%0Alet%20five%20%3D%205%3B%0Alet%20other_five%20%3D%205%3B%0Alet%20five_ref%20%3D%20%26five%3B%0Alet%20same_five_ref%20%3D%20%26five%3B%0Alet%20other_five_ref%20%3D%20%26other_five%3B%0A%0Aassert!(five_ref%20%3D%3D%20same_five_ref)%3B%0Aassert!(five_ref%20%3D%3D%20other_five_ref)%3B%0A%0Aassert!(ptr%3A%3Aeq(five_ref%2C%20same_five_ref))%3B%0Aassert!(!ptr%3A%3Aeq(five_ref%2C%20other_five_ref))%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>有关如何使用引用的更多信息，请参见 <a href="../book/ch04-02-references-and-borrowing.html">the book’s section on “References and Borrowing”</a>。</p>
+<h1 id="trait-实现" class="section-header"><a href="#trait-实现">Trait 实现</a></h1>
+<p>对于所有 <code>&amp;T</code> 都实现了以下 traits，无论其引用的类型是什么:</p>
+<ul>
+<li><a href="marker/trait.Copy.html" title="Copy"><code>Copy</code></a></li>
+<li><a href="clone/trait.Clone.html" title="Clone"><code>Clone</code></a> (请注意，如果存在，这不会遵循 T 的 <code>Clone</code> 实现! )</li>
+<li><a href="ops/trait.Deref.html"><code>Deref</code></a></li>
+<li><a href="borrow/trait.Borrow.html"><code>Borrow</code></a></li>
+<li><a href="fmt/trait.Pointer.html"><code>Pointer</code></a></li>
+</ul>
+<p><code>&amp;mut T</code> 引用除了 <code>Copy</code> 和 <code>Clone</code> (以防止创建多个同时可变借用) 之外，还获得以下所有内容，以及以下内容，无论其引用的类型是什么:</p>
+<ul>
+<li><a href="ops/trait.DerefMut.html"><code>DerefMut</code></a></li>
+<li><a href="borrow/trait.BorrowMut.html"><code>BorrowMut</code></a></li>
+</ul>
+<p>如果基础 <code>T</code> 也实现了 trait，则在 <code>&amp;T</code> 上实现以下 traits:</p>
+<ul>
+<li><a href="fmt/index.html"><code>std::fmt</code></a> 中的所有 traits (<a href="fmt/trait.Pointer.html"><code>Pointer</code></a> 和 <a href="fmt/trait.Write.html" title="fmt::Write"><code>fmt::Write</code></a> 除外)</li>
+<li><a href="cmp/trait.PartialOrd.html" title="PartialOrd"><code>PartialOrd</code></a></li>
+<li><a href="cmp/trait.Ord.html" title="Ord"><code>Ord</code></a></li>
+<li><a href="cmp/trait.PartialEq.html" title="PartialEq"><code>PartialEq</code></a></li>
+<li><a href="cmp/trait.Eq.html" title="Eq"><code>Eq</code></a></li>
+<li><a href="convert/trait.AsRef.html" title="AsRef"><code>AsRef</code></a></li>
+<li><a href="ops/trait.Fn.html" title="Fn"><code>Fn</code></a> (此外，如果使用 <code>T: Fn</code>，则引用 <code>&amp;T</code> 和 <a href="ops/trait.FnOnce.html" title="FnOnce"><code>FnOnce</code></a>)</li>
+<li><a href="hash/trait.Hash.html"><code>Hash</code></a></li>
+<li><a href="net/trait.ToSocketAddrs.html"><code>ToSocketAddrs</code></a></li>
+</ul>
+<p><code>&amp;mut T</code> 引用如果 <code>T</code> 实现了 trait，则获得除 <code>ToSocketAddrs</code> 之外的所有上述内容:</p>
+<ul>
+<li><a href="convert/trait.AsMut.html" title="AsMut"><code>AsMut</code></a></li>
+<li><a href="ops/trait.FnMut.html" title="FnMut"><code>FnMut</code></a> (此外，如果 <code>T: FnMut</code> 引用 <code>&amp;mut T</code>，则获得 <a href="ops/trait.FnOnce.html" title="FnOnce"><code>FnOnce</code></a>)</li>
+<li><a href="fmt/trait.Write.html" title="fmt::Write"><code>fmt::Write</code></a></li>
+<li><a href="iter/trait.Iterator.html" title="Iterator"><code>Iterator</code></a></li>
+<li><a href="iter/trait.DoubleEndedIterator.html" title="DoubleEndedIterator"><code>DoubleEndedIterator</code></a></li>
+<li><a href="iter/trait.ExactSizeIterator.html" title="ExactSizeIterator"><code>ExactSizeIterator</code></a></li>
+<li><a href="iter/trait.FusedIterator.html"><code>FusedIterator</code></a></li>
+<li><a href="iter/trait.TrustedLen.html"><code>TrustedLen</code></a></li>
+<li><a href="marker/trait.Send.html" title="Send"><code>Send</code></a> (请注意，如果使用 <code>T: Sync</code>，则 <code>&amp;T</code> 引用仅获得 <code>Send</code>)</li>
+<li><a href="io/trait.Write.html" title="io::Write"><code>io::Write</code></a></li>
+<li><a href="io/trait.Read.html"><code>Read</code></a></li>
+<li><a href="io/trait.Seek.html"><code>Seek</code></a></li>
+<li><a href="io/trait.BufRead.html"><code>BufRead</code></a></li>
+</ul>
+<p>请注意，由于采用了调用解引用强制多态方法，只需调用 trait 方法就可以像处理引用一样，也可以使用其拥有的值! 这里描述的实现是针对泛型上下文的，其中最终类型 <code>T</code> 是类型参数或本地未知。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

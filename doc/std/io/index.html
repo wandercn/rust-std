@@ -1,0 +1,231 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="core I/O 功能的 Traits，助手和类型定义。"><meta name="keywords" content="rust, rustlang, rust-lang, io"><title>std::io - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module io</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><div id="sidebar-vars" data-name="io" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">std</a>::<wbr><a class="mod" href="#">io</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/std/io/mod.rs.html#1-2785" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>core I/O 功能的 Traits，助手和类型定义。</p>
+<p><code>std::io</code> 模块包含许多在执行输入和输出时需要的常见操作。
+该模块中最 core 的部分是 <a href="trait.Read.html" title="Read"><code>Read</code></a> 和 <a href="trait.Write.html" title="Write"><code>Write</code></a> traits，它们提供用于读取和写入输入和输出的最通用接口。</p>
+<h1 id="读和写" class="section-header"><a href="#读和写">读和写</a></h1>
+<p>因为它们是 traits，所以 <a href="trait.Read.html" title="Read"><code>Read</code></a> 和 <a href="trait.Write.html" title="Write"><code>Write</code></a> 由许多其他类型实现，您也可以为您的类型实现它们。
+这样，您将在此模块的整个文档中看到几种不同类型的 I/O: <a href="../fs/struct.File.html"><code>File</code></a>，<a href="../net/struct.TcpStream.html"><code>TcpStream</code></a>，有时甚至是 <a href="../vec/struct.Vec.html" title="Vec&lt;T&gt;"><code>Vec&lt;T&gt;</code></a>。
+例如，<a href="trait.Read.html" title="Read"><code>Read</code></a> 添加了 <a href="trait.Read.html#tymethod.read" title="Read::read"><code>read</code></a> 方法，我们可以在 <a href="../fs/struct.File.html"><code>File</code></a> 上使用该方法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">std::fs::File</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="string">&quot;foo.txt&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">10</span>];
+
+    <span class="comment">// 最多读取 10 个字节</span>
+    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">f</span>.<span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">&quot;The bytes: {:?}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">buffer</span>[..<span class="ident">n</span>]);
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0Ause%20std%3A%3Afs%3A%3AFile%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20mut%20f%20%3D%20File%3A%3Aopen(%22foo.txt%22)%3F%3B%0A%20%20%20%20let%20mut%20buffer%20%3D%20%5B0%3B%2010%5D%3B%0A%0A%20%20%20%20%2F%2F%20%E6%9C%80%E5%A4%9A%E8%AF%BB%E5%8F%96%2010%20%E4%B8%AA%E5%AD%97%E8%8A%82%0A%20%20%20%20let%20n%20%3D%20f.read(%26mut%20buffer)%3F%3B%0A%0A%20%20%20%20println!(%22The%20bytes%3A%20%7B%3A%3F%7D%22%2C%20%26buffer%5B..n%5D)%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="trait.Read.html" title="Read"><code>Read</code></a> 和 <a href="trait.Write.html" title="Write"><code>Write</code></a> 非常重要，两个 traits 的实现者都有一个昵称: readers 和 writers。
+因此，有时您会看到 <code>reader</code> 而不是 <code>实现 [</code>Read<code>] trait 的类型</code>。
+容易得多!</p>
+<h2 id="seek-和-bufread" class="section-header"><a href="#seek-和-bufread">Seek 和 BufRead</a></h2>
+<p>除此之外，还提供了两个重要的 traits: <a href="trait.Seek.html" title="Seek"><code>Seek</code></a> 和 <a href="trait.BufRead.html" title="BufRead"><code>BufRead</code></a>。两者都建立在 reader 的顶部，以控制读取的方式。
+<a href="trait.Seek.html" title="Seek"><code>Seek</code></a> 让您控制下一个字节的来源:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">std::io::SeekFrom</span>;
+<span class="kw">use</span> <span class="ident">std::fs::File</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="string">&quot;foo.txt&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">10</span>];
+
+    <span class="comment">// 跳到文件的最后 10 个字节</span>
+    <span class="ident">f</span>.<span class="ident">seek</span>(<span class="ident">SeekFrom::End</span>(<span class="op">-</span><span class="number">10</span>))<span class="question-mark">?</span>;
+
+    <span class="comment">// 最多读取 10 个字节</span>
+    <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">f</span>.<span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">&quot;The bytes: {:?}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">buffer</span>[..<span class="ident">n</span>]);
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0Ause%20std%3A%3Aio%3A%3ASeekFrom%3B%0Ause%20std%3A%3Afs%3A%3AFile%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20mut%20f%20%3D%20File%3A%3Aopen(%22foo.txt%22)%3F%3B%0A%20%20%20%20let%20mut%20buffer%20%3D%20%5B0%3B%2010%5D%3B%0A%0A%20%20%20%20%2F%2F%20%E8%B7%B3%E5%88%B0%E6%96%87%E4%BB%B6%E7%9A%84%E6%9C%80%E5%90%8E%2010%20%E4%B8%AA%E5%AD%97%E8%8A%82%0A%20%20%20%20f.seek(SeekFrom%3A%3AEnd(-10))%3F%3B%0A%0A%20%20%20%20%2F%2F%20%E6%9C%80%E5%A4%9A%E8%AF%BB%E5%8F%96%2010%20%E4%B8%AA%E5%AD%97%E8%8A%82%0A%20%20%20%20let%20n%20%3D%20f.read(%26mut%20buffer)%3F%3B%0A%0A%20%20%20%20println!(%22The%20bytes%3A%20%7B%3A%3F%7D%22%2C%20%26buffer%5B..n%5D)%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="trait.BufRead.html" title="BufRead"><code>BufRead</code></a> 使用内部缓冲区来提供许多其他读取方式，但是为了展示它，我们通常需要讨论缓冲区。继续阅读!</p>
+<h2 id="bufreader-和-bufwriter" class="section-header"><a href="#bufreader-和-bufwriter">BufReader 和 BufWriter</a></h2>
+<p>基于字节的接口笨拙且效率低下，因为我们需要对操作系统进行近乎恒定的调用。
+为了解决这个问题，<code>std::io</code> 带有两个结构体 <a href="struct.BufReader.html" title="BufReader"><code>BufReader</code></a> 和 <a href="struct.BufWriter.html" title="BufWriter"><code>BufWriter</code></a>，它们包装了 readers 和 writers。
+包装器使用缓冲区，从而减少了调用次数，并提供了更好的方法来访问所需的内容。</p>
+<p>例如，<a href="struct.BufReader.html" title="BufReader"><code>BufReader</code></a> 与 <a href="trait.BufRead.html" title="BufRead"><code>BufRead</code></a> trait 一起为任何 reader 添加额外的方法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">std::io::BufReader</span>;
+<span class="kw">use</span> <span class="ident">std::fs::File</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="string">&quot;foo.txt&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">BufReader::new</span>(<span class="ident">f</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buffer</span> <span class="op">=</span> <span class="ident">String::new</span>();
+
+    <span class="comment">// 将一行读入缓冲区</span>
+    <span class="ident">reader</span>.<span class="ident">read_line</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buffer</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">buffer</span>);
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0Ause%20std%3A%3Aio%3A%3ABufReader%3B%0Ause%20std%3A%3Afs%3A%3AFile%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20f%20%3D%20File%3A%3Aopen(%22foo.txt%22)%3F%3B%0A%20%20%20%20let%20mut%20reader%20%3D%20BufReader%3A%3Anew(f)%3B%0A%20%20%20%20let%20mut%20buffer%20%3D%20String%3A%3Anew()%3B%0A%0A%20%20%20%20%2F%2F%20%E5%B0%86%E4%B8%80%E8%A1%8C%E8%AF%BB%E5%85%A5%E7%BC%93%E5%86%B2%E5%8C%BA%0A%20%20%20%20reader.read_line(%26mut%20buffer)%3F%3B%0A%0A%20%20%20%20println!(%22%7B%7D%22%2C%20buffer)%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="struct.BufWriter.html" title="BufWriter"><code>BufWriter</code></a> 没有添加任何新的写作方式; 它只是缓冲每个调用到 <a href="trait.Write.html#tymethod.write" title="Write::write"><code>write</code></a>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">std::io::BufWriter</span>;
+<span class="kw">use</span> <span class="ident">std::fs::File</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File::create</span>(<span class="string">&quot;foo.txt&quot;</span>)<span class="question-mark">?</span>;
+    {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">BufWriter::new</span>(<span class="ident">f</span>);
+
+        <span class="comment">// 向缓冲区写入一个字节</span>
+        <span class="ident">writer</span>.<span class="ident">write</span>(<span class="kw-2">&amp;</span>[<span class="number">42</span>])<span class="question-mark">?</span>;
+
+    } <span class="comment">// writer 离开作用域后，将刷新缓冲区</span>
+
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0Ause%20std%3A%3Aio%3A%3ABufWriter%3B%0Ause%20std%3A%3Afs%3A%3AFile%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20f%20%3D%20File%3A%3Acreate(%22foo.txt%22)%3F%3B%0A%20%20%20%20%7B%0A%20%20%20%20%20%20%20%20let%20mut%20writer%20%3D%20BufWriter%3A%3Anew(f)%3B%0A%0A%20%20%20%20%20%20%20%20%2F%2F%20%E5%90%91%E7%BC%93%E5%86%B2%E5%8C%BA%E5%86%99%E5%85%A5%E4%B8%80%E4%B8%AA%E5%AD%97%E8%8A%82%0A%20%20%20%20%20%20%20%20writer.write(%26%5B42%5D)%3F%3B%0A%0A%20%20%20%20%7D%20%2F%2F%20writer%20%E7%A6%BB%E5%BC%80%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%90%8E%EF%BC%8C%E5%B0%86%E5%88%B7%E6%96%B0%E7%BC%93%E5%86%B2%E5%8C%BA%0A%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<h2 id="标准输入输出" class="section-header"><a href="#标准输入输出">标准输入输出</a></h2>
+<p>输入的一个非常常见的来源是标准输入:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">String::new</span>();
+
+    <span class="ident">io::stdin</span>().<span class="ident">read_line</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">input</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">&quot;You typed: {}&quot;</span>, <span class="ident">input</span>.<span class="ident">trim</span>());
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20mut%20input%20%3D%20String%3A%3Anew()%3B%0A%0A%20%20%20%20io%3A%3Astdin().read_line(%26mut%20input)%3F%3B%0A%0A%20%20%20%20println!(%22You%20typed%3A%20%7B%7D%22%2C%20input.trim())%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<p>请注意，不能在不返回 <a href="../result/enum.Result.html"><code>Result&lt;T, E&gt;</code></a> 的函数中使用 <a href="../../book/appendix-02-operators.html"><code>?</code> operator</a>。
+相反，您可以在返回值上调用 <a href="../result/enum.Result.html#method.unwrap"><code>.unwrap()</code></a> 或 <code>match</code> 来捕获任何可能的错误:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">String::new</span>();
+
+<span class="ident">io::stdin</span>().<span class="ident">read_line</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">input</span>).<span class="ident">unwrap</span>();</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aio%3B%0A%0Alet%20mut%20input%20%3D%20String%3A%3Anew()%3B%0A%0Aio%3A%3Astdin().read_line(%26mut%20input).unwrap()%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>标准输出是一个非常常见的输出源:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="ident">io::stdout</span>().<span class="ident">write</span>(<span class="kw-2">&amp;</span>[<span class="number">42</span>])<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20io%3A%3Astdout().write(%26%5B42%5D)%3F%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<p>当然，直接使用 <a href="fn.stdout.html"><code>io::stdout</code></a> 比使用 <a href="../macro.println.html" title="println!"><code>println!</code></a> 少见。</p>
+<h2 id="迭代器类型" class="section-header"><a href="#迭代器类型">迭代器类型</a></h2>
+<p><code>std::io</code> 提供的大量结构用于在 I/O 上进行迭代的各种方式。例如，<a href="struct.Lines.html" title="Lines"><code>Lines</code></a> 用于拆分多行:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+<span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">std::io::BufReader</span>;
+<span class="kw">use</span> <span class="ident">std::fs::File</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="string">&quot;foo.txt&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">BufReader::new</span>(<span class="ident">f</span>);
+
+    <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="ident">reader</span>.<span class="ident">lines</span>() {
+        <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">line</span><span class="question-mark">?</span>);
+    }
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0Ause%20std%3A%3Aio%3A%3Aprelude%3A%3A*%3B%0Ause%20std%3A%3Aio%3A%3ABufReader%3B%0Ause%20std%3A%3Afs%3A%3AFile%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20f%20%3D%20File%3A%3Aopen(%22foo.txt%22)%3F%3B%0A%20%20%20%20let%20reader%20%3D%20BufReader%3A%3Anew(f)%3B%0A%0A%20%20%20%20for%20line%20in%20reader.lines()%20%7B%0A%20%20%20%20%20%20%20%20println!(%22%7B%7D%22%2C%20line%3F)%3B%0A%20%20%20%20%7D%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<p>有许多 <a href="#functions-1">函数</a> 提供对各种功能的访问。
+例如，我们可以使用以下三个函数将所有内容从标准输入复制到标准输出:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="ident">io::copy</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">io::stdin</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">io::stdout</span>())<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Ause%20std%3A%3Aio%3B%0A%0Afn%20main()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20io%3A%3Acopy(%26mut%20io%3A%3Astdin()%2C%20%26mut%20io%3A%3Astdout())%3F%3B%0A%20%20%20%20Ok(())%0A%7D&amp;edition=2018">Run</a></div>
+<h2 id="ioresult" class="section-header"><a href="#ioresult">io::Result</a></h2>
+<p>最后但并非最不重要的是 <a href="type.Result.html"><code>io::Result</code></a>。
+此类型用作许多 <code>std::io</code> 函数的返回类型，它们可能导致错误，也可以从您自己的函数中返回。
+该模块中的许多示例都使用 <a href="../../book/appendix-02-operators.html"><code>?</code> operator</a>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>;
+
+<span class="kw">fn</span> <span class="ident">read_input</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">String::new</span>();
+
+    <span class="ident">io::stdin</span>().<span class="ident">read_line</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">input</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">&quot;You typed: {}&quot;</span>, <span class="ident">input</span>.<span class="ident">trim</span>());
+
+    <span class="prelude-val">Ok</span>(())
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aio%3B%0A%0Afn%20read_input()%20-%3E%20io%3A%3AResult%3C()%3E%20%7B%0A%20%20%20%20let%20mut%20input%20%3D%20String%3A%3Anew()%3B%0A%0A%20%20%20%20io%3A%3Astdin().read_line(%26mut%20input)%3F%3B%0A%0A%20%20%20%20println!(%22You%20typed%3A%20%7B%7D%22%2C%20input.trim())%3B%0A%0A%20%20%20%20Ok(())%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p><code>read_input()</code> 的返回类型 <a href="type.Result.html"><code>io::Result&lt;()&gt;</code></a> 是函数的一种非常常见的类型，它没有 ‘real’ 返回值，但是希望在发生错误时返回错误。</p>
+<p>在这种情况下，此函数的唯一目的是读取并打印该行，因此我们使用 <code>()</code>。</p>
+<h2 id="平台特定的行为" class="section-header"><a href="#平台特定的行为">平台特定的行为</a></h2>
+<p>记录了整个标准库中的许多 I/O 函数，以指示将它们委派给的各种库或 syscall。
+这样做是为了帮助应用程序了解幕后的情况以及调查任何可能不清楚的语义。
+但是请注意，这只是提供信息，而不是有约束力的契约。
+其中许多函数的实现会随时间而变化，并且可能调用更少或更多的 syscalls/library 函数。</p>
+</div></details><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="prelude/index.html" title="std::io::prelude mod">prelude</a></td><td class="docblock-short"><p>I/O Prelude。</p>
+</td></tr></table><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="unstable module-item"><td><a class="struct" href="struct.Initializer.html" title="std::io::Initializer struct">Initializer</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>一种类型，用于有条件地初始化传递给 <code>Read</code> 方法的缓冲区。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.BufReader.html" title="std::io::BufReader struct">BufReader</a></td><td class="docblock-short"><p><code>BufReader&lt;R&gt;</code> 结构体将缓冲添加到任何 reader。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.BufWriter.html" title="std::io::BufWriter struct">BufWriter</a></td><td class="docblock-short"><p>包装一个 writer 并缓冲其输出。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Bytes.html" title="std::io::Bytes struct">Bytes</a></td><td class="docblock-short"><p>reader 的 <code>u8</code> 值上的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Chain.html" title="std::io::Chain struct">Chain</a></td><td class="docblock-short"><p>将两个 readers 链接在一起的适配器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Cursor.html" title="std::io::Cursor struct">Cursor</a></td><td class="docblock-short"><p><code>Cursor</code> 包装内存中的缓冲区，并为其提供 <a href="trait.Seek.html" title="Seek"><code>Seek</code></a> 实现。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Empty.html" title="std::io::Empty struct">Empty</a></td><td class="docblock-short"><p>始终处于 EOF 的 reader。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Error.html" title="std::io::Error struct">Error</a></td><td class="docblock-short"><p><a href="trait.Read.html"><code>Read</code></a>，<a href="trait.Write.html"><code>Write</code></a>，<a href="trait.Seek.html"><code>Seek</code></a> 和关联的 traits 的 I/O 操作的错误类型。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.IntoInnerError.html" title="std::io::IntoInnerError struct">IntoInnerError</a></td><td class="docblock-short"><p><a href="struct.BufWriter.html#method.into_inner" title="BufWriter::into_inner"><code>BufWriter::into_inner</code></a> 返回的错误，将写出缓冲区时发生的错误与缓冲的 writer object 结合在一起，可用于从条件中恢复。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.IoSlice.html" title="std::io::IoSlice struct">IoSlice</a></td><td class="docblock-short"><p><code>Write::write_vectored</code> 使用的缓冲区类型。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.IoSliceMut.html" title="std::io::IoSliceMut struct">IoSliceMut</a></td><td class="docblock-short"><p><code>Read::read_vectored</code> 使用的缓冲区类型。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.LineWriter.html" title="std::io::LineWriter struct">LineWriter</a></td><td class="docblock-short"><p>包装一个 writer 并缓冲输出到它的内容，每当检测到换行符 (<code>0x0a，</code>‘\n’`) 时刷新一次。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Lines.html" title="std::io::Lines struct">Lines</a></td><td class="docblock-short"><p><code>BufRead</code> 实例的行上的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Repeat.html" title="std::io::Repeat struct">Repeat</a></td><td class="docblock-short"><p>一个 reader，一个又一个的字节，一个又一个的字节，一个又一个的字节。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Sink.html" title="std::io::Sink struct">Sink</a></td><td class="docblock-short"><p>一个 writer，它将数据移入无效空间。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Split.html" title="std::io::Split struct">Split</a></td><td class="docblock-short"><p>对 <code>BufRead</code> 实例的内容进行迭代的迭代器，该实例在特定字节上拆分。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Stderr.html" title="std::io::Stderr struct">Stderr</a></td><td class="docblock-short"><p>进程的标准错误流的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.StderrLock.html" title="std::io::StderrLock struct">StderrLock</a></td><td class="docblock-short"><p><a href="struct.Stderr.html" title="Stderr"><code>Stderr</code></a> 句柄的锁定引用。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Stdin.html" title="std::io::Stdin struct">Stdin</a></td><td class="docblock-short"><p>进程的标准输入流的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.StdinLock.html" title="std::io::StdinLock struct">StdinLock</a></td><td class="docblock-short"><p><a href="struct.Stdin.html" title="Stdin"><code>Stdin</code></a> 句柄的锁定引用。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Stdout.html" title="std::io::Stdout struct">Stdout</a></td><td class="docblock-short"><p>当前进程的标准输出流的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.StdoutLock.html" title="std::io::StdoutLock struct">StdoutLock</a></td><td class="docblock-short"><p><a href="struct.Stdout.html" title="Stdout"><code>Stdout</code></a> 句柄的锁定引用。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Take.html" title="std::io::Take struct">Take</a></td><td class="docblock-short"><p>Reader 适配器，用于限制从基础 reader 读取的字节。</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.ErrorKind.html" title="std::io::ErrorKind enum">ErrorKind</a></td><td class="docblock-short"><p>一个列表，指定 I/O 错误的常规类别。</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.SeekFrom.html" title="std::io::SeekFrom enum">SeekFrom</a></td><td class="docblock-short"><p>列举可能在 I/O object 中进行搜索的方法。</p>
+</td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<table><tr class="module-item"><td><a class="trait" href="trait.BufRead.html" title="std::io::BufRead trait">BufRead</a></td><td class="docblock-short"><p><code>BufRead</code> 是带有内部缓冲区的 <code>Read</code> 类型，它可以执行其他读取方式。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Read.html" title="std::io::Read trait">Read</a></td><td class="docblock-short"><p><code>Read</code> trait 允许从源读取字节。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Seek.html" title="std::io::Seek trait">Seek</a></td><td class="docblock-short"><p><code>Seek</code> trait 提供了一个游标，可以在字节流中移动它。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Write.html" title="std::io::Write trait">Write</a></td><td class="docblock-short"><p>trait 用于面向字节的 sinks 的对象。</p>
+</td></tr></table><h2 id="functions-1" class="section-header"><a href="#functions-1">Functions</a></h2>
+<table><tr class="unstable module-item"><td><a class="fn" href="fn.read_to_string.html" title="std::io::read_to_string fn">read_to_string</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>将 <a href="trait.Read.html" title="Read">reader</a> 的所有字节读入新的 <a href="../string/struct.String.html" title="String"><code>String</code></a>。</p>
+</td></tr><tr class="unstable module-item"><td><a class="fn" href="fn.stderr_locked.html" title="std::io::stderr_locked fn">stderr_locked</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>为当前进程的标准错误创建一个新的锁定句柄。</p>
+</td></tr><tr class="unstable module-item"><td><a class="fn" href="fn.stdin_locked.html" title="std::io::stdin_locked fn">stdin_locked</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>为当前进程的标准输入创建一个新的锁定句柄。</p>
+</td></tr><tr class="unstable module-item"><td><a class="fn" href="fn.stdout_locked.html" title="std::io::stdout_locked fn">stdout_locked</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>为当前进程的标准输出创建一个新的锁定句柄。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.copy.html" title="std::io::copy fn">copy</a></td><td class="docblock-short"><p>将 reader 的全部内容复制到 writer 中。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.empty.html" title="std::io::empty fn">empty</a></td><td class="docblock-short"><p>为空的 reader 创建一个新的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.repeat.html" title="std::io::repeat fn">repeat</a></td><td class="docblock-short"><p>创建 reader 的实例，该实例无限重复一个字节。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.sink.html" title="std::io::sink fn">sink</a></td><td class="docblock-short"><p>创建 writer 的实例，该实例将成功使用所有数据。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.stderr.html" title="std::io::stderr fn">stderr</a></td><td class="docblock-short"><p>为当前进程的标准错误创建一个新的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.stdin.html" title="std::io::stdin fn">stdin</a></td><td class="docblock-short"><p>为当前进程的标准输入创建一个新的句柄。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.stdout.html" title="std::io::stdout fn">stdout</a></td><td class="docblock-short"><p>为当前进程的标准输出创建一个新的句柄。</p>
+</td></tr></table><h2 id="types" class="section-header"><a href="#types">Type Definitions</a></h2>
+<table><tr class="module-item"><td><a class="type" href="type.Result.html" title="std::io::Result type">Result</a></td><td class="docblock-short"><p>I/O 操作的专用 <a href="../result/enum.Result.html"><code>Result</code></a> 类型。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

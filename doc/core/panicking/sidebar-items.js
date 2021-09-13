@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["panic","不使用格式时，libcore 的 `panic!` 宏的基础实现。"],["panic_fmt","使用格式化时 libcore 的 `panic!` 宏的基础实现。"],["panic_str",""]]});

@@ -1,0 +1,486 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\borrow.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>borrow.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+</pre><pre class="rust">
+<span class="doccomment">//! 用于处理借用数据的模块。</span>
+
+<span class="attribute">#![<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+
+<span class="doccomment">/// 借用数据的 trait。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在 Rust 中，通常为不同的用例提供类型的不同表示形式。</span>
+<span class="doccomment">/// 例如，可以通过指针类型 (例如 [`Box&lt;T&gt;`] 或 [`Rc&lt;T&gt;`]) 为特定用途适当地选择值的存储位置和管理。</span>
+<span class="doccomment">/// 除了这些可以与任何类型一起使用的泛型包装之外，某些类型还提供了可选的构面，从而提供了可能昂贵的功能。</span>
+<span class="doccomment">/// 这种类型的一个示例是 [`String`]，它增加了将字符串扩展到基本 [`str`] 的功能。</span>
+<span class="doccomment">/// 这要求保持简单的不可变字符串不需要的其他信息。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 这些类型通过引用该数据的类型来提供对基础数据的访问。据说它们是借来的那种类型的。</span>
+<span class="doccomment">/// 例如，可以将 [`Box&lt;T&gt;`] 作为 `T` 借用，而可以将 [`String`] 作为 `str` 借用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 类型表示可以通过实现 `Borrow&lt;T&gt;` 来借用它们作为某种类型的 `T`，并在 trait 的 [`borrow`] 方法中对 `T` 进行引用。一个类型可以自由借用为几种不同的类型。</span>
+<span class="doccomment">/// 如果希望将类型可变为借用-允许修改基础数据，则可以另外实现 [`BorrowMut&lt;T&gt;`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此外，在为其他 traits 提供实现时，需要考虑由于充当该基础类型的表示而导致它们的行为是否与基础类型的行为相同。</span>
+<span class="doccomment">/// 当泛型代码依赖于这些其他 trait 实现的相同行为时，通常会使用 `Borrow&lt;T&gt;`。</span>
+<span class="doccomment">/// 这些 traits 可能会显示为其他 trait bounds。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 特别是对于借用和拥有的值，`Eq`，`Ord` 和 `Hash` 必须等效: `x.borrow() == y.borrow()` 的结果应与 `x == y` 相同。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 如果泛型代码只需要为可以为相关类型 `T` 提供引用的所有类型工作，则通常最好使用 [`AsRef&lt;T&gt;`]，因为更多类型可以安全地实现它。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`Box&lt;T&gt;`]: ../../std/boxed/struct.Box.html</span>
+<span class="doccomment">/// [`Mutex&lt;T&gt;`]: ../../std/sync/struct.Mutex.html</span>
+<span class="doccomment">/// [`Rc&lt;T&gt;`]: ../../std/rc/struct.Rc.html</span>
+<span class="doccomment">/// [`String`]: ../../std/string/struct.String.html</span>
+<span class="doccomment">/// [`borrow`]: Borrow::borrow</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 作为数据集合，[`HashMap&lt;K, V&gt;`] 同时拥有键和值。如果键的实际数据包装在某种管理类型中，则仍然应该可以使用对键数据的引用来搜索值。</span>
+<span class="doccomment">/// 例如，如果键是一个字符串，则它很可能与哈希 map 一起存储为 [`String`]，而应该可以使用 [`&amp;str`][`str`] 进行搜索。</span>
+<span class="doccomment">/// 因此，`insert` 需要在 `String` 上运行，而 `get` 需要能够使用 `&amp;str`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 略有简化，`HashMap&lt;K, V&gt;` 的相关部分如下所示:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::borrow::Borrow;</span>
+<span class="doccomment">/// use std::hash::Hash;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// pub struct HashMap&lt;K, V&gt; {</span>
+<span class="doccomment">///     # marker: ::std::marker::PhantomData&lt;(K, V)&gt;,</span>
+<span class="doccomment">///     // 字段省略</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl&lt;K, V&gt; HashMap&lt;K, V&gt; {</span>
+<span class="doccomment">///     pub fn insert(&amp;self, key: K, value: V) -&gt; Option&lt;V&gt;</span>
+<span class="doccomment">///     where K: Hash + Eq</span>
+<span class="doccomment">///     {</span>
+<span class="doccomment">///         # unimplemented!()</span>
+<span class="doccomment">///         // ...</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     pub fn get&lt;Q&gt;(&amp;self, k: &amp;Q) -&gt; Option&lt;&amp;V&gt;</span>
+<span class="doccomment">///     where</span>
+<span class="doccomment">///         K: Borrow&lt;Q&gt;,</span>
+<span class="doccomment">///         Q: Hash + Eq + ?Sized</span>
+<span class="doccomment">///     {</span>
+<span class="doccomment">///         # unimplemented!()</span>
+<span class="doccomment">///         // ...</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 整个哈希 map 在键类型 `K` 上是泛型的。由于这些键存储在哈希 map 中，因此该类型必须拥有键的数据。</span>
+<span class="doccomment">/// 插入键值对时，会给 map 这样的 `K`，并且需要找到正确的哈希值存储区，并根据该 `K` 检查键是否已存在。因此，它需要 `K: Hash + Eq`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 但是，在 map 中搜索值时，必须提供 `K` 的引用作为搜索键，这要求始终创建此类拥有的值。</span>
+<span class="doccomment">/// 对于字符串键，这意味着仅在搜索仅 `str` 可用的情况下，才需要创建 `String` 值。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 相反，`get` 方法是基础键数据类型的泛型，在上面的方法签名中称为 `Q`。它通过要求 `K: Borrow&lt;Q&gt;` 来声明 `K` 借用为 `Q`。</span>
+<span class="doccomment">/// 通过额外要求 `Q: Hash + Eq`，它表示要求 `K` 和 `Q` 具有 `Hash` 和 `Eq` traits 的实现，它们会产生相同的结果。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `get` 的实现尤其依赖于 `Hash` 的相同实现，即通过基于 `Q` 值计算出的哈希值插入键，通过在 `Q` 值上调用 `Hash::hash` 来确定键的哈希存储桶。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 结果，如果包装了 `Q` 值的 `K` 产生与 `Q` 不同的哈希，则哈希 map 会中断。例如，假设您有一个包裹字符串但比较 ASCII 字母而忽略大小写的类型:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// pub struct CaseInsensitiveString(String);</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl PartialEq for CaseInsensitiveString {</span>
+<span class="doccomment">///     fn eq(&amp;self, other: &amp;Self) -&gt; bool {</span>
+<span class="doccomment">///         self.0.eq_ignore_ascii_case(&amp;other.0)</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl Eq for CaseInsensitiveString { }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 因为两个相等的值需要产生相同的哈希值，所以 `Hash` 的实现也需要忽略 ASCII 大小写:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// # use std::hash::{Hash, Hasher};</span>
+<span class="doccomment">/// # pub struct CaseInsensitiveString(String);</span>
+<span class="doccomment">/// impl Hash for CaseInsensitiveString {</span>
+<span class="doccomment">///     fn hash&lt;H: Hasher&gt;(&amp;self, state: &amp;mut H) {</span>
+<span class="doccomment">///         for c in self.0.as_bytes() {</span>
+<span class="doccomment">///             c.to_ascii_lowercase().hash(state)</span>
+<span class="doccomment">///         }</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `CaseInsensitiveString` 可以实现 `Borrow&lt;str&gt;` 吗? 它当然可以通过其包含的拥有的字符串为字符串片段提供引用。</span>
+<span class="doccomment">/// 但是由于 `Hash` 的实现方式不同，所以它的行为与 `str` 不同，因此，实际上，一定不能实现 `Borrow&lt;str&gt;`。</span>
+<span class="doccomment">/// 如果它希望允许其他人访问基础 `str`，则可以通过 `AsRef&lt;str&gt;` 来实现，而 `AsRef&lt;str&gt;` 则没有任何额外的要求。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`Hash`]: crate::hash::Hash</span>
+<span class="doccomment">/// [`HashMap&lt;K, V&gt;`]: ../../std/collections/struct.HashMap.html</span>
+<span class="doccomment">/// [`String`]: ../../std/string/struct.String.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;Borrow&quot;</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Borrowed</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 从拥有的值中一成不变地借用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::borrow::Borrow;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// fn check&lt;T: Borrow&lt;str&gt;&gt;(s: T) {</span>
+    <span class="doccomment">///     assert_eq!(&quot;Hello&quot;, s.borrow());</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let s = &quot;Hello&quot;.to_string();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// check(s);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let s = &quot;Hello&quot;;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// check(s);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Borrowed</span>;
+}
+
+<span class="doccomment">/// 用于可变借用数据的 trait。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 作为 [`Borrow&lt;T&gt;`] 的伴侣，此 trait 通过提供变量引用允许类型借用作为基础类型。</span>
+<span class="doccomment">/// 请参见 [`Borrow&lt;T&gt;`]，以了解更多有关借用另一种类型的信息。</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span><span class="ident">Borrowed</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Borrowed</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 从拥有的值中借用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::borrow::BorrowMut;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// fn check&lt;T: BorrowMut&lt;[i32]&gt;&gt;(mut v: T) {</span>
+    <span class="doccomment">///     assert_eq!(&amp;mut [1, 2, 3], v.borrow_mut());</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let v = vec![1, 2, 3];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// check(v);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">borrow_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Borrowed</span>;
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span> {
+    <span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;noop_method_borrow&quot;</span>]</span>
+    <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">borrow_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">BorrowMut</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">borrow_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script><script src="../../source-script1.55.0.js"></script><script src="../../source-files1.55.0.js"></script></body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="将从 `dst` 开始的 `count * size_of::&lt;T&gt;()` 内存字节设置为 `val`。"><meta name="keywords" content="rust, rustlang, rust-lang, write_bytes"><title>write_bytes in core::ptr - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">core</a>::<wbr><a href="index.html">ptr</a></h2><div id="sidebar-vars" data-name="write_bytes" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">core</a>::<wbr><a href="index.html">ptr</a>::<wbr><a class="fn" href="#">write_bytes</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/intrinsics.rs.html#2209-2218" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub unsafe fn write_bytes&lt;T&gt;(dst: *mut T, val: u8, count: usize)</pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>将从 <code>dst</code> 开始的 <code>count * size_of::&lt;T&gt;()</code> 内存字节设置为 <code>val</code>。</p>
+<p><code>write_bytes</code> 与 C 的 <a href="https://en.cppreference.com/w/c/string/byte/memset"><code>memset</code></a> 类似，但是将 <code>count * size_of::&lt;T&gt;()</code> 字节设置为 <code>val</code>。</p>
+<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<p>如果违反以下任一条件，则行为是未定义的:</p>
+<ul>
+<li>
+<p><code>dst</code> 对于 <code>count * size_of::&lt;T&gt;()</code> 字节的写入，必须为 <a href="index.html#safety">有效</a> 的。</p>
+</li>
+<li>
+<p><code>dst</code> 必须正确对齐。</p>
+</li>
+</ul>
+<p>此外，调用者必须确保将 <code>count * size_of::&lt;T&gt;()</code> 字节写入给定的内存区域会导致 <code>T</code> 的有效值。
+使用类型为 <code>T</code> 的内存区域包含无效的 <code>T</code> 值是未定义的行为。</p>
+<p>请注意，即使有效复制的大小 (<code>count * size_of::&lt;T&gt;()</code>) 是 <code>0</code>，指针也必须非空的并且正确对齐。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>基本用法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vec</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u32</span>; <span class="number">4</span>];
+<span class="kw">unsafe</span> {
+    <span class="kw">let</span> <span class="ident">vec_ptr</span> <span class="op">=</span> <span class="ident">vec</span>.<span class="ident">as_mut_ptr</span>();
+    <span class="ident">ptr::write_bytes</span>(<span class="ident">vec_ptr</span>, <span class="number">0xfe</span>, <span class="number">2</span>);
+}
+<span class="macro">assert_eq!</span>(<span class="ident">vec</span>, [<span class="number">0xfefefefe</span>, <span class="number">0xfefefefe</span>, <span class="number">0</span>, <span class="number">0</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aptr%3B%0A%0Alet%20mut%20vec%20%3D%20vec!%5B0u32%3B%204%5D%3B%0Aunsafe%20%7B%0A%20%20%20%20let%20vec_ptr%20%3D%20vec.as_mut_ptr()%3B%0A%20%20%20%20ptr%3A%3Awrite_bytes(vec_ptr%2C%200xfe%2C%202)%3B%0A%7D%0Aassert_eq!(vec%2C%20%5B0xfefefefe%2C%200xfefefefe%2C%200%2C%200%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>创建一个无效值:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::ptr</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="number">0i32</span>);
+
+<span class="kw">unsafe</span> {
+    <span class="comment">// 通过使用空指针覆盖 `Box&lt;T&gt;`，泄漏先前保留的值。</span>
+    <span class="ident">ptr::write_bytes</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>, <span class="number">0</span>, <span class="number">1</span>);
+}
+
+<span class="comment">// 此时，使用或丢弃 `v` 会导致未定义的行为。</span>
+<span class="comment">// drop(v); // ERROR</span>
+
+<span class="comment">// 即使 `v` &quot;uses&quot; 泄漏了它，因此也是未定义的行为。</span>
+<span class="comment">// mem::forget(v); // 错误</span>
+
+<span class="comment">// 实际上，根据基本类型布局不变式，`v` 无效，因此触摸它的 *any* 操作是未定义的行为。</span>
+<span class="comment">// let v2 = v; // ERROR</span>
+
+<span class="kw">unsafe</span> {
+    <span class="comment">// 让我们输入一个有效值</span>
+    <span class="ident">ptr::write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">v</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>, <span class="ident">Box::new</span>(<span class="number">42i32</span>));
+}
+
+<span class="comment">// 现在 box 很好</span>
+<span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">v</span>, <span class="number">42</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aptr%3B%0A%0Alet%20mut%20v%20%3D%20Box%3A%3Anew(0i32)%3B%0A%0Aunsafe%20%7B%0A%20%20%20%20%2F%2F%20%E9%80%9A%E8%BF%87%E4%BD%BF%E7%94%A8%E7%A9%BA%E6%8C%87%E9%92%88%E8%A6%86%E7%9B%96%20%60Box%3CT%3E%60%EF%BC%8C%E6%B3%84%E6%BC%8F%E5%85%88%E5%89%8D%E4%BF%9D%E7%95%99%E7%9A%84%E5%80%BC%E3%80%82%0A%20%20%20%20ptr%3A%3Awrite_bytes(%26mut%20v%20as%20*mut%20Box%3Ci32%3E%2C%200%2C%201)%3B%0A%7D%0A%0A%2F%2F%20%E6%AD%A4%E6%97%B6%EF%BC%8C%E4%BD%BF%E7%94%A8%E6%88%96%E4%B8%A2%E5%BC%83%20%60v%60%20%E4%BC%9A%E5%AF%BC%E8%87%B4%E6%9C%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E8%A1%8C%E4%B8%BA%E3%80%82%0A%2F%2F%20drop(v)%3B%20%2F%2F%20ERROR%0A%0A%2F%2F%20%E5%8D%B3%E4%BD%BF%20%60v%60%20%22uses%22%20%E6%B3%84%E6%BC%8F%E4%BA%86%E5%AE%83%EF%BC%8C%E5%9B%A0%E6%AD%A4%E4%B9%9F%E6%98%AF%E6%9C%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E8%A1%8C%E4%B8%BA%E3%80%82%0A%2F%2F%20mem%3A%3Aforget(v)%3B%20%2F%2F%20%E9%94%99%E8%AF%AF%0A%0A%2F%2F%20%E5%AE%9E%E9%99%85%E4%B8%8A%EF%BC%8C%E6%A0%B9%E6%8D%AE%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B%E5%B8%83%E5%B1%80%E4%B8%8D%E5%8F%98%E5%BC%8F%EF%BC%8C%60v%60%20%E6%97%A0%E6%95%88%EF%BC%8C%E5%9B%A0%E6%AD%A4%E8%A7%A6%E6%91%B8%E5%AE%83%E7%9A%84%20*any*%20%E6%93%8D%E4%BD%9C%E6%98%AF%E6%9C%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E8%A1%8C%E4%B8%BA%E3%80%82%0A%2F%2F%20let%20v2%20%3D%20v%3B%20%2F%2F%20ERROR%0A%0Aunsafe%20%7B%0A%20%20%20%20%2F%2F%20%E8%AE%A9%E6%88%91%E4%BB%AC%E8%BE%93%E5%85%A5%E4%B8%80%E4%B8%AA%E6%9C%89%E6%95%88%E5%80%BC%0A%20%20%20%20ptr%3A%3Awrite(%26mut%20v%20as%20*mut%20Box%3Ci32%3E%2C%20Box%3A%3Anew(42i32))%3B%0A%7D%0A%0A%2F%2F%20%E7%8E%B0%E5%9C%A8%20box%20%E5%BE%88%E5%A5%BD%0Aassert_eq!(*v%2C%2042)%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

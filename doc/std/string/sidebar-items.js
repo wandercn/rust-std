@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Drain","`String` 的 draining 迭代器。"],["FromUtf16Error","从 UTF-16 字节切片转换 `String` 时可能的错误值。"],["FromUtf8Error","从 UTF-8 字节 vector 转换 `String` 时可能的错误值。"],["String","一个 UTF-8 编码的可增长字符串。"]],"trait":[["ToString","trait，用于将值转换为 `String`。"]],"type":[["ParseError","`Infallible` 的类型别名。"]]});

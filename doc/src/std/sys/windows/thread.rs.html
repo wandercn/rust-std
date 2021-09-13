@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\sys\windows\thread.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../std/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ffi::CStr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::io</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::NonZeroUsize</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::c</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::handle::Handle</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::stack_overflow</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::time::Duration</span>;
+
+<span class="kw">use</span> <span class="ident">libc::c_void</span>;
+
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::to_u16s</span>;
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">DEFAULT_MIN_STACK_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>;
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Thread</span> {
+    <span class="ident">handle</span>: <span class="ident">Handle</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Thread</span> {
+    <span class="comment">// 不安全: 有关安全要求，请参见 thread::Builder::spawn_unchecked</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">stack</span>: <span class="ident">usize</span>, <span class="ident">p</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">FnOnce</span>()<span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">Thread</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="kw">box</span> <span class="ident">p</span>);
+
+        <span class="comment">// FIXME 在 UNIX 上，我们会防止栈大小过小，但这是因为 pthread 强制栈的大小至少为 PTHREAD_STACK_MIN 个字节。</span>
+        <span class="comment">// Windows 没有这样的下限，只是低于某个阈值您什么也做不了。</span>
+        <span class="comment">// 但是，该阈值是特定于应用程序和体系结构的。</span>
+        <span class="comment">// 舍入到下一个 64 kB，因为这是 NT 内核所做的，也可能使其明确。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">stack_size</span> <span class="op">=</span> (<span class="ident">stack</span> <span class="op">+</span> <span class="number">0xfffe</span>) <span class="op">&amp;</span> (<span class="op">!</span><span class="number">0xfffe</span>);
+        <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">c::CreateThread</span>(
+            <span class="ident">ptr::null_mut</span>(),
+            <span class="ident">stack_size</span>,
+            <span class="ident">thread_start</span>,
+            <span class="ident">p</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>,
+            <span class="ident">c::STACK_SIZE_PARAM_IS_A_RESERVATION</span>,
+            <span class="ident">ptr::null_mut</span>(),
+        );
+
+        <span class="kw">return</span> <span class="kw">if</span> <span class="ident">ret</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="comment">// 线程无法启动，结果 p 没有被使用。</span>
+            <span class="comment">// 因此，重建 box 使其被释放是安全的。</span>
+            <span class="ident">drop</span>(<span class="ident">Box::from_raw</span>(<span class="ident">p</span>));
+            <span class="prelude-val">Err</span>(<span class="ident">io::Error::last_os_error</span>())
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Thread</span> { <span class="ident">handle</span>: <span class="ident">Handle::new</span>(<span class="ident">ret</span>) })
+        };
+
+        <span class="kw">extern</span> <span class="string">&quot;system&quot;</span> <span class="kw">fn</span> <span class="ident">thread_start</span>(<span class="ident">main</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">c_void</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::DWORD</span> {
+            <span class="kw">unsafe</span> {
+                <span class="comment">// 接下来，设置我们的栈溢出处理程序，如果我们用完栈，可能会触发该处理程序。</span>
+                <span class="comment">//</span>
+                <span class="kw">let</span> <span class="ident">_handler</span> <span class="op">=</span> <span class="ident">stack_overflow::Handler::new</span>();
+                <span class="comment">// 最后，让我们运行一些代码。</span>
+                <span class="ident">Box::from_raw</span>(<span class="ident">main</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">FnOnce</span>()<span class="op">&gt;</span>)();
+            }
+            <span class="number">0</span>
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_name</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">CStr</span>) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">utf8</span>) <span class="op">=</span> <span class="ident">name</span>.<span class="ident">to_str</span>() {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">utf16</span>) <span class="op">=</span> <span class="ident">to_u16s</span>(<span class="ident">utf8</span>) {
+                <span class="kw">unsafe</span> {
+                    <span class="ident">c::SetThreadDescription</span>(<span class="ident">c::GetCurrentThread</span>(), <span class="ident">utf16</span>.<span class="ident">as_ptr</span>());
+                };
+            };
+        };
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">join</span>(<span class="self">self</span>) {
+        <span class="kw">let</span> <span class="ident">rc</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">c::WaitForSingleObject</span>(<span class="self">self</span>.<span class="ident">handle</span>.<span class="ident">raw</span>(), <span class="ident">c::INFINITE</span>) };
+        <span class="kw">if</span> <span class="ident">rc</span> <span class="op">=</span><span class="op">=</span> <span class="ident">c::WAIT_FAILED</span> {
+            <span class="macro">panic!</span>(<span class="string">&quot;failed to join on thread: {}&quot;</span>, <span class="ident">io::Error::last_os_error</span>());
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">yield_now</span>() {
+        <span class="comment">// 如果没有其他线程要执行，则此函数将返回 0，但这也意味着 yield 没用，因此实际上不必担心这种情况。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">c::SwitchToThread</span>();
+        }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sleep</span>(<span class="ident">dur</span>: <span class="ident">Duration</span>) {
+        <span class="kw">unsafe</span> { <span class="ident">c::Sleep</span>(<span class="kw">super</span><span class="ident">::dur2timeout</span>(<span class="ident">dur</span>)) }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Handle</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handle</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_handle</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Handle</span> {
+        <span class="self">self</span>.<span class="ident">handle</span>
+    }
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">available_concurrency</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">io::Result</span><span class="op">&lt;</span><span class="ident">NonZeroUsize</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sysinfo</span>: <span class="ident">c::SYSTEM_INFO</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::mem::zeroed</span>();
+        <span class="ident">c::GetSystemInfo</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">sysinfo</span>);
+        <span class="ident">sysinfo</span>.<span class="ident">dwNumberOfProcessors</span> <span class="kw">as</span> <span class="ident">usize</span>
+    };
+    <span class="kw">match</span> <span class="ident">res</span> {
+        <span class="number">0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">io::Error::new_const</span>(
+            <span class="ident">io::ErrorKind::NotFound</span>,
+            <span class="kw-2">&amp;</span><span class="string">&quot;The number of hardware threads is not known for the target platform&quot;</span>,
+        )),
+        <span class="ident">cpus</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="kw">unsafe</span> { <span class="ident">NonZeroUsize::new_unchecked</span>(<span class="ident">cpus</span>) }),
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">allow</span>(<span class="ident">dead_code</span>))]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">guard</span> {
+    <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Guard</span> <span class="op">=</span> <span class="op">!</span>;
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">current</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Guard</span><span class="op">&gt;</span> {
+        <span class="prelude-val">None</span>
+    }
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">init</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Guard</span><span class="op">&gt;</span> {
+        <span class="prelude-val">None</span>
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="std" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

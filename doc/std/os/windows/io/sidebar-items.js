@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["AsRawHandle","提取原始句柄。"],["AsRawSocket","提取原始套接字。"],["FromRawHandle","从原始句柄构造 I/O 对象。"],["FromRawSocket","从原始套接字创建 I/O 对象。"],["IntoRawHandle","trait，用于表达使用对象并获得其原始 `HANDLE` 所有权的能力。"],["IntoRawSocket","trait，用于表达使用对象并获得其原始 `SOCKET` 所有权的能力。"]],"type":[["RawHandle","原始的句柄。"],["RawSocket","未加工的袜子。"]]});

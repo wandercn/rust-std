@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["default","根据 `Default` trait 返回类型的默认值。"]],"macro":[["Default","派生宏，生成 trait `Default` 的 impl。"]],"trait":[["Default","trait，用于为类型提供有用的默认值。"]]});

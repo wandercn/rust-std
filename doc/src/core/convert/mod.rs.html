@@ -1,0 +1,1480 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\convert\mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+</pre><pre class="rust">
+<span class="doccomment">//! Traits 用于类型之间的转换。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 此模块中的 traits 提供了一种从一种类型转换为另一种类型的方法。</span>
+<span class="doccomment">//! 每个 trait 都有不同的用途:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - 实现 [`AsRef`] trait 以实现廉价的引用到引用转换</span>
+<span class="doccomment">//! - 实现 [`AsMut`] trait 进行廉价的变量到变量转换</span>
+<span class="doccomment">//! - 实现 [`From`] trait 以进行值到值的转换</span>
+<span class="doccomment">//! - 实现 [`Into`] trait，以便将值转换为当前 crate 之外的类型</span>
+<span class="doccomment">//! - [`TryFrom`] 和 [`TryInto`] traits 的行为类似于 [`From`] 和 [`Into`]，但应在转换失败时实现。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 此模块中的 traits 通常用作泛型函数的 trait bounds，以便支持多种类型的参数。有关示例，请参见每个 trait 的文档。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 作为库作者，您应该总是更喜欢实现 [`From&lt;T&gt;`][`From`] 或 [`TryFrom&lt;T&gt;`][`TryFrom`]，而不是 [`Into&lt;U&gt;`][`Into`] 或 [`TryInto&lt;U&gt;`][`TryInto`]，因为 [`From`] 和 [`TryFrom`] 提供了更大的灵活性，并免费提供了等效的 [`Into`] 或 [`TryInto`] 实现，这要归功于标准库中的全面实现。</span>
+<span class="doccomment">//! 当定位到 Rust 1.41 之前的版本时，当转换为当前 crate 之外的类型时，可能有必要直接实现 [`Into`] 或 [`TryInto`]。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # 泛型实现</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - [`AsRef`] 如果内部类型是引用，则 [`AsMut`] 自动解引用</span>
+<span class="doccomment">//! - [`From`]`&lt;U&gt; for T` 暗示 [`Into`]`&lt;T&gt; for U`</span>
+<span class="doccomment">//! - [`TryFrom`]`&lt;U&gt; for T` 暗示 [`TryInto`]`&lt;T&gt; for U`</span>
+<span class="doccomment">//! - [`From`] 和 [`Into`] 是自反的，这意味着所有类型都可以 `into` 自己和 `from` 自己</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 有关用法示例，请参见每个 trait。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+
+<span class="attribute">#![<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::fmt</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>};
+
+<span class="kw">mod</span> <span class="ident">num</span>;
+
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_float_to_int&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;67057&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">num::FloatToInt</span>;
+
+<span class="doccomment">/// 身份函数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 关于此函数，有两点需要注意:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - 它并不总是等同于 `|x| x` 之类的闭包，因为闭包可能会将 `x` 强制转换为其他类型。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - 它将输入 `x` 传递给函数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 虽然有一个只返回输入的函数似乎很奇怪，但是有一些有趣的用法。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 使用 `identity` 在其他有趣的函数序列中什么也不做:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::convert::identity;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// fn manipulation(x: u32) -&gt; u32 {</span>
+<span class="doccomment">///     // 让我们假设添加一个是一个有趣的函数。</span>
+<span class="doccomment">///     x + 1</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let _arr = &amp;[identity, manipulation];</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在条件中将 `identity` 用作 &quot;do nothing&quot; 终止条件:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::convert::identity;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # let condition = true;</span>
+<span class="doccomment">/// #</span>
+<span class="doccomment">/// # fn manipulation(x: u32) -&gt; u32 { x + 1 }</span>
+<span class="doccomment">/// #</span>
+<span class="doccomment">/// let do_stuff = if condition { manipulation } else { identity };</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 做更多有趣的事情...</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let _results = do_stuff(42);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 使用 `identity` 保留 `Option&lt;T&gt;` 迭代器的 `Some` 成员:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::convert::identity;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let iter = vec![Some(1), None, Some(3)].into_iter();</span>
+<span class="doccomment">/// let filtered = iter.filter_map(identity).collect::&lt;Vec&lt;_&gt;&gt;();</span>
+<span class="doccomment">/// assert_eq!(vec![1, 3], filtered);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_id&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.33.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">rustc_const_stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_identity&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.33.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">identity</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">x</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+    <span class="ident">x</span>
+}
+
+<span class="doccomment">/// 用于执行廉价的引用到引用转换。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// trait 类似于 [`AsMut`]，用于在可变引用之间进行转换。</span>
+<span class="doccomment">/// 如果需要进行昂贵的转换，最好用 `&amp;T` 类型实现 [`From`] 或编写自定义函数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `AsRef` 具有与 [`Borrow`] 相同的签名，但是 [`Borrow`] 在几个方面有所不同:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - 与 `AsRef` 不同，[`Borrow`] 对任何 `T` 都有一个毯子暗示，可用于接受引用或值。</span>
+<span class="doccomment">/// - [`Borrow`] 还要求借用值的 [`Hash`]，[`Eq`] 和 [`Ord`] 等于拥有值的 [`Hash`]，[`Eq`] 和 [`Ord`]。</span>
+<span class="doccomment">/// 因此，如果只想借用一个结构体的单个字段，则可以实现 `AsRef`，而不能实现 [`Borrow`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **注意: 此 trait 一定不能失败**。如果转换失败，请使用专用方法返回 [`Option&lt;T&gt;`] 或 [`Result&lt;T, E&gt;`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 泛型实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - `AsRef` 如果内部类型是引用或变量引用，则自动引用 (例如: 如果 `foo` 具有 `&amp;mut Foo` 或 `&amp;&amp;mut Foo` 类型，则 `foo.as_ref()` 将工作相同)</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 通过使用 trait bounds，我们可以接受不同类型的参数，只要它们可以转换为指定的 `T` 类型即可。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 例如: 通过创建一个采用 `AsRef&lt;str&gt;` 的泛型函数，我们表示我们希望接受所有可以转换为 [`&amp;str`] 的引用作为参数。</span>
+<span class="doccomment">/// 由于 [`String`] 和 [`&amp;str`] 都实现了 `AsRef&lt;str&gt;`，因此我们可以将两者都用作输入参数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`&amp;str`]: primitive@str</span>
+<span class="doccomment">/// [`Borrow`]: crate::borrow::Borrow</span>
+<span class="doccomment">/// [`Eq`]: crate::cmp::Eq</span>
+<span class="doccomment">/// [`Ord`]: crate::cmp::Ord</span>
+<span class="doccomment">/// [`String`]: ../../std/string/struct.String.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// fn is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {</span>
+<span class="doccomment">///    assert_eq!(&quot;hello&quot;, s.as_ref());</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let s = &quot;hello&quot;;</span>
+<span class="doccomment">/// is_hello(s);</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let s = &quot;hello&quot;.to_string();</span>
+<span class="doccomment">/// is_hello(s);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;AsRef&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span>;
+}
+
+<span class="doccomment">/// 用于进行廉价的可变到可变引用转换。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// trait 与 [`AsRef`] 相似，但用于在变量引用之间进行转换。</span>
+<span class="doccomment">/// 如果需要进行昂贵的转换，最好用 `&amp;mut T` 类型实现 [`From`] 或编写自定义函数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **注意: 此 trait 一定不能失败**。如果转换失败，请使用专用方法返回 [`Option&lt;T&gt;`] 或 [`Result&lt;T, E&gt;`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 泛型实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - `AsMut` 如果内部类型是可变引用，则自动引用 (例如: 如果 `foo` 具有 `&amp;mut Foo` 或 `&amp;mut &amp;mut Foo` 类型，则 `foo.as_mut()` 将工作相同)</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 使用 `AsMut` 作为泛型函数的 trait bound，我们可以接受所有可以转换为 `&amp;mut T` 类型的变量引用。</span>
+<span class="doccomment">/// 因为 [`Box&lt;T&gt;`] 实现了 `AsMut&lt;T&gt;`，所以我们可以编写一个函数 `add_one`，该函数采用可以转换为 `&amp;mut u64` 的所有参数。</span>
+<span class="doccomment">/// 由于 [`Box&lt;T&gt;`] 实现 `AsMut&lt;T&gt;`，因此 `add_one` 也接受 `&amp;mut Box&lt;u64&gt;` 类型的参数:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// fn add_one&lt;T: AsMut&lt;u64&gt;&gt;(num: &amp;mut T) {</span>
+<span class="doccomment">///     *num.as_mut() += 1;</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let mut boxed_num = Box::new(0);</span>
+<span class="doccomment">/// add_one(&amp;mut boxed_num);</span>
+<span class="doccomment">/// assert_eq!(*boxed_num, 1);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`Box&lt;T&gt;`]: ../../std/boxed/struct.Box.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;AsMut&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AsMut</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span>;
+}
+
+<span class="doccomment">/// 消耗输入值的值到值转换。与 [`From`] 相反。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 应该避免实现 [`Into`]，而应实现 [`From`]。</span>
+<span class="doccomment">/// 由于标准库中的全面实现，因此 [`From`] 的自动实现为 [`Into`] 的实现提供了一个实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在泛型函数上指定 trait bounds 时，最好使用 [`Into`] 而不是 [`From`]，以确保也可以使用仅实现 [`Into`] 的类型。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **注意: 此 trait 一定不能失败**。如果转换失败，请使用 [`TryInto`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 泛型实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - [`From`]`&lt;T&gt; for U` 暗示 `Into&lt;U&gt; for T`</span>
+<span class="doccomment">/// - [`Into`] 是自反的，这意味着 `Into&lt;T&gt; for T` 已实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 在旧版本的 Rust 中实现 [`Into`] 转换为外部类型</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在 Rust 1.41 之前，如果目标类型不是当前 crate 的一部分，那么您将无法直接实现 [`From`]。</span>
+<span class="doccomment">/// 例如，使用以下代码:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// struct Wrapper&lt;T&gt;(Vec&lt;T&gt;);</span>
+<span class="doccomment">/// impl&lt;T&gt; From&lt;Wrapper&lt;T&gt;&gt; for Vec&lt;T&gt; {</span>
+<span class="doccomment">///     fn from(w: Wrapper&lt;T&gt;) -&gt; Vec&lt;T&gt; {</span>
+<span class="doccomment">///         w.0</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// 由于 Rust 的孤儿规则过去要严格一些，因此无法在较旧的语言版本中进行编译。</span>
+<span class="doccomment">/// 要绕过它，您可以直接实现 [`Into`]:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// struct Wrapper&lt;T&gt;(Vec&lt;T&gt;);</span>
+<span class="doccomment">/// impl&lt;T&gt; Into&lt;Vec&lt;T&gt;&gt; for Wrapper&lt;T&gt; {</span>
+<span class="doccomment">///     fn into(self) -&gt; Vec&lt;T&gt; {</span>
+<span class="doccomment">///         self.0</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 重要的是要了解 [`Into`] 不提供 [`From`] 实现 (就像 [`From`] 与 [`Into`] 一样)。</span>
+<span class="doccomment">/// 因此，您应该始终尝试实现 [`From`]，如果无法实现 [`From`]，则应回退到 [`Into`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`String`] 实现 [`Into`]`&lt;`[`Vec`]`&lt;`[`u8`]`&gt;&gt;`:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 为了表示我们希望泛型函数采用所有可以转换为指定类型 `T` 的参数，我们可以使用 [`Into`]`&lt;T&gt;` 的 trait bound。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 例如: 函数 `is_hello` 接受所有可以转换为 [`Vec`]`&lt;`[`u8`]`&gt;` 的参数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// fn is_hello&lt;T: Into&lt;Vec&lt;u8&gt;&gt;&gt;(s: T) {</span>
+<span class="doccomment">///    let bytes = b&quot;hello&quot;.to_vec();</span>
+<span class="doccomment">///    assert_eq!(bytes, s.into());</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let s = &quot;hello&quot;.to_string();</span>
+<span class="doccomment">/// is_hello(s);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`String`]: ../../std/string/struct.String.html</span>
+<span class="doccomment">/// [`Vec`]: ../../std/vec/struct.Vec.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;into_trait&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>;
+}
+
+<span class="doccomment">/// 用于在消耗输入值的同时进行值到值的转换。它是 [`Into`] 的倒数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 与标准 [`Into`] 相比，人们应该总是更喜欢实现 `From`，因为由于标准库中的全面实现，实现 `From` 会自动为 [`Into`] 提供一个 [`Into`] 的实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 仅当针对 Rust 1.41 之前的版本并将其转换为当前 crate 以外的类型时，才实现 [`Into`]。</span>
+<span class="doccomment">/// `From` 由于 Rust 的孤儿规则，无法在较早版本中进行这些类型的转换。</span>
+<span class="doccomment">/// 有关更多详细信息，请参见 [`Into`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在泛型函数上指定 trait bounds 时，优先使用 [`Into`]。</span>
+<span class="doccomment">/// 这样，直接实现 [`Into`] 的类型也可以用作参数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `From` 在执行错误处理时也非常有用。当创建一个能够失败的函数时，返回类型通常为 `Result&lt;T, E&gt;` 形式。</span>
+<span class="doccomment">/// `From` trait 通过允许函数返回封装了多种错误类型的单个错误类型，简化了错误处理。有关更多详细信息，请参见 &quot;示例&quot; 部分和这本 [书][book]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// **注意: 此 trait 一定不能失败**。如果转换失败，请使用 [`TryFrom`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 泛型实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - `From&lt;T&gt; for U` 暗示 [`Into`]`&lt;U&gt; for T`</span>
+<span class="doccomment">/// - `From` 是自反的，这意味着 `From&lt;T&gt; for T` 已实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`String`] 实现 `From&lt;&amp;str&gt;`:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 从 `&amp;str` 到字符串的显式转换如下:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// let string = &quot;hello&quot;.to_string();</span>
+<span class="doccomment">/// let other_string = String::from(&quot;hello&quot;);</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// assert_eq!(string, other_string);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在执行错误处理时，通常对于您自己的错误类型实现 `From` 很有用。</span>
+<span class="doccomment">/// 通过将基础错误类型转换为封装了基础错误类型的我们自己的自定义错误类型，我们可以返回单个错误类型，而不会丢失有关基础原因的信息。</span>
+<span class="doccomment">/// &#39;?&#39; 运算符通过调用 `Into&lt;CliError&gt;::into` 自动将基础错误类型转换为我们的自定义错误类型，该 `Into&lt;CliError&gt;::into` 是在实现 `From` 时自动提供的。</span>
+<span class="doccomment">/// 然后，编译器会推断应使用 `Into` 的哪种实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::fs;</span>
+<span class="doccomment">/// use std::io;</span>
+<span class="doccomment">/// use std::num;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// enum CliError {</span>
+<span class="doccomment">///     IoError(io::Error),</span>
+<span class="doccomment">///     ParseError(num::ParseIntError),</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl From&lt;io::Error&gt; for CliError {</span>
+<span class="doccomment">///     fn from(error: io::Error) -&gt; Self {</span>
+<span class="doccomment">///         CliError::IoError(error)</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl From&lt;num::ParseIntError&gt; for CliError {</span>
+<span class="doccomment">///     fn from(error: num::ParseIntError) -&gt; Self {</span>
+<span class="doccomment">///         CliError::ParseError(error)</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// fn open_and_parse_file(file_name: &amp;str) -&gt; Result&lt;i32, CliError&gt; {</span>
+<span class="doccomment">///     let mut contents = fs::read_to_string(&amp;file_name)?;</span>
+<span class="doccomment">///     let num: i32 = contents.trim().parse()?;</span>
+<span class="doccomment">///     Ok(num)</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`String`]: ../../std/string/struct.String.html</span>
+<span class="doccomment">/// [`from`]: From::from</span>
+<span class="doccomment">/// [book]: ../../book/ch09-00-error-handling.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;from_trait&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">rustc_on_unimplemented</span>(<span class="ident">on</span>(
+    <span class="ident">all</span>(<span class="ident">_Self</span> <span class="op">=</span> <span class="string">&quot;&amp;str&quot;</span>, <span class="ident">T</span> <span class="op">=</span> <span class="string">&quot;std::string::String&quot;</span>),
+    <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;to coerce a `{T}` into a `{Self}`, use `&amp;*` as a prefix&quot;</span>,
+))]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;from&quot;</span>]</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
+}
+
+<span class="doccomment">/// 尝试使用 `self` 进行转换，这可能会或可能不会很昂贵。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 库作者通常不应直接实现此 trait，而应首选实现 [`TryFrom`] trait，它具有更大的灵活性，并免费提供了等效的 `TryInto` 实现，这要归功于标准库中的全面实现。</span>
+<span class="doccomment">/// 有关此的更多信息，请参见 [`Into`] 的文档。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 实现 `TryInto`</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 这与实现 [`Into`] 受到相同的限制和推理，有关详细信息，请参见此处。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;try_into_trait&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">TryInto</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// 发生转换错误时返回的类型。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">type</span> <span class="ident">Error</span>;
+
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">try_into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="self">Self</span><span class="ident">::Error</span><span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// 简单安全的类型转换在某些情况下可能会以受控方式失败。它是 [`TryInto`] 的倒数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 当您进行的类型转换可能会成功完成但可能还需要特殊处理时，这很有用。</span>
+<span class="doccomment">/// 例如，无法使用 [`From`] trait 将 [`i64`] 转换为 [`i32`]，因为 [`i64`] 可能包含 [`i32`] 无法表示的值，因此转换将丢失数据。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 这可以通过将 [`i64`] 截断为 [`i32`] (本质上给 [`i64`] 的值取 [`i32::MAX`] 模) 或通过简单地返回 [`i32::MAX`] 或其他方法来处理。</span>
+<span class="doccomment">/// [`From`] trait 用于完美的转换，因此 `TryFrom` trait 会通知程序员类型转换何时会变差，并让他们决定如何处理它。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 泛型实现</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - `TryFrom&lt;T&gt; for U` 暗示 [`TryInto`]`&lt;U&gt; for T`</span>
+<span class="doccomment">/// - [`try_from`] 是自反的，这意味着 `TryFrom&lt;T&gt; for T` 已实现且不会失败 - 用于在 `T` 类型的值上调用 `T::try_from()` 的关联 `Error` 类型为 [`Infallible`]。</span>
+<span class="doccomment">/// 当 [`!`] 类型稳定后，[`Infallible`] 和 [`!`] 将等效。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `TryFrom&lt;T&gt;` 可以实现如下:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::convert::TryFrom;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// struct GreaterThanZero(i32);</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl TryFrom&lt;i32&gt; for GreaterThanZero {</span>
+<span class="doccomment">///     type Error = &amp;&#39;static str;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     fn try_from(value: i32) -&gt; Result&lt;Self, Self::Error&gt; {</span>
+<span class="doccomment">///         if value &lt;= 0 {</span>
+<span class="doccomment">///             Err(&quot;GreaterThanZero only accepts value superior than zero!&quot;)</span>
+<span class="doccomment">///         } else {</span>
+<span class="doccomment">///             Ok(GreaterThanZero(value))</span>
+<span class="doccomment">///         }</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 如上所述，[`i32`] 实现了 `TryFrom&lt;`[`i64`]`&gt;`:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::convert::TryFrom;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let big_number = 1_000_000_000_000i64;</span>
+<span class="doccomment">/// // 默默地截断 `big_number`，事实之后需要检测并处理该截断。</span>
+<span class="comment">/////</span>
+<span class="doccomment">/// let smaller_number = big_number as i32;</span>
+<span class="doccomment">/// assert_eq!(smaller_number, -727379968);</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 由于 `big_number` 太大而无法容纳在 `i32` 中，因此返回错误。</span>
+<span class="comment">/////</span>
+<span class="doccomment">/// let try_smaller_number = i32::try_from(big_number);</span>
+<span class="doccomment">/// assert!(try_smaller_number.is_err());</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 返回 `Ok(3)`。</span>
+<span class="doccomment">/// let try_successful_smaller_number = i32::try_from(3);</span>
+<span class="doccomment">/// assert!(try_successful_smaller_number.is_ok());</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`try_from`]: TryFrom::try_from</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;try_from_trait&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// 发生转换错误时返回的类型。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">type</span> <span class="ident">Error</span>;
+
+    <span class="doccomment">/// 执行转换。</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="self">Self</span><span class="ident">::Error</span><span class="op">&gt;</span>;
+}
+
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">// 泛型 IMPLS</span>
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+
+<span class="comment">// 随着提起 &amp;</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>,
+{
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">U</span> {
+        <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="kw-2">*</span><span class="self">self</span>)
+    }
+}
+
+<span class="comment">// 越过 &amp;mut</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>,
+{
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">U</span> {
+        <span class="op">&lt;</span><span class="ident">T</span> <span class="kw">as</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="kw-2">*</span><span class="self">self</span>)
+    }
+}
+
+<span class="comment">// FIXME (#45742): 用以下更通用的替代替换 &amp;/&amp;mut 的上述 impls:</span>
+<span class="comment">// // 越过 Deref</span>
+<span class="comment">// impl&lt;D: ?Sized + Deref&lt;Target: AsRef&lt;U&gt;&gt;, U: ?Sized&gt; AsRef&lt;U&gt; for D { fn as_ref(&amp;self) -&gt; &amp;U {        self.deref().as_ref() } }</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="comment">// AsMut 超过 &amp;mut</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">AsMut</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">AsMut</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>,
+{
+    <span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">U</span> {
+        (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">as_mut</span>()
+    }
+}
+
+<span class="comment">// FIXME (#45742): 用以下更通用的替代替换 &amp;mut 的上述隐含内容:</span>
+<span class="comment">// // AsMut 越过 DerefMut</span>
+<span class="comment">// impl&lt;D: ?Sized + Deref&lt;Target: AsMut&lt;U&gt;&gt;, U: ?Sized&gt; AsMut&lt;U&gt; for D { fn as_mut(&amp;mut self) -&gt; &amp;mut U {        self.deref_mut().as_mut() } }</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+
+<span class="comment">// 从暗示进入</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">U</span><span class="op">&gt;</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">U</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+{
+    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">U</span> {
+        <span class="ident">U::from</span>(<span class="self">self</span>)
+    }
+}
+
+<span class="comment">// From (因此 Into) 是自反的</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+        <span class="ident">t</span>
+    }
+}
+
+<span class="doccomment">/// **稳定性注意事项:** 该暗示尚不存在，但我们 &quot;reserving space&quot; 会将其添加到 future 中。</span>
+<span class="doccomment">/// 有关详细信息，请参见 [rust-lang/rust#64715][#64715]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [#64715]: https://github.com/rust-lang/rust/issues/64715</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_attributes</span>)]</span> <span class="comment">// FIXME(#58633): 而是进行有原则的修复。</span>
+<span class="attribute">#[<span class="ident">rustc_reservation_impl</span> <span class="op">=</span> <span class="string">&quot;permitting this impl would forbid us from adding \
+                            `impl&lt;T&gt; From&lt;!&gt; for T` later; see rust-lang/rust#64715 for details&quot;</span>]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="op">!</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">t</span>: <span class="op">!</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+        <span class="ident">t</span>
+    }
+}
+
+<span class="comment">// TryFrom 表示 TryInto</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">U</span><span class="op">&gt;</span> <span class="ident">TryInto</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">U</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+{
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">U::Error</span>;
+
+    <span class="kw">fn</span> <span class="ident">try_into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">U</span>, <span class="ident">U::Error</span><span class="op">&gt;</span> {
+        <span class="ident">U::try_from</span>(<span class="self">self</span>)
+    }
+}
+
+<span class="comment">// 可靠的转换在语义上等同于错误类型没有错误的可靠的转换。</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;try_from&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">U</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">U</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+{
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span>;
+
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="ident">U</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="self">Self</span><span class="ident">::Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">U::into</span>(<span class="ident">value</span>))
+    }
+}
+
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">// CONCRETE IMPLS</span>
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">T</span>]<span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">T</span>] {
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">T</span>] {
+        <span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">AsMut</span><span class="op">&lt;</span>[<span class="ident">T</span>]<span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">T</span>] {
+    <span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">T</span>] {
+        <span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">str</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">str</span> {
+        <span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;as_mut_str_for_str&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.51.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">AsMut</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">str</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">as_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">str</span> {
+        <span class="self">self</span>
+    }
+}
+
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">// 无错误错误类型</span>
+<span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+
+<span class="doccomment">/// 永远不会发生的错误的错误类型。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 由于此枚举没有成员，因此这种类型的值永远不会实际存在。</span>
+<span class="doccomment">/// 这对于使用 [`Result`] 并参数化错误类型的泛型 API 很有用，以指示结果始终为 [`Ok`]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 例如，对于存在反向 [`Into`] 实现的所有类型，[`TryFrom`] trait (返回 [`Result`] 的转换) 都具有通用实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```ignore (illustrates std code, duplicating the impl in a doctest would be an error)</span>
+<span class="doccomment">/// impl&lt;T, U&gt; TryFrom&lt;U&gt; for T where U: Into&lt;T&gt; {</span>
+<span class="doccomment">///     type Error = Infallible;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     fn try_from(value: U) -&gt; Result&lt;Self, Infallible&gt; {</span>
+<span class="doccomment">///         Ok(U::into(value))  // 永不返回 `Err`</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Future 兼容性</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 该枚举与 [never 类型 (`!`)][never] 具有相同的作用，在此版本的 Rust 中不稳定。</span>
+<span class="doccomment">/// 当 `!` 稳定后，我们计划将 `Infallible` 用作它的类型别名:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```ignore (illustrates future std change)</span>
+<span class="doccomment">/// pub type Infallible = !;</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// … 并最终弃用 `Infallible`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 但是，在一种情况下，可以在将 `!` 稳定为完整类型之前使用 `!` 语法: 在函数的返回类型位置。</span>
+<span class="doccomment">/// 具体来说，可能有两种不同的函数指针类型的实现:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// trait MyTrait {}</span>
+<span class="doccomment">/// impl MyTrait for fn() -&gt; ! {}</span>
+<span class="doccomment">/// impl MyTrait for fn() -&gt; std::convert::Infallible {}</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `Infallible` 是枚举，此代码有效。</span>
+<span class="doccomment">/// 但是，当 `Infallible` 成为 never type 的别名时，两个 `impl` 将开始重叠，因此将被语言的 trait 一致性规则所禁止。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Infallible</span> {}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Infallible</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="ident">Infallible</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">Infallible</span> {}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw">crate</span><span class="ident">::cmp::Ordering</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::cmp::Ordering</span> {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.34.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="op">!</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">x</span>: <span class="op">!</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="ident">x</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;convert_infallible_hash&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.44.0&quot;</span>)]</span>
+<span class="kw">impl</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">Infallible</span> {
+    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">H</span>) {
+        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {}
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script><script src="../../../source-script1.55.0.js"></script><script src="../../../source-files1.55.0.js"></script></body></html>

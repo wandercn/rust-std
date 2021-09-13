@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["TryReserveError","`try_reserve` 方法的错误类型。"]],"mod":[["binary_heap","用二进制堆实现的优先级队列。"],["btree_map","基于 B 树的 map。"],["btree_set","基于 B 树的集合。"],["linked_list","具有所属节点的双向链表。"],["vec_deque","使用可增长的环形缓冲区实现的双端队列。"]]});

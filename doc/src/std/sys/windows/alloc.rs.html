@@ -1,0 +1,496 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\sys\windows\alloc.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>alloc.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../std/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+</pre><pre class="rust">
+<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">unsafe_op_in_unsafe_fn</span>)]</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::alloc</span>::{<span class="ident">GlobalAlloc</span>, <span class="ident">Layout</span>, <span class="ident">System</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ffi::c_void</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::atomic</span>::{<span class="ident">AtomicPtr</span>, <span class="ident">Ordering</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::c</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys::common::alloc</span>::{<span class="ident">realloc_fallback</span>, <span class="ident">MIN_ALIGN</span>};
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span>;
+
+<span class="comment">// Windows 上的堆内存管理是通过使用系统 Heap API (heapapi.h) 完成的</span>
+<span class="comment">// See https://docs.microsoft.com/windows/win32/api/heapapi/</span>
+
+<span class="comment">// 指示 `HeapAlloc` 返回的内存应清零的标志。</span>
+<span class="kw">const</span> <span class="ident">HEAP_ZERO_MEMORY</span>: <span class="ident">c::DWORD</span> <span class="op">=</span> <span class="number">0x00000008</span>;
+
+<span class="kw">extern</span> <span class="string">&quot;system&quot;</span> {
+    <span class="comment">// 获取当前进程的默认堆的句柄，如果操作失败，则为 null。</span>
+    <span class="comment">//</span>
+    <span class="comment">// SAFETY: 假设在同一进程中成功调用此函数会返回相同的句柄，该句柄在整个进程生命周期内始终有效。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// See https://docs.microsoft.com/windows/win32/api/heapapi/nf-heapapi-getprocessheap</span>
+    <span class="kw">fn</span> <span class="ident">GetProcessHeap</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::HANDLE</span>;
+
+    <span class="comment">// 从给定的堆 `hHeap` 分配一块 `dwBytes` 字节的内存。</span>
+    <span class="comment">// 如果 `dwFlags` 设置为 `HEAP_ZERO_MEMORY`，分配的内存可能未初始化或归零。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 返回指向新分配内存的指针，如果操作失败，则返回 null。</span>
+    <span class="comment">// 返回的指针将至少与 `MIN_ALIGN` 对齐。</span>
+    <span class="comment">//</span>
+    <span class="comment">// SAFETY:</span>
+    <span class="comment">//  - `hHeap` 必须是 `GetProcessHeap` 返回的非空句柄。</span>
+    <span class="comment">//  - `dwFlags` 必须设置为零或 `HEAP_ZERO_MEMORY`。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 请注意，与其他一些分配器相反，`dwBytes` 可以为零。</span>
+    <span class="comment">//</span>
+    <span class="comment">// See https://docs.microsoft.com/windows/win32/api/heapapi/nf-heapapi-heapalloc</span>
+    <span class="kw">fn</span> <span class="ident">HeapAlloc</span>(<span class="ident">hHeap</span>: <span class="ident">c::HANDLE</span>, <span class="ident">dwFlags</span>: <span class="ident">c::DWORD</span>, <span class="ident">dwBytes</span>: <span class="ident">c::SIZE_T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::LPVOID</span>;
+
+    <span class="comment">// 将给定指针 `lpMem` 后面的一块内存从给定的堆 `hHeap` 重新分配到至少 `dwBytes` 字节的块，要么将块缩小到位，要么在新位置分配，复制内存并释放原始位置。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 返回指向重新分配的内存的指针，如果操作失败，则返回 null。</span>
+    <span class="comment">// 返回的指针将至少与 `MIN_ALIGN` 对齐。</span>
+    <span class="comment">// 如果操作失败，给定的块将永远不会被释放。</span>
+    <span class="comment">//</span>
+    <span class="comment">// SAFETY:</span>
+    <span class="comment">//  - `hHeap` 必须是 `GetProcessHeap` 返回的非空句柄。</span>
+    <span class="comment">//  - `dwFlags` 必须设置为零。</span>
+    <span class="comment">//  - `lpMem` 必须是一个非空指针，指向由 `HeapAlloc` 或 `HeapReAlloc` 返回的尚未被释放的已分配块。</span>
+    <span class="comment">// 如果块在新位置成功重新分配，则不能再次解引用指向已释放内存的指针，例如 `lpMem`。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 请注意，与其他一些分配器相反，`dwBytes` 可以为零。</span>
+    <span class="comment">//</span>
+    <span class="comment">// See https://docs.microsoft.com/windows/win32/api/heapapi/nf-heapapi-heaprealloc</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="kw">fn</span> <span class="ident">HeapReAlloc</span>(
+        <span class="ident">hHeap</span>: <span class="ident">c::HANDLE</span>,
+        <span class="ident">dwFlags</span>: <span class="ident">c::DWORD</span>,
+        <span class="ident">lpMem</span>: <span class="ident">c::LPVOID</span>,
+        <span class="ident">dwBytes</span>: <span class="ident">c::SIZE_T</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::LPVOID</span>;
+
+    <span class="comment">// 从给定的堆 `hHeap` 中释放给定指针 `lpMem` 后面的一块内存。</span>
+    <span class="comment">// 如果操作成功则返回一个非零值，如果操作失败则返回零。</span>
+    <span class="comment">//</span>
+    <span class="comment">// SAFETY:</span>
+    <span class="comment">//  - `hHeap` 必须是 `GetProcessHeap` 返回的非空句柄。</span>
+    <span class="comment">//  - `dwFlags` 必须设置为零。</span>
+    <span class="comment">//  - `lpMem` 必须是 `HeapAlloc` 或 `HeapReAlloc` 返回的一个尚未被释放的已分配块的指针。</span>
+    <span class="comment">// 如果块被成功释放，指向被释放内存的指针，如 `lpMem`，不得再次解引用。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 注意 `lpMem` 允许为空，这不会导致操作失败。</span>
+    <span class="comment">//</span>
+    <span class="comment">// See https://docs.microsoft.com/windows/win32/api/heapapi/nf-heapapi-heapfree</span>
+    <span class="comment">//</span>
+    <span class="kw">fn</span> <span class="ident">HeapFree</span>(<span class="ident">hHeap</span>: <span class="ident">c::HANDLE</span>, <span class="ident">dwFlags</span>: <span class="ident">c::DWORD</span>, <span class="ident">lpMem</span>: <span class="ident">c::LPVOID</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::BOOL</span>;
+}
+
+<span class="comment">// 缓存到当前进程的默认堆的句柄。</span>
+<span class="comment">// `GetProcessHeap` 返回的非空句柄，或在尚未初始化或 `GetProcessHeap` 失败时为空。</span>
+<span class="kw">static</span> <span class="ident">HEAP</span>: <span class="ident">AtomicPtr</span><span class="op">&lt;</span><span class="ident">c_void</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">AtomicPtr::new</span>(<span class="ident">ptr::null_mut</span>());
+
+<span class="comment">// 获取当前进程的默认堆的句柄，如果操作失败，则为 null。</span>
+<span class="comment">// 如果此操作成功，则 `HEAP` 将成功初始化并包含 `GetProcessHeap` 返回的非空句柄。</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">fn</span> <span class="ident">init_or_get_process_heap</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::HANDLE</span> {
+    <span class="kw">let</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">HEAP</span>.<span class="ident">load</span>(<span class="ident">Ordering::Relaxed</span>);
+    <span class="kw">if</span> <span class="ident">heap</span>.<span class="ident">is_null</span>() {
+        <span class="comment">// `HEAP` 尚未成功初始化</span>
+        <span class="kw">let</span> <span class="ident">heap</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">GetProcessHeap</span>() };
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">heap</span>.<span class="ident">is_null</span>() {
+            <span class="comment">// SAFETY: 不需要锁定，因为在同一个进程中，成功调用 `GetProcessHeap` 将始终返回相同的值，即使在不同的线程上也是如此。</span>
+            <span class="comment">//</span>
+            <span class="ident">HEAP</span>.<span class="ident">store</span>(<span class="ident">heap</span>, <span class="ident">Ordering::Release</span>);
+
+            <span class="comment">// SAFETY: `HEAP` 包含一个由 `GetProcessHeap` 返回的非空句柄</span>
+            <span class="ident">heap</span>
+        } <span class="kw">else</span> {
+            <span class="comment">// 无法获取当前进程堆。</span>
+            <span class="ident">ptr::null_mut</span>()
+        }
+    } <span class="kw">else</span> {
+        <span class="comment">// SAFETY: `HEAP` 包含一个由 `GetProcessHeap` 返回的非空句柄</span>
+        <span class="ident">heap</span>
+    }
+}
+
+<span class="comment">// 获取当前进程默认堆的非空句柄。</span>
+<span class="comment">// SAFETY: `HEAP` 必须已成功初始化。</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">get_process_heap</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">c::HANDLE</span> {
+    <span class="ident">HEAP</span>.<span class="ident">load</span>(<span class="ident">Ordering::Acquire</span>)
+}
+
+<span class="comment">// 包含指向已分配块开头的指针的标头。</span>
+<span class="comment">// SAFETY: 大小和对齐方式必须 &lt;= `MIN_ALIGN`。</span>
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Header</span>(<span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>);
+
+<span class="comment">// 为给定的 `layout` 分配一块可选为零的内存。</span>
+<span class="comment">// SAFETY: 返回一个满足 `System` 关于已分配指针的保证的指针，如果操作失败，则返回 null。</span>
+<span class="comment">// 如果返回非空，那么 `HEAP` 将被成功初始化。</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">allocate</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>, <span class="ident">zeroed</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+    <span class="kw">let</span> <span class="ident">heap</span> <span class="op">=</span> <span class="ident">init_or_get_process_heap</span>();
+    <span class="kw">if</span> <span class="ident">heap</span>.<span class="ident">is_null</span>() {
+        <span class="comment">// 分配失败，无法获取当前进程堆。</span>
+        <span class="kw">return</span> <span class="ident">ptr::null_mut</span>();
+    }
+
+    <span class="comment">// 分配的内存将被清零或未初始化。</span>
+    <span class="kw">let</span> <span class="ident">flags</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">zeroed</span> { <span class="ident">HEAP_ZERO_MEMORY</span> } <span class="kw">else</span> { <span class="number">0</span> };
+
+    <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MIN_ALIGN</span> {
+        <span class="comment">// SAFETY: `heap` 是 `GetProcessHeap` 返回的非空句柄。</span>
+        <span class="comment">// 返回的指针指向已分配块的开始。</span>
+        <span class="kw">unsafe</span> { <span class="ident">HeapAlloc</span>(<span class="ident">heap</span>, <span class="ident">flags</span>, <span class="ident">layout</span>.<span class="ident">size</span>()) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> }
+    } <span class="kw">else</span> {
+        <span class="comment">// 分配额外的填充以便能够满足对齐。</span>
+        <span class="kw">let</span> <span class="ident">total</span> <span class="op">=</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">+</span> <span class="ident">layout</span>.<span class="ident">size</span>();
+
+        <span class="comment">// SAFETY: `heap` 是 `GetProcessHeap` 返回的非空句柄。</span>
+        <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">HeapAlloc</span>(<span class="ident">heap</span>, <span class="ident">flags</span>, <span class="ident">total</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> };
+        <span class="kw">if</span> <span class="ident">ptr</span>.<span class="ident">is_null</span>() {
+            <span class="comment">// 分配失败。</span>
+            <span class="kw">return</span> <span class="ident">ptr::null_mut</span>();
+        }
+
+        <span class="comment">// 从分配的块的开头创建一个正确对齐的指针偏移量，并在它之前写入一个头。</span>
+        <span class="comment">//</span>
+
+        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">-</span> (<span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">&amp;</span> (<span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">-</span> <span class="number">1</span>));
+        <span class="comment">// SAFETY: `MIN_ALIGN` &lt;= `offset` &lt;= `layout.align()`，分配块的大小为 `layout.align() + layout.size()`。</span>
+        <span class="comment">// `aligned` 因此将是分配块内正确对齐的指针，其后面至少有 `layout.size()` 字节，前面至少有 `MIN_ALIGN` 字节的填充。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">aligned</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">ptr</span>.<span class="ident">add</span>(<span class="ident">offset</span>) };
+        <span class="comment">// SAFETY: 因为标头的大小和对齐方式 &lt;= `MIN_ALIGN` 并且 `aligned` 至少与 `MIN_ALIGN` 对齐并且在它之前至少有 `MIN_ALIGN` 个字节的填充，所以直接在它之前写入标头是安全的。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> { <span class="ident">ptr::write</span>((<span class="ident">aligned</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Header</span>).<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>), <span class="ident">Header</span>(<span class="ident">ptr</span>)) };
+
+        <span class="comment">// SAFETY: 返回的指针不指向已分配块的开始，但在它包含块开始位置之前有一个直接可读的标头。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="ident">aligned</span>
+    }
+}
+
+<span class="comment">// 此分配器返回的所有指针除了 `GlobalAlloc` 的保证外，还具有以下属性:</span>
+<span class="comment">//</span>
+<span class="comment">// 如果使用 `layout` 指定对齐 &lt;= `MIN_ALIGN` 分配或重新分配指针，则指针将至少与 `MIN_ALIGN` 对齐并指向已分配块的开头。</span>
+<span class="comment">//</span>
+<span class="comment">// 如果使用 `layout` 指定对齐 &gt; `MIN_ALIGN` 分配或重新分配指针，则指针将与指定对齐对齐，而不指向已分配块的开头。</span>
+<span class="comment">//</span>
+<span class="comment">// 相反，在返回的指针之前会有一个直接可读的标头，包含块开始的实际位置。</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc_system_type&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.28.0&quot;</span>)]</span>
+<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">GlobalAlloc</span> <span class="kw">for</span> <span class="ident">System</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+        <span class="comment">// SAFETY: `allocate` 返回的指针满足 `System` 的保证</span>
+        <span class="kw">let</span> <span class="ident">zeroed</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        <span class="kw">unsafe</span> { <span class="ident">allocate</span>(<span class="ident">layout</span>, <span class="ident">zeroed</span>) }
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc_zeroed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+        <span class="comment">// SAFETY: `allocate` 返回的指针满足 `System` 的保证</span>
+        <span class="kw">let</span> <span class="ident">zeroed</span> <span class="op">=</span> <span class="bool-val">true</span>;
+        <span class="kw">unsafe</span> { <span class="ident">allocate</span>(<span class="ident">layout</span>, <span class="ident">zeroed</span>) }
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">dealloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) {
+        <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> {
+            <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MIN_ALIGN</span> {
+                <span class="ident">ptr</span>
+            } <span class="kw">else</span> {
+                <span class="comment">// 块开始的位置存储在 `ptr` 之前的填充中。</span>
+
+                <span class="comment">// SAFETY: 由于 `System` 的约定，`ptr` 被保证为非空并且在它之前有一个直接可读的标头。</span>
+                <span class="comment">//</span>
+                <span class="kw">unsafe</span> { <span class="ident">ptr::read</span>((<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Header</span>).<span class="ident">offset</span>(<span class="op">-</span><span class="number">1</span>)).<span class="number">0</span> }
+            }
+        };
+
+        <span class="comment">// SAFETY: 因为 `ptr` 已经用这个分配器成功分配了，所以 `HEAP` 一定已经成功初始化了。</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">heap</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">get_process_heap</span>() };
+
+        <span class="comment">// SAFETY: `heap` 是 `GetProcessHeap` 返回的非空句柄，`block` 是指向已分配块开头的指针。</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> { <span class="ident">HeapFree</span>(<span class="ident">heap</span>, <span class="number">0</span>, <span class="ident">block</span> <span class="kw">as</span> <span class="ident">c::LPVOID</span>) };
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">realloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>, <span class="ident">new_size</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+        <span class="kw">if</span> <span class="ident">layout</span>.<span class="ident">align</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">MIN_ALIGN</span> {
+            <span class="comment">// SAFETY: 因为 `ptr` 已经用这个分配器成功分配了，所以 `HEAP` 一定已经成功初始化了。</span>
+            <span class="comment">//</span>
+            <span class="kw">let</span> <span class="ident">heap</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">get_process_heap</span>() };
+
+            <span class="comment">// SAFETY: `heap` 是 `GetProcessHeap` 返回的非空句柄，`ptr` 是指向已分配块开头的指针。</span>
+            <span class="comment">//</span>
+            <span class="comment">// 返回的指针指向已分配块的开始。</span>
+            <span class="kw">unsafe</span> { <span class="ident">HeapReAlloc</span>(<span class="ident">heap</span>, <span class="number">0</span>, <span class="ident">ptr</span> <span class="kw">as</span> <span class="ident">c::LPVOID</span>, <span class="ident">new_size</span>) <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> }
+        } <span class="kw">else</span> {
+            <span class="comment">// SAFETY: `realloc_fallback` 使用 `dealloc` 和 `alloc` 实现，它们将正确处理 `ptr` 并返回满足 `System` 保证的指针</span>
+            <span class="comment">//</span>
+            <span class="kw">unsafe</span> { <span class="ident">realloc_fallback</span>(<span class="self">self</span>, <span class="ident">ptr</span>, <span class="ident">layout</span>, <span class="ident">new_size</span>) }
+        }
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="std" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

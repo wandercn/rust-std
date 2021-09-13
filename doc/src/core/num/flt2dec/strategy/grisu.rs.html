@@ -1,0 +1,1532 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\num\flt2dec\strategy\grisu.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>grisu.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../../storage1.55.0.js"></script><script src="../../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img src="../../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+</pre><pre class="rust">
+<span class="doccomment">//! Grisu3 算法的 Rust 适应性，在使用整数快速而准确地打印浮点数 [^1] 中进行了介绍。</span>
+<span class="doccomment">//! 它使用大约 1KB 的预先计算表，因此，对于大多数输入而言，它非常快。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [^1]: Florian Loitsch. 2010. 快速打印浮点数和</span>
+<span class="doccomment">//!   准确地使用整数。SIGPLAN 不是。45, 6 (June 2010), 233-243.</span>
+<span class="doccomment">//!</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::mem::MaybeUninit</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::diy_float::Fp</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::flt2dec</span>::{<span class="ident">round_up</span>, <span class="ident">Decoded</span>, <span class="ident">MAX_SIG_DIGITS</span>};
+
+<span class="comment">// 有关基本原理，请参见 `format_shortest_opt` 中的注释。</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ALPHA</span>: <span class="ident">i16</span> <span class="op">=</span> <span class="op">-</span><span class="number">60</span>;
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">GAMMA</span>: <span class="ident">i16</span> <span class="op">=</span> <span class="op">-</span><span class="number">32</span>;
+
+<span class="comment">/*
+# the following Python code generates this table:
+for i in xrange(-308, 333, 8):
+    if i &gt;= 0: f = 10**i; e = 0
+    else: f = 2**(80-4*i) // 10**-i; e = 4 * i - 80
+    l = f.bit_length()
+    f = ((f &lt;&lt; 64 &gt;&gt; (l-1)) + 1) &gt;&gt; 1; e += l - 64
+    print &#39;    (%#018x, %5d, %4d),&#39; % (f, e, i)
+*/</span>
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">static</span> <span class="ident">CACHED_POW10</span>: [(<span class="ident">u64</span>, <span class="ident">i16</span>, <span class="ident">i16</span>); <span class="number">81</span>] <span class="op">=</span> [
+    <span class="comment">// (f, e, k)</span>
+    (<span class="number">0xe61acf033d1a45df</span>, <span class="op">-</span><span class="number">1087</span>, <span class="op">-</span><span class="number">308</span>),
+    (<span class="number">0xab70fe17c79ac6ca</span>, <span class="op">-</span><span class="number">1060</span>, <span class="op">-</span><span class="number">300</span>),
+    (<span class="number">0xff77b1fcbebcdc4f</span>, <span class="op">-</span><span class="number">1034</span>, <span class="op">-</span><span class="number">292</span>),
+    (<span class="number">0xbe5691ef416bd60c</span>, <span class="op">-</span><span class="number">1007</span>, <span class="op">-</span><span class="number">284</span>),
+    (<span class="number">0x8dd01fad907ffc3c</span>, <span class="op">-</span><span class="number">980</span>, <span class="op">-</span><span class="number">276</span>),
+    (<span class="number">0xd3515c2831559a83</span>, <span class="op">-</span><span class="number">954</span>, <span class="op">-</span><span class="number">268</span>),
+    (<span class="number">0x9d71ac8fada6c9b5</span>, <span class="op">-</span><span class="number">927</span>, <span class="op">-</span><span class="number">260</span>),
+    (<span class="number">0xea9c227723ee8bcb</span>, <span class="op">-</span><span class="number">901</span>, <span class="op">-</span><span class="number">252</span>),
+    (<span class="number">0xaecc49914078536d</span>, <span class="op">-</span><span class="number">874</span>, <span class="op">-</span><span class="number">244</span>),
+    (<span class="number">0x823c12795db6ce57</span>, <span class="op">-</span><span class="number">847</span>, <span class="op">-</span><span class="number">236</span>),
+    (<span class="number">0xc21094364dfb5637</span>, <span class="op">-</span><span class="number">821</span>, <span class="op">-</span><span class="number">228</span>),
+    (<span class="number">0x9096ea6f3848984f</span>, <span class="op">-</span><span class="number">794</span>, <span class="op">-</span><span class="number">220</span>),
+    (<span class="number">0xd77485cb25823ac7</span>, <span class="op">-</span><span class="number">768</span>, <span class="op">-</span><span class="number">212</span>),
+    (<span class="number">0xa086cfcd97bf97f4</span>, <span class="op">-</span><span class="number">741</span>, <span class="op">-</span><span class="number">204</span>),
+    (<span class="number">0xef340a98172aace5</span>, <span class="op">-</span><span class="number">715</span>, <span class="op">-</span><span class="number">196</span>),
+    (<span class="number">0xb23867fb2a35b28e</span>, <span class="op">-</span><span class="number">688</span>, <span class="op">-</span><span class="number">188</span>),
+    (<span class="number">0x84c8d4dfd2c63f3b</span>, <span class="op">-</span><span class="number">661</span>, <span class="op">-</span><span class="number">180</span>),
+    (<span class="number">0xc5dd44271ad3cdba</span>, <span class="op">-</span><span class="number">635</span>, <span class="op">-</span><span class="number">172</span>),
+    (<span class="number">0x936b9fcebb25c996</span>, <span class="op">-</span><span class="number">608</span>, <span class="op">-</span><span class="number">164</span>),
+    (<span class="number">0xdbac6c247d62a584</span>, <span class="op">-</span><span class="number">582</span>, <span class="op">-</span><span class="number">156</span>),
+    (<span class="number">0xa3ab66580d5fdaf6</span>, <span class="op">-</span><span class="number">555</span>, <span class="op">-</span><span class="number">148</span>),
+    (<span class="number">0xf3e2f893dec3f126</span>, <span class="op">-</span><span class="number">529</span>, <span class="op">-</span><span class="number">140</span>),
+    (<span class="number">0xb5b5ada8aaff80b8</span>, <span class="op">-</span><span class="number">502</span>, <span class="op">-</span><span class="number">132</span>),
+    (<span class="number">0x87625f056c7c4a8b</span>, <span class="op">-</span><span class="number">475</span>, <span class="op">-</span><span class="number">124</span>),
+    (<span class="number">0xc9bcff6034c13053</span>, <span class="op">-</span><span class="number">449</span>, <span class="op">-</span><span class="number">116</span>),
+    (<span class="number">0x964e858c91ba2655</span>, <span class="op">-</span><span class="number">422</span>, <span class="op">-</span><span class="number">108</span>),
+    (<span class="number">0xdff9772470297ebd</span>, <span class="op">-</span><span class="number">396</span>, <span class="op">-</span><span class="number">100</span>),
+    (<span class="number">0xa6dfbd9fb8e5b88f</span>, <span class="op">-</span><span class="number">369</span>, <span class="op">-</span><span class="number">92</span>),
+    (<span class="number">0xf8a95fcf88747d94</span>, <span class="op">-</span><span class="number">343</span>, <span class="op">-</span><span class="number">84</span>),
+    (<span class="number">0xb94470938fa89bcf</span>, <span class="op">-</span><span class="number">316</span>, <span class="op">-</span><span class="number">76</span>),
+    (<span class="number">0x8a08f0f8bf0f156b</span>, <span class="op">-</span><span class="number">289</span>, <span class="op">-</span><span class="number">68</span>),
+    (<span class="number">0xcdb02555653131b6</span>, <span class="op">-</span><span class="number">263</span>, <span class="op">-</span><span class="number">60</span>),
+    (<span class="number">0x993fe2c6d07b7fac</span>, <span class="op">-</span><span class="number">236</span>, <span class="op">-</span><span class="number">52</span>),
+    (<span class="number">0xe45c10c42a2b3b06</span>, <span class="op">-</span><span class="number">210</span>, <span class="op">-</span><span class="number">44</span>),
+    (<span class="number">0xaa242499697392d3</span>, <span class="op">-</span><span class="number">183</span>, <span class="op">-</span><span class="number">36</span>),
+    (<span class="number">0xfd87b5f28300ca0e</span>, <span class="op">-</span><span class="number">157</span>, <span class="op">-</span><span class="number">28</span>),
+    (<span class="number">0xbce5086492111aeb</span>, <span class="op">-</span><span class="number">130</span>, <span class="op">-</span><span class="number">20</span>),
+    (<span class="number">0x8cbccc096f5088cc</span>, <span class="op">-</span><span class="number">103</span>, <span class="op">-</span><span class="number">12</span>),
+    (<span class="number">0xd1b71758e219652c</span>, <span class="op">-</span><span class="number">77</span>, <span class="op">-</span><span class="number">4</span>),
+    (<span class="number">0x9c40000000000000</span>, <span class="op">-</span><span class="number">50</span>, <span class="number">4</span>),
+    (<span class="number">0xe8d4a51000000000</span>, <span class="op">-</span><span class="number">24</span>, <span class="number">12</span>),
+    (<span class="number">0xad78ebc5ac620000</span>, <span class="number">3</span>, <span class="number">20</span>),
+    (<span class="number">0x813f3978f8940984</span>, <span class="number">30</span>, <span class="number">28</span>),
+    (<span class="number">0xc097ce7bc90715b3</span>, <span class="number">56</span>, <span class="number">36</span>),
+    (<span class="number">0x8f7e32ce7bea5c70</span>, <span class="number">83</span>, <span class="number">44</span>),
+    (<span class="number">0xd5d238a4abe98068</span>, <span class="number">109</span>, <span class="number">52</span>),
+    (<span class="number">0x9f4f2726179a2245</span>, <span class="number">136</span>, <span class="number">60</span>),
+    (<span class="number">0xed63a231d4c4fb27</span>, <span class="number">162</span>, <span class="number">68</span>),
+    (<span class="number">0xb0de65388cc8ada8</span>, <span class="number">189</span>, <span class="number">76</span>),
+    (<span class="number">0x83c7088e1aab65db</span>, <span class="number">216</span>, <span class="number">84</span>),
+    (<span class="number">0xc45d1df942711d9a</span>, <span class="number">242</span>, <span class="number">92</span>),
+    (<span class="number">0x924d692ca61be758</span>, <span class="number">269</span>, <span class="number">100</span>),
+    (<span class="number">0xda01ee641a708dea</span>, <span class="number">295</span>, <span class="number">108</span>),
+    (<span class="number">0xa26da3999aef774a</span>, <span class="number">322</span>, <span class="number">116</span>),
+    (<span class="number">0xf209787bb47d6b85</span>, <span class="number">348</span>, <span class="number">124</span>),
+    (<span class="number">0xb454e4a179dd1877</span>, <span class="number">375</span>, <span class="number">132</span>),
+    (<span class="number">0x865b86925b9bc5c2</span>, <span class="number">402</span>, <span class="number">140</span>),
+    (<span class="number">0xc83553c5c8965d3d</span>, <span class="number">428</span>, <span class="number">148</span>),
+    (<span class="number">0x952ab45cfa97a0b3</span>, <span class="number">455</span>, <span class="number">156</span>),
+    (<span class="number">0xde469fbd99a05fe3</span>, <span class="number">481</span>, <span class="number">164</span>),
+    (<span class="number">0xa59bc234db398c25</span>, <span class="number">508</span>, <span class="number">172</span>),
+    (<span class="number">0xf6c69a72a3989f5c</span>, <span class="number">534</span>, <span class="number">180</span>),
+    (<span class="number">0xb7dcbf5354e9bece</span>, <span class="number">561</span>, <span class="number">188</span>),
+    (<span class="number">0x88fcf317f22241e2</span>, <span class="number">588</span>, <span class="number">196</span>),
+    (<span class="number">0xcc20ce9bd35c78a5</span>, <span class="number">614</span>, <span class="number">204</span>),
+    (<span class="number">0x98165af37b2153df</span>, <span class="number">641</span>, <span class="number">212</span>),
+    (<span class="number">0xe2a0b5dc971f303a</span>, <span class="number">667</span>, <span class="number">220</span>),
+    (<span class="number">0xa8d9d1535ce3b396</span>, <span class="number">694</span>, <span class="number">228</span>),
+    (<span class="number">0xfb9b7cd9a4a7443c</span>, <span class="number">720</span>, <span class="number">236</span>),
+    (<span class="number">0xbb764c4ca7a44410</span>, <span class="number">747</span>, <span class="number">244</span>),
+    (<span class="number">0x8bab8eefb6409c1a</span>, <span class="number">774</span>, <span class="number">252</span>),
+    (<span class="number">0xd01fef10a657842c</span>, <span class="number">800</span>, <span class="number">260</span>),
+    (<span class="number">0x9b10a4e5e9913129</span>, <span class="number">827</span>, <span class="number">268</span>),
+    (<span class="number">0xe7109bfba19c0c9d</span>, <span class="number">853</span>, <span class="number">276</span>),
+    (<span class="number">0xac2820d9623bf429</span>, <span class="number">880</span>, <span class="number">284</span>),
+    (<span class="number">0x80444b5e7aa7cf85</span>, <span class="number">907</span>, <span class="number">292</span>),
+    (<span class="number">0xbf21e44003acdd2d</span>, <span class="number">933</span>, <span class="number">300</span>),
+    (<span class="number">0x8e679c2f5e44ff8f</span>, <span class="number">960</span>, <span class="number">308</span>),
+    (<span class="number">0xd433179d9c8cb841</span>, <span class="number">986</span>, <span class="number">316</span>),
+    (<span class="number">0x9e19db92b4e31ba9</span>, <span class="number">1013</span>, <span class="number">324</span>),
+    (<span class="number">0xeb96bf6ebadf77d9</span>, <span class="number">1039</span>, <span class="number">332</span>),
+];
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CACHED_POW10_FIRST_E</span>: <span class="ident">i16</span> <span class="op">=</span> <span class="op">-</span><span class="number">1087</span>;
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CACHED_POW10_LAST_E</span>: <span class="ident">i16</span> <span class="op">=</span> <span class="number">1039</span>;
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cached_power</span>(<span class="ident">alpha</span>: <span class="ident">i16</span>, <span class="ident">gamma</span>: <span class="ident">i16</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">i16</span>, <span class="ident">Fp</span>) {
+    <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="ident">CACHED_POW10_FIRST_E</span> <span class="kw">as</span> <span class="ident">i32</span>;
+    <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> (<span class="ident">CACHED_POW10</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">i32</span>) <span class="op">-</span> <span class="number">1</span>;
+    <span class="kw">let</span> <span class="ident">domain</span> <span class="op">=</span> (<span class="ident">CACHED_POW10_LAST_E</span> <span class="op">-</span> <span class="ident">CACHED_POW10_FIRST_E</span>) <span class="kw">as</span> <span class="ident">i32</span>;
+    <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> ((<span class="ident">gamma</span> <span class="kw">as</span> <span class="ident">i32</span>) <span class="op">-</span> <span class="ident">offset</span>) <span class="op">*</span> <span class="ident">range</span> <span class="op">/</span> <span class="ident">domain</span>;
+    <span class="kw">let</span> (<span class="ident">f</span>, <span class="ident">e</span>, <span class="ident">k</span>) <span class="op">=</span> <span class="ident">CACHED_POW10</span>[<span class="ident">idx</span> <span class="kw">as</span> <span class="ident">usize</span>];
+    <span class="macro">debug_assert!</span>(<span class="ident">alpha</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">e</span> <span class="op">&amp;&amp;</span> <span class="ident">e</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">gamma</span>);
+    (<span class="ident">k</span>, <span class="ident">Fp</span> { <span class="ident">f</span>, <span class="ident">e</span> })
+}
+
+<span class="doccomment">/// 给定 `x &gt; 0`，则返回 `(k, 10^k)`，如 `10^k &lt;= x &lt; 10^(k+1)`。</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">max_pow10_no_more_than</span>(<span class="ident">x</span>: <span class="ident">u32</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">u8</span>, <span class="ident">u32</span>) {
+    <span class="macro">debug_assert!</span>(<span class="ident">x</span> <span class="op">&gt;</span> <span class="number">0</span>);
+
+    <span class="kw">const</span> <span class="ident">X9</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">10_0000_0000</span>;
+    <span class="kw">const</span> <span class="ident">X8</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1_0000_0000</span>;
+    <span class="kw">const</span> <span class="ident">X7</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1000_0000</span>;
+    <span class="kw">const</span> <span class="ident">X6</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">100_0000</span>;
+    <span class="kw">const</span> <span class="ident">X5</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">10_0000</span>;
+    <span class="kw">const</span> <span class="ident">X4</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1_0000</span>;
+    <span class="kw">const</span> <span class="ident">X3</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">1000</span>;
+    <span class="kw">const</span> <span class="ident">X2</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">100</span>;
+    <span class="kw">const</span> <span class="ident">X1</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">10</span>;
+
+    <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X4</span> {
+        <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X2</span> {
+            <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X1</span> { (<span class="number">0</span>, <span class="number">1</span>) } <span class="kw">else</span> { (<span class="number">1</span>, <span class="ident">X1</span>) }
+        } <span class="kw">else</span> {
+            <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X3</span> { (<span class="number">2</span>, <span class="ident">X2</span>) } <span class="kw">else</span> { (<span class="number">3</span>, <span class="ident">X3</span>) }
+        }
+    } <span class="kw">else</span> {
+        <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X6</span> {
+            <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X5</span> { (<span class="number">4</span>, <span class="ident">X4</span>) } <span class="kw">else</span> { (<span class="number">5</span>, <span class="ident">X5</span>) }
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X8</span> {
+            <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X7</span> { (<span class="number">6</span>, <span class="ident">X6</span>) } <span class="kw">else</span> { (<span class="number">7</span>, <span class="ident">X7</span>) }
+        } <span class="kw">else</span> {
+            <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="ident">X9</span> { (<span class="number">8</span>, <span class="ident">X8</span>) } <span class="kw">else</span> { (<span class="number">9</span>, <span class="ident">X9</span>) }
+        }
+    }
+}
+
+<span class="doccomment">/// Grisu 的最短模式实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 否则，当返回不精确的表示形式时，它将返回 `None`。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_shortest_opt</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>)<span class="op">&gt;</span> {
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">minus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">plus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_add</span>(<span class="ident">d</span>.<span class="ident">plus</span>).<span class="ident">is_some</span>());
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_sub</span>(<span class="ident">d</span>.<span class="ident">minus</span>).<span class="ident">is_some</span>());
+    <span class="macro">assert!</span>(<span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">MAX_SIG_DIGITS</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">+</span> <span class="ident">d</span>.<span class="ident">plus</span> <span class="op">&lt;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">61</span>)); <span class="comment">// 我们至少需要三位额外的精度</span>
+
+    <span class="comment">// 从具有共享指数的归一化值开始</span>
+    <span class="kw">let</span> <span class="ident">plus</span> <span class="op">=</span> <span class="ident">Fp</span> { <span class="ident">f</span>: <span class="ident">d</span>.<span class="ident">mant</span> <span class="op">+</span> <span class="ident">d</span>.<span class="ident">plus</span>, <span class="ident">e</span>: <span class="ident">d</span>.<span class="ident">exp</span> }.<span class="ident">normalize</span>();
+    <span class="kw">let</span> <span class="ident">minus</span> <span class="op">=</span> <span class="ident">Fp</span> { <span class="ident">f</span>: <span class="ident">d</span>.<span class="ident">mant</span> <span class="op">-</span> <span class="ident">d</span>.<span class="ident">minus</span>, <span class="ident">e</span>: <span class="ident">d</span>.<span class="ident">exp</span> }.<span class="ident">normalize_to</span>(<span class="ident">plus</span>.<span class="ident">e</span>);
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Fp</span> { <span class="ident">f</span>: <span class="ident">d</span>.<span class="ident">mant</span>, <span class="ident">e</span>: <span class="ident">d</span>.<span class="ident">exp</span> }.<span class="ident">normalize_to</span>(<span class="ident">plus</span>.<span class="ident">e</span>);
+
+    <span class="comment">// 找到任何 `cached = 10^minusk` 这样的 `ALPHA &lt;= minusk + plus.e + 64 &lt;= GAMMA`。</span>
+    <span class="comment">// 由于 `plus` 已标准化，这意味着 `2^(62 + ALPHA) &lt;= plus * cached &lt; 2^(64 + GAMMA)`;</span>
+    <span class="comment">// 考虑到我们选择了 `ALPHA` 和 `GAMMA`，这会将 `plus * cached` 放入 `[4, 2^32)`。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 显然，最大化 `GAMMA - ALPHA` 是可取的，这样我们就不需要很多 10 的缓存幂，但是有一些注意事项:</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 1. 我们希望将 `floor(plus * cached)` 保留在 `u32` 之内，因为它需要一个代价高昂的除法。</span>
+    <span class="comment">//    (这实际上是无法避免的，需要剩余的部分来进行准确性估算。)</span>
+    <span class="comment">// 2.</span>
+    <span class="comment">// `floor(plus * cached)` 的其余部分反复乘以 10，并且不应溢出。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 第一个给出 `64 + GAMMA &lt;= 32`，第二个给出 `10 * 2^-ALPHA &lt;= 2^64`;</span>
+    <span class="comment">// -60 -32 是具有此约束的最大范围，V8 也使用它们。</span>
+    <span class="kw">let</span> (<span class="ident">minusk</span>, <span class="ident">cached</span>) <span class="op">=</span> <span class="ident">cached_power</span>(<span class="ident">ALPHA</span> <span class="op">-</span> <span class="ident">plus</span>.<span class="ident">e</span> <span class="op">-</span> <span class="number">64</span>, <span class="ident">GAMMA</span> <span class="op">-</span> <span class="ident">plus</span>.<span class="ident">e</span> <span class="op">-</span> <span class="number">64</span>);
+
+    <span class="comment">// 缩放 fps。这给出了 1 ulp 的最大误差 (由定理 5.1 证明)。</span>
+    <span class="kw">let</span> <span class="ident">plus</span> <span class="op">=</span> <span class="ident">plus</span>.<span class="ident">mul</span>(<span class="kw-2">&amp;</span><span class="ident">cached</span>);
+    <span class="kw">let</span> <span class="ident">minus</span> <span class="op">=</span> <span class="ident">minus</span>.<span class="ident">mul</span>(<span class="kw-2">&amp;</span><span class="ident">cached</span>);
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">mul</span>(<span class="kw-2">&amp;</span><span class="ident">cached</span>);
+    <span class="macro">debug_assert_eq!</span>(<span class="ident">plus</span>.<span class="ident">e</span>, <span class="ident">minus</span>.<span class="ident">e</span>);
+    <span class="macro">debug_assert_eq!</span>(<span class="ident">plus</span>.<span class="ident">e</span>, <span class="ident">v</span>.<span class="ident">e</span>);
+
+    <span class="comment">// +- 负的实际范围</span>
+    <span class="comment">//   | &lt;---|---------------------- unsafe region --------------------------&gt; |</span>
+    <span class="comment">//   |     |                                                                 |</span>
+    <span class="comment">//   |  |&lt;---&gt;|  | &lt;--------------- safe region ---------------&gt; |           |</span>
+    <span class="comment">//   |  |     |  |                                               |           |</span>
+    <span class="comment">//   |1 ulp|1 ulp|                 |1 ulp|1 ulp|                 |1 ulp|1 ulp|</span>
+    <span class="comment">//   |&lt;---&gt;|&lt;---&gt;|                 |&lt;---&gt;|&lt;---&gt;|                 |&lt;---&gt;|&lt;---&gt;|</span>
+    <span class="comment">//   |-----|-----|-------...-------|-----|-----|-------...-------|-----|-----|</span>
+    <span class="comment">//   |   minus   |                 |     v     |                 |   plus    | minus1     minus0           v - 1 ulp   v + 1 ulp           plus0       plus1</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// `minus` 之上的 `v` 和 `plus` 被量化为近似值 (误差 &lt; 1 ulp)。</span>
+    <span class="comment">// 因为我们不知道误差是正还是负，所以我们使用两个等距分布的近似值，并且最大误差为 2 ulps。</span>
+    <span class="comment">//</span>
+    <span class="comment">// &quot;unsafe region&quot; 是我们最初生成的自由区间。</span>
+    <span class="comment">// &quot;safe region&quot; 是我们仅接受的保守区间。</span>
+    <span class="comment">// 我们从不安全区域内的正确 repr 开始，然后尝试找到也在安全区域内与 `v` 最接近的 repr。</span>
+    <span class="comment">// 如果不能，我们就放弃。</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="ident">plus1</span> <span class="op">=</span> <span class="ident">plus</span>.<span class="ident">f</span> <span class="op">+</span> <span class="number">1</span>;
+    <span class="comment">// let plus0 = plus.f - 1; // only for explanation</span>
+    <span class="comment">//  let minus0 = minus.f + 1; // only for explanation</span>
+    <span class="kw">let</span> <span class="ident">minus1</span> <span class="op">=</span> <span class="ident">minus</span>.<span class="ident">f</span> <span class="op">-</span> <span class="number">1</span>;
+    <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="op">-</span><span class="ident">plus</span>.<span class="ident">e</span> <span class="kw">as</span> <span class="ident">usize</span>; <span class="comment">// 共享指数</span>
+
+    <span class="comment">// 将 `plus1` 分为整数部分和小数部分。</span>
+    <span class="comment">// 由于精度要求，缓存的幂保证了 `plus &lt; 2^32`，归一化的 `plus.f` 始终小于 `2^64 - 2^4`，因此保证了集成部件可以装入 u32。</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="ident">plus1int</span> <span class="op">=</span> (<span class="ident">plus1</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">e</span>) <span class="kw">as</span> <span class="ident">u32</span>;
+    <span class="kw">let</span> <span class="ident">plus1frac</span> <span class="op">=</span> <span class="ident">plus1</span> <span class="op">&amp;</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">-</span> <span class="number">1</span>);
+
+    <span class="comment">// 计算最大的 `10^max_kappa` 不超过 `plus1` (因此 `plus1 &lt; 10^(max_kappa+1)`)。</span>
+    <span class="comment">// 这是下面的 `kappa` 的上限。</span>
+    <span class="kw">let</span> (<span class="ident">max_kappa</span>, <span class="ident">max_ten_kappa</span>) <span class="op">=</span> <span class="ident">max_pow10_no_more_than</span>(<span class="ident">plus1int</span>);
+
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">let</span> <span class="ident">exp</span> <span class="op">=</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">i16</span> <span class="op">-</span> <span class="ident">minusk</span> <span class="op">+</span> <span class="number">1</span>;
+
+    <span class="comment">// 定理 6.2: 如果 `k` 是最大整数 s.t。</span>
+    <span class="comment">// `0 &lt;= y mod 10^k &lt;= y - x`, 那么 `V = floor(y / 10^k) * 10^k` 在 `[x, y]` 中，并且是该范围内最短的表示形式之一 (有效位数最少)。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 根据定理 6.2，找到 `(minus1, plus1)` 之间的数字长度 `kappa`。</span>
+    <span class="comment">// 通过定理 6.2 可以通过要求 `y mod 10^k &lt; y - x` 来排除 `x`。</span>
+    <span class="comment">// (例如，`x` =32000，`y` =32777; `kappa` =2，因为 `y mod 10 ^ 3=777 &lt;y-x=777`。) 该算法依赖于以后的验证阶段来排除 `y`。</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="ident">delta1</span> <span class="op">=</span> <span class="ident">plus1</span> <span class="op">-</span> <span class="ident">minus1</span>;
+    <span class="comment">// let delta1int = (delta1 &gt;&gt; e) as usize; // only for explanation</span>
+    <span class="kw">let</span> <span class="ident">delta1frac</span> <span class="op">=</span> <span class="ident">delta1</span> <span class="op">&amp;</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">-</span> <span class="number">1</span>);
+
+    <span class="comment">// 渲染组成部分，同时检查每一步的准确性。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kappa</span> <span class="op">=</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">i16</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ten_kappa</span> <span class="op">=</span> <span class="ident">max_ten_kappa</span>; <span class="comment">// 10^kappa</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">plus1int</span>; <span class="comment">// 尚未渲染的数字</span>
+    <span class="kw">loop</span> {
+        <span class="comment">// 我们总是有一个数字要渲染，作为 `plus1 &gt;= 10^kappa` 不变量:</span>
+        <span class="comment">// - `delta1int &lt;= remainder &lt; 10^(kappa+1)`</span>
+        <span class="comment">// - `plus1int = d[0..n-1] * 10^(kappa+1) + remainder` (它遵循 `remainder = plus1int % 10^(kappa+1)`)</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+
+        <span class="comment">// 将 `remainder` 除以 `10^kappa`。两者均按照 `2^-e` 缩放。</span>
+        <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">/</span> <span class="ident">ten_kappa</span>;
+        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">%</span> <span class="ident">ten_kappa</span>;
+        <span class="macro">debug_assert!</span>(<span class="ident">q</span> <span class="op">&lt;</span> <span class="number">10</span>);
+        <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">q</span> <span class="kw">as</span> <span class="ident">u8</span>);
+        <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="kw">let</span> <span class="ident">plus1rem</span> <span class="op">=</span> ((<span class="ident">r</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">+</span> <span class="ident">plus1frac</span>; <span class="comment">// == (plus1 % 10^kappa) * 2^e</span>
+        <span class="kw">if</span> <span class="ident">plus1rem</span> <span class="op">&lt;</span> <span class="ident">delta1</span> {
+            <span class="comment">// `plus1 % 10^kappa &lt; delta1 = plus1 - minus1`; 我们找到了正确的 `kappa`。</span>
+            <span class="kw">let</span> <span class="ident">ten_kappa</span> <span class="op">=</span> (<span class="ident">ten_kappa</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>; <span class="comment">// 将 10 ^ kappa 缩放回共享指数</span>
+            <span class="kw">return</span> <span class="ident">round_and_weed</span>(
+                <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+                <span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[..<span class="ident">i</span>]) },
+                <span class="ident">exp</span>,
+                <span class="ident">plus1rem</span>,
+                <span class="ident">delta1</span>,
+                <span class="ident">plus1</span> <span class="op">-</span> <span class="ident">v</span>.<span class="ident">f</span>,
+                <span class="ident">ten_kappa</span>,
+                <span class="number">1</span>,
+            );
+        }
+
+        <span class="comment">// 绘制所有整数后，请中断循环。</span>
+        <span class="comment">// 确切的位数是 `max_kappa + 1` 和 `plus1 &lt; 10^(max_kappa+1)`。</span>
+        <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">usize</span> {
+            <span class="macro">debug_assert_eq!</span>(<span class="ident">ten_kappa</span>, <span class="number">1</span>);
+            <span class="macro">debug_assert_eq!</span>(<span class="ident">kappa</span>, <span class="number">0</span>);
+            <span class="kw">break</span>;
+        }
+
+        <span class="comment">// 恢复不变量</span>
+        <span class="ident">kappa</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="ident">ten_kappa</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+        <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">r</span>;
+    }
+
+    <span class="comment">// 渲染小数部分，同时检查每个步骤的准确性。</span>
+    <span class="comment">// 这次我们依靠重复的乘法，因为除法将失去精度。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">plus1frac</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">threshold</span> <span class="op">=</span> <span class="ident">delta1frac</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ulp</span> <span class="op">=</span> <span class="number">1</span>;
+    <span class="kw">loop</span> {
+        <span class="comment">// 下一个数字应该是有效的，因为我们已经在分解不可变变量之前进行了测试，其中 `m = max_kappa + 1` (整数部分的数字) :</span>
+        <span class="comment">//</span>
+        <span class="comment">// - `remainder &lt; 2^e`</span>
+        <span class="comment">// - `plus1frac * 10^(n-m) = d[m..n-1] * 2^e + remainder`</span>
+
+        <span class="ident">remainder</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">10</span>; <span class="comment">// 不会溢出 `2^e * 10 &lt; 2^64`</span>
+        <span class="ident">threshold</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">10</span>;
+        <span class="ident">ulp</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">10</span>;
+
+        <span class="comment">// 将 `remainder` 除以 `10^kappa`。</span>
+        <span class="comment">// 两者都按 `2^e / 10^kappa` 缩放，因此后者在这里是隐式的。</span>
+        <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">e</span>;
+        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">&amp;</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">-</span> <span class="number">1</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">q</span> <span class="op">&lt;</span> <span class="number">10</span>);
+        <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">q</span> <span class="kw">as</span> <span class="ident">u8</span>);
+        <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="kw">if</span> <span class="ident">r</span> <span class="op">&lt;</span> <span class="ident">threshold</span> {
+            <span class="kw">let</span> <span class="ident">ten_kappa</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>; <span class="comment">// 隐式除数</span>
+            <span class="kw">return</span> <span class="ident">round_and_weed</span>(
+                <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+                <span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[..<span class="ident">i</span>]) },
+                <span class="ident">exp</span>,
+                <span class="ident">r</span>,
+                <span class="ident">threshold</span>,
+                (<span class="ident">plus1</span> <span class="op">-</span> <span class="ident">v</span>.<span class="ident">f</span>) <span class="op">*</span> <span class="ident">ulp</span>,
+                <span class="ident">ten_kappa</span>,
+                <span class="ident">ulp</span>,
+            );
+        }
+
+        <span class="comment">// 恢复不变量</span>
+        <span class="ident">kappa</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">r</span>;
+    }
+
+    <span class="comment">// 我们已经生成了 `plus1` 的所有有效数字，但不确定是否是最佳数字。</span>
+    <span class="comment">// 例如，如果 `minus1` 为 3.14153 ... `plus1` 是 3.14158 ...，从 3.14154 到 3.14158 有 5 种不同的最短表示形式，但我们只有最大的一种。</span>
+    <span class="comment">// 我们必须连续减少最后一位并检查这是否是最佳代表。</span>
+    <span class="comment">// 最多有 9 个候选人 (..1 到..9)，所以这相当快。(&quot;rounding&quot; 阶段)</span>
+    <span class="comment">//</span>
+    <span class="comment">// 函数检查此 &quot;optimal&quot; repr 是否实际上在 ulp 范围内，并且由于舍入误差，&quot;second-to-optimal&quot; repr 实际上可能是最佳的。</span>
+    <span class="comment">// 在这两种情况下，都将返回 `None`。</span>
+    <span class="comment">// (&quot;weeding&quot; 阶段)</span>
+    <span class="comment">//</span>
+    <span class="comment">// 这里的所有参数均按公共 (但隐式) 值 `k` 进行缩放，以便:</span>
+    <span class="comment">// - `remainder = (plus1 % 10^kappa) * k`</span>
+    <span class="comment">// - `threshold = (plus1 - minus1) * k` (还有 `remainder &lt; threshold`)</span>
+    <span class="comment">// - `plus1v = (plus1 - v) * k` (以及先前不可变变量的 `threshold &gt; plus1v`)</span>
+    <span class="comment">// - `ten_kappa = 10^kappa * k`</span>
+    <span class="comment">// - `ulp = 2^-e * k`</span>
+    <span class="comment">//</span>
+    <span class="kw">fn</span> <span class="ident">round_and_weed</span>(
+        <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>],
+        <span class="ident">exp</span>: <span class="ident">i16</span>,
+        <span class="ident">remainder</span>: <span class="ident">u64</span>,
+        <span class="ident">threshold</span>: <span class="ident">u64</span>,
+        <span class="ident">plus1v</span>: <span class="ident">u64</span>,
+        <span class="ident">ten_kappa</span>: <span class="ident">u64</span>,
+        <span class="ident">ulp</span>: <span class="ident">u64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">i16</span>)<span class="op">&gt;</span> {
+        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">buf</span>.<span class="ident">is_empty</span>());
+
+        <span class="comment">// 在 1.5 ulps 内对 `v` (实际上是 `plus1 - v`) 产生两个近似值。</span>
+        <span class="comment">// 结果表示应为两者最接近的表示。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 这里使用 `plus1 - v` 是因为针对 `plus1` 进行了计算，以避免使用 overflow/underflow (因此，似乎交换了名称)。</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">plus1v_down</span> <span class="op">=</span> <span class="ident">plus1v</span> <span class="op">+</span> <span class="ident">ulp</span>; <span class="comment">// plus1 - (v - 1 ulp)</span>
+        <span class="kw">let</span> <span class="ident">plus1v_up</span> <span class="op">=</span> <span class="ident">plus1v</span> <span class="op">-</span> <span class="ident">ulp</span>; <span class="comment">// plus1 - (v + 1 ulp)</span>
+
+        <span class="comment">// 减少最后一位数字，并停在最接近 `v + 1 ulp` 的位置。</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">plus1w</span> <span class="op">=</span> <span class="ident">remainder</span>; <span class="comment">// plus1w(n) = plus1 - w(n)</span>
+        {
+            <span class="kw">let</span> <span class="ident">last</span> <span class="op">=</span> <span class="ident">buf</span>.<span class="ident">last_mut</span>().<span class="ident">unwrap</span>();
+
+            <span class="comment">// 我们使用的近似数字 `w(n)` 最初等于 `plus1 - plus1 % 10^kappa`。将循环体运行 `n` 次之后， `w(n) = plus1 - plus1 % 10^kappa - n * 10^kappa`.</span>
+            <span class="comment">// 我们将 `plus1w(n) = plus1 - w(n) = plus1 % 10^kappa + n * 10^kappa` 设置为 (因此 `remainder= plus1w(0)`) 以简化检查。</span>
+            <span class="comment">// 请注意，`plus1w(n)` 一直在增加。</span>
+            <span class="comment">//</span>
+            <span class="comment">// 我们有三个条件可以终止。它们中的任何一个都将使循环无法继续进行，但是无论如何我们至少拥有一个已知的最接近 `v + 1 ulp` 的有效表示形式。</span>
+            <span class="comment">// 为了简便起见，我们将它们表示为 TC1 至 TC3。</span>
+            <span class="comment">//</span>
+            <span class="comment">// TC1: `w(n) &lt;= v + 1 ulp`，即这是最接近的代表。</span>
+            <span class="comment">// 这等效于 `plus1 - w(n) = plus1w(n) &gt;= plus1 - (v + 1 ulp) = plus1v_up`。</span>
+            <span class="comment">// 与 TC2 (检查 `w(n+1)` 是否有效) 结合使用，可以防止 `plus1w(n)` 的计算可能出现溢出。</span>
+            <span class="comment">//</span>
+            <span class="comment">// TC2: `w(n+1) &lt; minus1`，即下一个代表肯定不会舍入到 `v`。</span>
+            <span class="comment">// 这等效于 `plus1 - w(n) + 10^kappa = plus1w(n) + 10^kappa &gt; plus1 - minus1 = threshold`。</span>
+            <span class="comment">// 左侧可能会溢出，但是我们知道 `threshold &gt; plus1v`，所以如果 TC1 为假，则 `threshold - plus1w(n) &gt; threshold - (plus1v - 1 ulp) &gt; 1 ulp`，我们可以安全地测试 `threshold - plus1w(n) &lt; 10^kappa`。</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">// TC3: `abs(w(n) - (v + 1 ulp)) &lt;= abs(w(n+1) - (v + 1 ulp))`，即下一个代表不比当前代表更接近 `v + 1 ulp`。</span>
+            <span class="comment">// 给定 `z(n) = plus1v_up - plus1w(n)`，则变为 `abs(z(n)) &lt;= abs(z(n+1))`。再次假设 TC1 为假，我们得到 `z(n) &gt; 0`。我们有两种情况要考虑:</span>
+            <span class="comment">//</span>
+            <span class="comment">// - 当 `z(n+1) &gt;= 0`: TC3 变为 `z(n) &lt;= z(n+1)`。</span>
+            <span class="comment">// 随着 `plus1w(n)` 的增加，`z(n)` 应该减少，这显然是错误的。</span>
+            <span class="comment">// - 当 `z(n+1) &lt; 0`:</span>
+            <span class="comment">//   - TC3a: 前提是 `plus1v_up &lt; plus1w(n) + 10^kappa`。假设 TC2 为 false，则为 `threshold &gt;= plus1w(n) + 10^kappa`，因此它不会溢出。</span>
+            <span class="comment">//   - TC3b: TC3 变为 `z(n) &lt;= -z(n+1)`，即 `plus1v_up - plus1w(n) &gt;= plus1w(n+1) - plus1v_up = plus1w(n) + 10^kappa - plus1v_up`.</span>
+            <span class="comment">//   取反的 TC1 给出 `plus1v_up &gt; plus1w(n)`，因此与 TC3a 结合使用时不会溢出或下溢。</span>
+            <span class="comment">//</span>
+            <span class="comment">// 因此，我们应该在 `TC1 || TC2 || (TC3a &amp;&amp; TC3b)` 时停止。以下等价于它的逆， `!TC1 &amp;&amp; !TC2 &amp;&amp; (!TC3a || !TC3b)`.</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="comment">//</span>
+            <span class="kw">while</span> <span class="ident">plus1w</span> <span class="op">&lt;</span> <span class="ident">plus1v_up</span>
+                <span class="op">&amp;&amp;</span> <span class="ident">threshold</span> <span class="op">-</span> <span class="ident">plus1w</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">ten_kappa</span>
+                <span class="op">&amp;&amp;</span> (<span class="ident">plus1w</span> <span class="op">+</span> <span class="ident">ten_kappa</span> <span class="op">&lt;</span> <span class="ident">plus1v_up</span>
+                    <span class="op">|</span><span class="op">|</span> <span class="ident">plus1v_up</span> <span class="op">-</span> <span class="ident">plus1w</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">plus1w</span> <span class="op">+</span> <span class="ident">ten_kappa</span> <span class="op">-</span> <span class="ident">plus1v_up</span>)
+            {
+                <span class="kw-2">*</span><span class="ident">last</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="macro">debug_assert!</span>(<span class="kw-2">*</span><span class="ident">last</span> <span class="op">&gt;</span> <span class="string">b&#39;0&#39;</span>); <span class="comment">// 最短的代表不能以 `0` 结尾</span>
+                <span class="ident">plus1w</span> <span class="op">+</span><span class="op">=</span> <span class="ident">ten_kappa</span>;
+            }
+        }
+
+        <span class="comment">// 检查此表示形式是否也是最接近 `v - 1 ulp` 的表示形式。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 这与 `v + 1 ulp` 的终止条件完全相同，所有 `plus1v_up` 都替换为 `plus1v_down`。</span>
+        <span class="comment">// 溢出分析同样成立。</span>
+        <span class="kw">if</span> <span class="ident">plus1w</span> <span class="op">&lt;</span> <span class="ident">plus1v_down</span>
+            <span class="op">&amp;&amp;</span> <span class="ident">threshold</span> <span class="op">-</span> <span class="ident">plus1w</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">ten_kappa</span>
+            <span class="op">&amp;&amp;</span> (<span class="ident">plus1w</span> <span class="op">+</span> <span class="ident">ten_kappa</span> <span class="op">&lt;</span> <span class="ident">plus1v_down</span>
+                <span class="op">|</span><span class="op">|</span> <span class="ident">plus1v_down</span> <span class="op">-</span> <span class="ident">plus1w</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">plus1w</span> <span class="op">+</span> <span class="ident">ten_kappa</span> <span class="op">-</span> <span class="ident">plus1v_down</span>)
+        {
+            <span class="kw">return</span> <span class="prelude-val">None</span>;
+        }
+
+        <span class="comment">// 现在，我们在 `plus1` 和 `minus1` 之间具有最接近 `v` 的表示形式。</span>
+        <span class="comment">// 但是，这太宽松了，因此我们拒绝 `plus0` 和 `minus0` 之间的任何 `w(n)`，即 `plus1 - plus1w(n) &lt;= minus0` 或 `plus1 - plus1w(n) &gt;= plus0`。</span>
+        <span class="comment">// 我们利用 `threshold = plus1 - minus1` 和 `plus1 - plus0 = minus0 - minus1 = 2 ulp` 的事实。</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">ulp</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">plus1w</span> <span class="op">&amp;&amp;</span> <span class="ident">plus1w</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">threshold</span> <span class="op">-</span> <span class="number">4</span> <span class="op">*</span> <span class="ident">ulp</span> { <span class="prelude-val">Some</span>((<span class="ident">buf</span>, <span class="ident">exp</span>)) } <span class="kw">else</span> { <span class="prelude-val">None</span> }
+    }
+}
+
+<span class="doccomment">/// 具有 Dragon 后备功能的 Grisu 的最短模式实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在大多数情况下都应使用此方法。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_shortest</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>) {
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::flt2dec::strategy::dragon::format_shortest</span> <span class="kw">as</span> <span class="ident">fallback</span>;
+    <span class="comment">// SAFETY: 借用检查器不够智能，无法在第二个分支中使用 `buf`，因此我们在这里清洗生命周期。</span>
+    <span class="comment">// 但是，只有在 `format_shortest_opt` 返回 `None` 的情况下，我们才重新使用 `buf`，所以可以。</span>
+    <span class="comment">//</span>
+    <span class="kw">match</span> <span class="ident">format_shortest_opt</span>(<span class="ident">d</span>, <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span>(<span class="ident">buf</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>) }) {
+        <span class="prelude-val">Some</span>(<span class="ident">ret</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ret</span>,
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">fallback</span>(<span class="ident">d</span>, <span class="ident">buf</span>),
+    }
+}
+
+<span class="doccomment">/// Grisu 的确切和固定模式实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 否则，当返回不精确的表示形式时，它将返回 `None`。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_exact_opt</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+    <span class="ident">limit</span>: <span class="ident">i16</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>)<span class="op">&gt;</span> {
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">&lt;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">61</span>)); <span class="comment">// 我们至少需要三位额外的精度</span>
+    <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">buf</span>.<span class="ident">is_empty</span>());
+
+    <span class="comment">// 归一化和缩放 `v`。</span>
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Fp</span> { <span class="ident">f</span>: <span class="ident">d</span>.<span class="ident">mant</span>, <span class="ident">e</span>: <span class="ident">d</span>.<span class="ident">exp</span> }.<span class="ident">normalize</span>();
+    <span class="kw">let</span> (<span class="ident">minusk</span>, <span class="ident">cached</span>) <span class="op">=</span> <span class="ident">cached_power</span>(<span class="ident">ALPHA</span> <span class="op">-</span> <span class="ident">v</span>.<span class="ident">e</span> <span class="op">-</span> <span class="number">64</span>, <span class="ident">GAMMA</span> <span class="op">-</span> <span class="ident">v</span>.<span class="ident">e</span> <span class="op">-</span> <span class="number">64</span>);
+    <span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">mul</span>(<span class="kw-2">&amp;</span><span class="ident">cached</span>);
+
+    <span class="comment">// 将 `v` 分为整数部分和小数部分。</span>
+    <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> <span class="op">-</span><span class="ident">v</span>.<span class="ident">e</span> <span class="kw">as</span> <span class="ident">usize</span>;
+    <span class="kw">let</span> <span class="ident">vint</span> <span class="op">=</span> (<span class="ident">v</span>.<span class="ident">f</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">e</span>) <span class="kw">as</span> <span class="ident">u32</span>;
+    <span class="kw">let</span> <span class="ident">vfrac</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">f</span> <span class="op">&amp;</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">-</span> <span class="number">1</span>);
+
+    <span class="comment">// 旧 `v` 和新 `v` (由 `10^-k` 缩放) 的误差均小于 1 ulp (定理 5.1)。</span>
+    <span class="comment">// 因为我们不知道误差是正还是负，所以我们使用两个等距的近似值，并且最大误差为 2 ulps (与最短的情况相同)。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">// 目的是找到 `v - 1 ulp` 和 `v + 1 ulp` 共有的精确四舍五入的数字序列，以便我们有最大的信心。</span>
+    <span class="comment">// 如果无法做到这一点，我们不知道哪一个是 `v` 的正确输出，因此我们放弃并后退。</span>
+    <span class="comment">//</span>
+    <span class="comment">// `err` 在这里定义为 `1 ulp * 2^e` (与 `vfrac` 中的 ulp 相同)，只要 `v` 得到缩放，我们就会对其进行缩放。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">err</span> <span class="op">=</span> <span class="number">1</span>;
+
+    <span class="comment">// 计算最大的 `10^max_kappa` 不超过 `v` (因此 `v &lt; 10^(max_kappa+1)`)。</span>
+    <span class="comment">// 这是下面的 `kappa` 的上限。</span>
+    <span class="kw">let</span> (<span class="ident">max_kappa</span>, <span class="ident">max_ten_kappa</span>) <span class="op">=</span> <span class="ident">max_pow10_no_more_than</span>(<span class="ident">vint</span>);
+
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">let</span> <span class="ident">exp</span> <span class="op">=</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">i16</span> <span class="op">-</span> <span class="ident">minusk</span> <span class="op">+</span> <span class="number">1</span>;
+
+    <span class="comment">// 如果使用的是最后一位数字的限制，则需要在实际渲染之前缩短缓冲区，以避免双舍入。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 请注意，在进行舍入操作时，我们必须再次扩大缓冲区!</span>
+    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">exp</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">limit</span> {
+        <span class="comment">// 糟糕，我们甚至无法产生 *一位* 数字。</span>
+        <span class="comment">// 例如，当我们有类似 9.5 的值并将其四舍五入时，这是可能的。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 原则上，我们可以立即使用空缓冲区调用 `possibly_round`，但是将 `max_ten_kappa &lt;&lt; e` 缩放 10 会导致溢出。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 因此我们在这里很草率，错误范围扩大了 10 倍。</span>
+        <span class="comment">// 这会增加假阴性率，但只会非常非常轻微地提高假阴性率;</span>
+        <span class="comment">// 仅当尾数大于 60 位时才有意义。</span>
+        <span class="comment">//</span>
+        <span class="comment">// SAFETY: `len=0`，因此初始化此内存的义务微不足道。</span>
+        <span class="kw">return</span> <span class="kw">unsafe</span> {
+            <span class="ident">possibly_round</span>(<span class="ident">buf</span>, <span class="number">0</span>, <span class="ident">exp</span>, <span class="ident">limit</span>, <span class="ident">v</span>.<span class="ident">f</span> <span class="op">/</span> <span class="number">10</span>, (<span class="ident">max_ten_kappa</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>, <span class="ident">err</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>)
+        };
+    } <span class="kw">else</span> <span class="kw">if</span> ((<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="op">-</span> <span class="ident">limit</span> <span class="kw">as</span> <span class="ident">i32</span>) <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">&lt;</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
+        (<span class="ident">exp</span> <span class="op">-</span> <span class="ident">limit</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    } <span class="kw">else</span> {
+        <span class="ident">buf</span>.<span class="ident">len</span>()
+    };
+    <span class="macro">debug_assert!</span>(<span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span>);
+
+    <span class="comment">// 渲染不可分割的部分。</span>
+    <span class="comment">// 该错误完全是零星的，因此我们无需在此部分中进行检查。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kappa</span> <span class="op">=</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">i16</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ten_kappa</span> <span class="op">=</span> <span class="ident">max_ten_kappa</span>; <span class="comment">// 10^kappa</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">vint</span>; <span class="comment">// 尚未渲染的数字</span>
+    <span class="kw">loop</span> {
+        <span class="comment">// 我们总是至少有一位数字来表示不变式:</span>
+        <span class="comment">// - `remainder &lt; 10^(kappa+1)`</span>
+        <span class="comment">// - `vint = d[0..n-1] * 10^(kappa+1) + remainder` (之后是 `remainder = vint % 10^(kappa+1)`)</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+
+        <span class="comment">// 将 `remainder` 除以 `10^kappa`。两者均按照 `2^-e` 缩放。</span>
+        <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">/</span> <span class="ident">ten_kappa</span>;
+        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">%</span> <span class="ident">ten_kappa</span>;
+        <span class="macro">debug_assert!</span>(<span class="ident">q</span> <span class="op">&lt;</span> <span class="number">10</span>);
+        <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">q</span> <span class="kw">as</span> <span class="ident">u8</span>);
+        <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="comment">// 缓冲区是否已满? 用余数运行舍入通行证。</span>
+        <span class="kw">if</span> <span class="ident">i</span> <span class="op">=</span><span class="op">=</span> <span class="ident">len</span> {
+            <span class="kw">let</span> <span class="ident">vrem</span> <span class="op">=</span> ((<span class="ident">r</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">+</span> <span class="ident">vfrac</span>; <span class="comment">// == (v % 10^kappa) * 2^e</span>
+            <span class="comment">// SAFETY: 我们已经将 `len` 初始化了很多字节。</span>
+            <span class="kw">return</span> <span class="kw">unsafe</span> {
+                <span class="ident">possibly_round</span>(<span class="ident">buf</span>, <span class="ident">len</span>, <span class="ident">exp</span>, <span class="ident">limit</span>, <span class="ident">vrem</span>, (<span class="ident">ten_kappa</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>, <span class="ident">err</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>)
+            };
+        }
+
+        <span class="comment">// 绘制所有整数后，请中断循环。</span>
+        <span class="comment">// 确切的位数是 `max_kappa + 1` 和 `plus1 &lt; 10^(max_kappa+1)`。</span>
+        <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;</span> <span class="ident">max_kappa</span> <span class="kw">as</span> <span class="ident">usize</span> {
+            <span class="macro">debug_assert_eq!</span>(<span class="ident">ten_kappa</span>, <span class="number">1</span>);
+            <span class="macro">debug_assert_eq!</span>(<span class="ident">kappa</span>, <span class="number">0</span>);
+            <span class="kw">break</span>;
+        }
+
+        <span class="comment">// 恢复不变量</span>
+        <span class="ident">kappa</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+        <span class="ident">ten_kappa</span> <span class="op">/</span><span class="op">=</span> <span class="number">10</span>;
+        <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">r</span>;
+    }
+
+    <span class="comment">// 渲染小数部分。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 原则上，我们可以继续到最后一个可用数字并检查准确性。</span>
+    <span class="comment">// 不幸的是，我们正在使用有限大小的整数，因此我们需要一些标准来检测溢出。</span>
+    <span class="comment">// V8 使用 `remainder &gt; err`，当 `v - 1 ulp` 和 `v` 的前 `i` 有效数字不同时，此错误。</span>
+    <span class="comment">// 但是，这会拒绝太多否则有效的输入。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 由于后面的阶段具有正确的溢出检测功能，因此我们使用更严格的标准:</span>
+    <span class="comment">// 我们继续直到 `err` 超过 `10^kappa / 2`，以便 `v - 1 ulp` 和 `v + 1 ulp` 之间的范围肯定包含两个或多个舍入表示形式。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 对于引用，这与 `possibly_round` 的前两次比较相同。</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">vfrac</span>;
+    <span class="kw">let</span> <span class="ident">maxerr</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">e</span> <span class="op">-</span> <span class="number">1</span>);
+    <span class="kw">while</span> <span class="ident">err</span> <span class="op">&lt;</span> <span class="ident">maxerr</span> {
+        <span class="comment">// 不可变变量，其中 `m = max_kappa + 1` (整数部分的位数) :</span>
+        <span class="comment">// - `remainder &lt; 2^e`</span>
+        <span class="comment">// - `vfrac * 10^(n-m) = d[m..n-1] * 2^e + remainder`</span>
+        <span class="comment">// - `err = 10^(n-m)`</span>
+
+        <span class="ident">remainder</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">10</span>; <span class="comment">// 不会溢出 `2^e * 10 &lt; 2^64`</span>
+        <span class="ident">err</span> <span class="kw-2">*</span><span class="op">=</span> <span class="number">10</span>; <span class="comment">// 不会溢出 `err * 10 &lt; 2^e * 5 &lt; 2^64`</span>
+
+        <span class="comment">// 将 `remainder` 除以 `10^kappa`。</span>
+        <span class="comment">// 两者都按 `2^e / 10^kappa` 缩放，因此后者在这里是隐式的。</span>
+        <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">e</span>;
+        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident">remainder</span> <span class="op">&amp;</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>) <span class="op">-</span> <span class="number">1</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">q</span> <span class="op">&lt;</span> <span class="number">10</span>);
+        <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">q</span> <span class="kw">as</span> <span class="ident">u8</span>);
+        <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="comment">// 缓冲区是否已满? 用余数运行舍入通行证。</span>
+        <span class="kw">if</span> <span class="ident">i</span> <span class="op">=</span><span class="op">=</span> <span class="ident">len</span> {
+            <span class="comment">// SAFETY: 我们已经将 `len` 初始化了很多字节。</span>
+            <span class="kw">return</span> <span class="kw">unsafe</span> { <span class="ident">possibly_round</span>(<span class="ident">buf</span>, <span class="ident">len</span>, <span class="ident">exp</span>, <span class="ident">limit</span>, <span class="ident">r</span>, <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">e</span>, <span class="ident">err</span>) };
+        }
+
+        <span class="comment">// 恢复不变量</span>
+        <span class="ident">remainder</span> <span class="op">=</span> <span class="ident">r</span>;
+    }
+
+    <span class="comment">// 进一步的计算是没有用的 (`possibly_round` 肯定会失败)，所以我们放弃了。</span>
+    <span class="kw">return</span> <span class="prelude-val">None</span>;
+
+    <span class="comment">// 我们已经生成了所有要求的 `v` 数字，这些数字也应该与 `v - 1 ulp` 的相应数字相同。</span>
+    <span class="comment">// 现在，我们检查 `v - 1 ulp` 和 `v + 1 ulp` 是否共享唯一的表示形式; 这可以与生成的数字相同，也可以与这些数字的四舍五入形式相同。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 如果范围包含相同长度的多个表示形式，则不能确定，应返回 `None`。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 这里的所有参数均按公共 (但隐式) 值 `k` 进行缩放，以便:</span>
+    <span class="comment">// - `remainder = (v % 10^kappa) * k`</span>
+    <span class="comment">// - `ten_kappa = 10^kappa * k`</span>
+    <span class="comment">// - `ulp = 2^-e * k`</span>
+    <span class="comment">//</span>
+    <span class="comment">// SAFETY: `buf` 的前 `len` 字节必须初始化。</span>
+    <span class="comment">//</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">possibly_round</span>(
+        <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+        <span class="kw-2">mut</span> <span class="ident">len</span>: <span class="ident">usize</span>,
+        <span class="kw-2">mut</span> <span class="ident">exp</span>: <span class="ident">i16</span>,
+        <span class="ident">limit</span>: <span class="ident">i16</span>,
+        <span class="ident">remainder</span>: <span class="ident">u64</span>,
+        <span class="ident">ten_kappa</span>: <span class="ident">u64</span>,
+        <span class="ident">ulp</span>: <span class="ident">u64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">i16</span>)<span class="op">&gt;</span> {
+        <span class="macro">debug_assert!</span>(<span class="ident">remainder</span> <span class="op">&lt;</span> <span class="ident">ten_kappa</span>);
+
+        <span class="comment">// 10^kappa</span>
+        <span class="comment">//    :   :   :&lt;-&gt;:   :</span>
+        <span class="comment">//    :   :   :   :   :</span>
+        <span class="comment">//    :|1 ulp|1 ulp|  :</span>
+        <span class="comment">//    :|&lt;---&gt;|&lt;---&gt;|  :</span>
+        <span class="comment">// ----|-----|-----|----</span>
+        <span class="comment">//     |     v     | v - 1 ulp   v + 1 ulp</span>
+        <span class="comment">//</span>
+        <span class="comment">// (对于引用，虚线表示在给定数字位数下可能表示的确切值。)</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">// 错误太大，以至于 `v - 1 ulp` 和 `v + 1 ulp` 之间至少存在三种可能的表示形式。</span>
+        <span class="comment">// 我们无法确定哪一个是正确的。</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="ident">ulp</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">ten_kappa</span> {
+            <span class="kw">return</span> <span class="prelude-val">None</span>;
+        }
+
+        <span class="comment">// 10^kappa</span>
+        <span class="comment">//   :&lt;-------&gt;:</span>
+        <span class="comment">//   :         :</span>
+        <span class="comment">//   : |1 ulp|1 ulp|</span>
+        <span class="comment">//   : |&lt;---&gt;|&lt;---&gt;|</span>
+        <span class="comment">// ----|-----|-----|----</span>
+        <span class="comment">//     |     v     | v - 1 ulp   v + 1 ulp</span>
+        <span class="comment">//</span>
+        <span class="comment">// 实际上，1/2 ulp 足以引入两种可能的表示形式。</span>
+        <span class="comment">// (请记住，对于 `v - 1 ulp` 和 `v + 1 ulp`，我们都需要一个唯一的表示形式。) 这不会溢出，因为从第一次检查起就是 `ulp &lt; ten_kappa`。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="ident">ten_kappa</span> <span class="op">-</span> <span class="ident">ulp</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">ulp</span> {
+            <span class="kw">return</span> <span class="prelude-val">None</span>;
+        }
+
+        <span class="comment">// remainder</span>
+        <span class="comment">//       :&lt;-&gt;|                           :</span>
+        <span class="comment">//       :   |                           :</span>
+        <span class="comment">//       :&lt;--------- 10^kappa ----------&gt;:</span>
+        <span class="comment">//     | :   |                           :</span>
+        <span class="comment">//     |1 ulp|1 ulp|                     :</span>
+        <span class="comment">//     |&lt;---&gt;|&lt;---&gt;|                     :</span>
+        <span class="comment">// ----|-----|-----|------------------------</span>
+        <span class="comment">//     |     v     | v - 1 ulp   v + 1 ulp</span>
+        <span class="comment">//</span>
+        <span class="comment">// 如果 `v + 1 ulp` 更接近四舍五入的表示形式 (已经存在于 `buf` 中)，那么我们可以安全地返回。</span>
+        <span class="comment">// 请注意，`v - 1 ulp` 可以小于当前表示形式，但是作为 `1 ulp &lt; 10^kappa / 2`，此条件就足够了:</span>
+        <span class="comment">// `v - 1 ulp` 和当前表示之间的距离不能超过 `10^kappa / 2`。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 条件等于 `remainder + ulp &lt; 10^kappa / 2`。</span>
+        <span class="comment">// 由于这很容易溢出，因此请首先检查 `remainder &lt; 10^kappa / 2`。</span>
+        <span class="comment">// 我们已经验证了 `ulp &lt; 10^kappa / 2`，因此只要 `10^kappa` 毕竟没有溢出，第二次检查就可以了。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="ident">ten_kappa</span> <span class="op">-</span> <span class="ident">remainder</span> <span class="op">&gt;</span> <span class="ident">remainder</span> <span class="op">&amp;&amp;</span> <span class="ident">ten_kappa</span> <span class="op">-</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">remainder</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">2</span> <span class="op">*</span> <span class="ident">ulp</span> {
+            <span class="comment">// SAFETY: 我们的调用者初始化了该内存。</span>
+            <span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="ident">len</span>]) }, <span class="ident">exp</span>));
+        }
+
+        <span class="comment">// :&lt;------- remainder ------&gt;|   :</span>
+        <span class="comment">//   :                          |   :</span>
+        <span class="comment">//   :&lt;--------- 10^kappa ---------&gt;:</span>
+        <span class="comment">//   :                    |     |   : |</span>
+        <span class="comment">//   :                    |1 ulp|1 ulp|</span>
+        <span class="comment">//   :                    |&lt;---&gt;|&lt;---&gt;|</span>
+        <span class="comment">// -----------------------|-----|-----|-----</span>
+        <span class="comment">//                        |     v     | v - 1 ulp   v + 1 ulp</span>
+        <span class="comment">//</span>
+        <span class="comment">// 另一方面，如果 `v - 1 ulp` 更接近于四舍五入的表示形式，我们应该四舍五入并返回。</span>
+        <span class="comment">// 出于同样的原因，我们不需要检查 `v + 1 ulp`。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 条件等于 `remainder - ulp &gt;= 10^kappa / 2`。</span>
+        <span class="comment">// 再次，我们首先检查是否为 `remainder &gt; ulp` (请注意，这不是 `remainder &gt;= ulp`，因为 `10^kappa` 永远不会为零)。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 还请注意 `remainder - ulp &lt;= 10^kappa`，因此第二次检查不会溢出。</span>
+        <span class="comment">//</span>
+        <span class="kw">if</span> <span class="ident">remainder</span> <span class="op">&gt;</span> <span class="ident">ulp</span> <span class="op">&amp;&amp;</span> <span class="ident">ten_kappa</span> <span class="op">-</span> (<span class="ident">remainder</span> <span class="op">-</span> <span class="ident">ulp</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="ident">remainder</span> <span class="op">-</span> <span class="ident">ulp</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span>
+                <span class="comment">// SAFETY: 我们的调用者必须已初始化该内存。</span>
+                <span class="ident">round_up</span>(<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[..<span class="ident">len</span>]) })
+            {
+                <span class="comment">// 仅在要求我们提供固定精度时才添加一个额外的数字。</span>
+                <span class="comment">// 我们还需要检查一下，如果原始缓冲区为空，则只能在 `exp == limit` (edge 情况) 下添加附加数字。</span>
+                <span class="comment">//</span>
+                <span class="ident">exp</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="kw">if</span> <span class="ident">exp</span> <span class="op">&gt;</span> <span class="ident">limit</span> <span class="op">&amp;&amp;</span> <span class="ident">len</span> <span class="op">&lt;</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
+                    <span class="ident">buf</span>[<span class="ident">len</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="ident">c</span>);
+                    <span class="ident">len</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                }
+            }
+            <span class="comment">// SAFETY: 我们和调用者初始化了该内存。</span>
+            <span class="kw">return</span> <span class="prelude-val">Some</span>((<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="ident">len</span>]) }, <span class="ident">exp</span>));
+        }
+
+        <span class="comment">// 否则，我们注定要失败 (即，`v - 1 ulp` 和 `v + 1 ulp` 之间的一些值四舍五入，而其他值则四舍五入) 并放弃。</span>
+        <span class="comment">//</span>
+        <span class="prelude-val">None</span>
+    }
+}
+
+<span class="doccomment">/// 具有 Dragon 后备功能的 Grisu 的精确和固定模式实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 在大多数情况下都应使用此方法。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_exact</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+    <span class="ident">limit</span>: <span class="ident">i16</span>,
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>) {
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::flt2dec::strategy::dragon::format_exact</span> <span class="kw">as</span> <span class="ident">fallback</span>;
+    <span class="comment">// SAFETY: 借用检查器不够智能，无法在第二个分支中使用 `buf`，因此我们在这里清洗生命周期。</span>
+    <span class="comment">// 但是，只有在 `format_exact_opt` 返回 `None` 的情况下，我们才重新使用 `buf`，所以可以。</span>
+    <span class="comment">//</span>
+    <span class="kw">match</span> <span class="ident">format_exact_opt</span>(<span class="ident">d</span>, <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span>(<span class="ident">buf</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span>) }, <span class="ident">limit</span>) {
+        <span class="prelude-val">Some</span>(<span class="ident">ret</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">ret</span>,
+        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">fallback</span>(<span class="ident">d</span>, <span class="ident">buf</span>, <span class="ident">limit</span>),
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="core" data-search-index-js="../../../../../search-index1.55.0.js" data-search-js="../../../../../search1.55.0.js"></div><script src="../../../../../main1.55.0.js"></script><script src="../../../../../source-script1.55.0.js"></script><script src="../../../../../source-files1.55.0.js"></script></body></html>

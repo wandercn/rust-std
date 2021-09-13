@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="将值绑定到变量。"><meta name="keywords" content="rust, rustlang, rust-lang, let"><title>let - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="let" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">let</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#797" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>将值绑定到变量。</p>
+<p><code>let</code> 关键字的主要用途是在 <code>let</code> 语句中，该语句用于将一组新变量引入到当前的作用域中，如模式所示。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">thing1</span>: <span class="ident">i32</span> <span class="op">=</span> <span class="number">100</span>;
+<span class="kw">let</span> <span class="ident">thing2</span> <span class="op">=</span> <span class="number">200</span> <span class="op">+</span> <span class="ident">thing1</span>;
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">changing_thing</span> <span class="op">=</span> <span class="bool-val">true</span>;
+<span class="ident">changing_thing</span> <span class="op">=</span> <span class="bool-val">false</span>;
+
+<span class="kw">let</span> (<span class="ident">part1</span>, <span class="ident">part2</span>) <span class="op">=</span> (<span class="string">&quot;first&quot;</span>, <span class="string">&quot;second&quot;</span>);
+
+<span class="kw">struct</span> <span class="ident">Example</span> {
+    <span class="ident">a</span>: <span class="ident">bool</span>,
+    <span class="ident">b</span>: <span class="ident">u64</span>,
+}
+
+<span class="kw">let</span> <span class="ident">Example</span> { <span class="ident">a</span>, <span class="ident">b</span>: <span class="kw">_</span> } <span class="op">=</span> <span class="ident">Example</span> {
+    <span class="ident">a</span>: <span class="bool-val">true</span>,
+    <span class="ident">b</span>: <span class="number">10004</span>,
+};
+<span class="macro">assert!</span>(<span class="ident">a</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23!%5Ballow(unused_assignments)%5D%0Afn%20main()%20%7B%0Alet%20thing1%3A%20i32%20%3D%20100%3B%0Alet%20thing2%20%3D%20200%20%2B%20thing1%3B%0A%0Alet%20mut%20changing_thing%20%3D%20true%3B%0Achanging_thing%20%3D%20false%3B%0A%0Alet%20(part1%2C%20part2)%20%3D%20(%22first%22%2C%20%22second%22)%3B%0A%0Astruct%20Example%20%7B%0A%20%20%20%20a%3A%20bool%2C%0A%20%20%20%20b%3A%20u64%2C%0A%7D%0A%0Alet%20Example%20%7B%20a%2C%20b%3A%20_%20%7D%20%3D%20Example%20%7B%0A%20%20%20%20a%3A%20true%2C%0A%20%20%20%20b%3A%2010004%2C%0A%7D%3B%0Aassert!(a)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>模式通常是单个变量，这意味着不进行模式匹配，并且给定的表达式已绑定到该变量。
+除此之外，鉴于 <code>let</code> 绑定是详尽无遗的，因此可以根据需要将其复杂化。
+有关模式匹配的更多信息，请参见 <a href="../book/ch06-02-match.html">Rust book</a>。
+以后可以选择提供模式的类型，但是如果可能的话，编译器会自动推断出是否留空。</p>
+<p>Rust 中的变量默认情况下是不可变的，并且要求将 <code>mut</code> 关键字设置为可变。</p>
+<p>可以使用相同的名称定义多个变量，称为阴影。
+除了无法在阴影点之外直接访问它之外，这不会以任何方式影响原始变量。
+它继续保留在作用域中，只有在它离开离开作用域时才被丢弃。
+带阴影的变量不需要与带阴影的变量具有相同的类型。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">shadowing_example</span> <span class="op">=</span> <span class="bool-val">true</span>;
+<span class="kw">let</span> <span class="ident">shadowing_example</span> <span class="op">=</span> <span class="number">123.4</span>;
+<span class="kw">let</span> <span class="ident">shadowing_example</span> <span class="op">=</span> <span class="ident">shadowing_example</span> <span class="kw">as</span> <span class="ident">u32</span>;
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shadowing_example</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;cool! {}&quot;</span>, <span class="ident">shadowing_example</span>);
+<span class="ident">shadowing_example</span> <span class="op">+</span><span class="op">=</span> <span class="string">&quot; something else!&quot;</span>; <span class="comment">// 不遮蔽</span></pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20shadowing_example%20%3D%20true%3B%0Alet%20shadowing_example%20%3D%20123.4%3B%0Alet%20shadowing_example%20%3D%20shadowing_example%20as%20u32%3B%0Alet%20mut%20shadowing_example%20%3D%20format!(%22cool!%20%7B%7D%22%2C%20shadowing_example)%3B%0Ashadowing_example%20%2B%3D%20%22%20something%20else!%22%3B%20%2F%2F%20%E4%B8%8D%E9%81%AE%E8%94%BD%0A%7D&amp;edition=2018">Run</a></div>
+<p><code>let</code> 关键字使用的其他位置包括 <code>if let</code> 表达式形式的 <a href="keyword.if.html"><code>if</code></a>。
+如果匹配的模式不是穷举的 (例如枚举)，则它们很有用。
+<code>while let</code> 也存在，它使用模式匹配值运行循环，直到该模式无法匹配为止。</p>
+<p>有关 <code>let</code> 关键字的更多信息，请参见 <a href="../book/ch18-01-all-the-places-for-patterns.html#let-statements">Rust book</a> 或 <a href="../reference/statements.html#let-statements">Reference</a>。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

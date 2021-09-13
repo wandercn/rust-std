@@ -1,0 +1,206 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\ops\unsize.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unsize.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::marker::Unsize</span>;
+
+<span class="doccomment">/// Trait，指示这是一个指针或一个包装器，其中可以在指针上执行大小调整。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 有关更多详细信息，请参见 [DST 强制 RFC][dst-coerce] 和 [关于强制的 nomicon 入口][nomicon-coerce]。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 对于内置指针类型，如果 `T: Unsize&lt;U&gt;` 通过从精简指针转换为胖指针，则指向 `T` 的指针将强制指向指向 `U` 的指针。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 对于自定义类型，这里的强制通过将 `Foo&lt;T&gt;` 强制为 `Foo&lt;U&gt;` 来工作 (如果存在 `CoerceUnsized&lt;Foo&lt;U&gt;&gt; for Foo&lt;T&gt;` 的实现)。</span>
+<span class="doccomment">/// 仅当 `Foo&lt;T&gt;` 仅具有涉及 `T` 的单个非虚拟数据字段时，才可以写这样的 impl。</span>
+<span class="doccomment">/// 如果该字段的类型为 `Bar&lt;T&gt;`，则必须存在 `CoerceUnsized&lt;Bar&lt;U&gt;&gt; for Bar&lt;T&gt;` 的实现。</span>
+<span class="doccomment">/// 强制将通过将 `Bar&lt;T&gt;` 字段强制转换为 `Bar&lt;U&gt;` 并填充 `Foo&lt;T&gt;` 的其余字段以创建 `Foo&lt;U&gt;` 来起作用。</span>
+<span class="doccomment">/// 这将有效地向下钻取指针字段并将其强制。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 通常，对于智能指针，您将实现 `CoerceUnsized&lt;Ptr&lt;U&gt;&gt; for Ptr&lt;T&gt; where T: Unsize&lt;U&gt;, U: ?Sized`，并在 `T` 本身上绑定了可选的 `?Sized`。</span>
+<span class="doccomment">/// 对于直接嵌入 `T` 的包装器类型 (例如 `Cell&lt;T&gt;` 和 `RefCell&lt;T&gt;`)，您可以直接实现 `CoerceUnsized&lt;Wrap&lt;U&gt;&gt; for Wrap&lt;T&gt; where T: CoerceUnsized&lt;U&gt;`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 这将使像 `Cell&lt;Box&lt;T&gt;&gt;` 这样的强制类型起作用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`Unsize`][unsize] 用于标记在指针后面可以强制转换为 DST 的类型。它由编译器自动实现。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [dst-coerce]: https://github.com/rust-lang/rfcs/blob/master/text/0982-dst-coercion.md</span>
+<span class="doccomment">/// [unsize]: crate::marker::Unsize</span>
+<span class="doccomment">/// [nomicon-coerce]: ../../nomicon/coercions.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
+    <span class="comment">// Empty.</span>
+}
+
+<span class="comment">// &amp;mut T -&gt; &amp;mut U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span> {}
+<span class="comment">// &amp;mut T -&gt; &amp;U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>: <span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="kw-2">mut</span> <span class="ident">T</span> {}
+<span class="comment">// &amp;mut T -&gt; *mut U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span> {}
+<span class="comment">// &amp;mut T -&gt; *const U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span> {}
+
+<span class="comment">// &amp;T -&gt; &amp;U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>: <span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">T</span> {}
+<span class="comment">// &amp;T -&gt; *const U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span> {}
+
+<span class="comment">// *mut T -&gt; *mut U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span> {}
+<span class="comment">// *mut T -&gt; *const U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span> {}
+
+<span class="comment">// *const T -&gt; *const U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;coerce_unsized&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;27732&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">CoerceUnsized</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span> {}
+
+<span class="doccomment">/// 这用于对象安全，以检查是否可以分派方法的接收者类型。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// trait 的示例实现:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// # #![feature(dispatch_from_dyn, unsize)]</span>
+<span class="doccomment">/// # use std::{ops::DispatchFromDyn, marker::Unsize};</span>
+<span class="doccomment">/// # struct Rc&lt;T: ?Sized&gt;(std::rc::Rc&lt;T&gt;);</span>
+<span class="doccomment">/// impl&lt;T: ?Sized, U: ?Sized&gt; DispatchFromDyn&lt;Rc&lt;U&gt;&gt; for Rc&lt;T&gt;</span>
+<span class="doccomment">/// where</span>
+<span class="doccomment">///     T: Unsize&lt;U&gt;,</span>
+<span class="doccomment">/// {}</span>
+<span class="doccomment">/// ```</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">DispatchFromDyn</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="comment">// Empty.</span>
+}
+
+<span class="comment">// &amp;T -&gt; &amp;U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">DispatchFromDyn</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span> {}
+<span class="comment">// &amp;mut T -&gt; &amp;mut U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">DispatchFromDyn</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span> {}
+<span class="comment">// *const T -&gt; *const U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">DispatchFromDyn</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw">const</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span> {}
+<span class="comment">// *mut T -&gt; *mut U</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;dispatch_from_dyn&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Unsize</span><span class="op">&lt;</span><span class="ident">U</span><span class="op">&gt;</span>, <span class="ident">U</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">DispatchFromDyn</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">U</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span> {}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script><script src="../../../source-script1.55.0.js"></script><script src="../../../source-files1.55.0.js"></script></body></html>

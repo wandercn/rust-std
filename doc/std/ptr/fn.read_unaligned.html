@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="从 `src` 读取值而不移动它。这将使 `src` 中的内存保持不变。"><meta name="keywords" content="rust, rustlang, rust-lang, read_unaligned"><title>read_unaligned in std::ptr - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../index.html">std</a>::<wbr><a href="index.html">ptr</a></h2><div id="sidebar-vars" data-name="read_unaligned" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../index.html">std</a>::<wbr><a href="index.html">ptr</a>::<wbr><a class="fn" href="#">read_unaligned</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.17.0">1.17.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/ptr/mod.rs.html#779" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub const unsafe fn read_unaligned&lt;T&gt;(src: <a class="primitive" href="../primitive.pointer.html">*const T</a>) -&gt; T</pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>从 <code>src</code> 读取值而不移动它。这将使 <code>src</code> 中的内存保持不变。</p>
+<p>与 <a href="fn.read.html" title="read"><code>read</code></a> 不同，<code>read_unaligned</code> 使用未对齐的指针。</p>
+<h1 id="safety" class="section-header"><a href="#safety">Safety</a></h1>
+<p>如果违反以下任一条件，则行为是未定义的:</p>
+<ul>
+<li>
+<p><code>src</code> 必须是 <a href="index.html#safety">有效</a> 的才能读取。</p>
+</li>
+<li>
+<p><code>src</code> 必须指向类型为 <code>T</code> 的正确初始化的值。</p>
+</li>
+</ul>
+<p>与 <a href="fn.read.html" title="read"><code>read</code></a> 一样，无论 <code>T</code> 是否为 <a href="../marker/trait.Copy.html" title="Copy"><code>Copy</code></a>，<code>read_unaligned</code> 都会创建 <code>T</code> 的按位副本。
+如果 <code>T</code> 不是 <a href="../marker/trait.Copy.html" title="Copy"><code>Copy</code></a>，则同时使用返回值和 <code>*src</code> 处的值都可以 <a href="fn.read.html#ownership-of-the-returned-value">violate memory safety</a>。</p>
+<p>请注意，即使 <code>T</code> 的大小为 <code>0</code>，指针也必须非空。</p>
+<h2 id="在-packed-结构体上" class="section-header"><a href="#在-packed-结构体上">在 <code>packed</code> 结构体上</a></h2>
+<p>尝试使用诸如 <code>&amp;packed.unaligned as *const FieldType</code> 的表达式创建指向 <code>unaligned</code> 结构体字段的裸指针，然后再将其转换为裸指针，这会产生一个中间未对齐的引用。</p>
+<p>引用是临时的并且立即强制转换是无关紧要的，因为编译器始终希望引用正确对齐。
+结果，使用 <code>&amp;packed.unaligned as *const FieldType</code> 会在程序中立即导致* undefined 行为 *。</p>
+<p>相反，您必须使用 <a href="macro.addr_of.html"><code>ptr::addr_of!</code></a> 宏来创建指针。您可以将返回的指针与此函数一起使用。</p>
+<p>一个不执行的操作以及它与 <code>read_unaligned</code> 的关系的示例是:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">packed</span>, <span class="ident">C</span>)]</span>
+<span class="kw">struct</span> <span class="ident">Packed</span> {
+    <span class="ident">_padding</span>: <span class="ident">u8</span>,
+    <span class="ident">unaligned</span>: <span class="ident">u32</span>,
+}
+
+<span class="kw">let</span> <span class="ident">packed</span> <span class="op">=</span> <span class="ident">Packed</span> {
+    <span class="ident">_padding</span>: <span class="number">0x00</span>,
+    <span class="ident">unaligned</span>: <span class="number">0x01020304</span>,
+};
+
+<span class="comment">// 取一个未对齐的 32 位整数的地址。</span>
+<span class="comment">// 与 `&amp;packed.unaligned as *const _` 相比，它没有未定义的行为。</span>
+<span class="kw">let</span> <span class="ident">unaligned</span> <span class="op">=</span> <span class="macro">std::ptr::addr_of!</span>(<span class="ident">packed</span>.<span class="ident">unaligned</span>);
+
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">std::ptr::read_unaligned</span>(<span class="ident">unaligned</span>) };
+<span class="macro">assert_eq!</span>(<span class="ident">v</span>, <span class="number">0x01020304</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0A%23%5Brepr(packed%2C%20C)%5D%0Astruct%20Packed%20%7B%0A%20%20%20%20_padding%3A%20u8%2C%0A%20%20%20%20unaligned%3A%20u32%2C%0A%7D%0A%0Alet%20packed%20%3D%20Packed%20%7B%0A%20%20%20%20_padding%3A%200x00%2C%0A%20%20%20%20unaligned%3A%200x01020304%2C%0A%7D%3B%0A%0A%2F%2F%20%E5%8F%96%E4%B8%80%E4%B8%AA%E6%9C%AA%E5%AF%B9%E9%BD%90%E7%9A%84%2032%20%E4%BD%8D%E6%95%B4%E6%95%B0%E7%9A%84%E5%9C%B0%E5%9D%80%E3%80%82%0A%2F%2F%20%E4%B8%8E%20%60%26packed.unaligned%20as%20*const%20_%60%20%E7%9B%B8%E6%AF%94%EF%BC%8C%E5%AE%83%E6%B2%A1%E6%9C%89%E6%9C%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E8%A1%8C%E4%B8%BA%E3%80%82%0Alet%20unaligned%20%3D%20std%3A%3Aptr%3A%3Aaddr_of!(packed.unaligned)%3B%0A%0Alet%20v%20%3D%20unsafe%20%7B%20std%3A%3Aptr%3A%3Aread_unaligned(unaligned)%20%7D%3B%0Aassert_eq!(v%2C%200x01020304)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>但是，例如使用 <code>packed.unaligned</code> 直接访问未对齐的字段是安全的。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>从字节缓冲区读取 usize 值:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::mem</span>;
+
+<span class="kw">fn</span> <span class="ident">read_usize</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="macro">assert!</span>(<span class="ident">x</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>());
+
+    <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">usize</span>;
+
+    <span class="kw">unsafe</span> { <span class="ident">ptr</span>.<span class="ident">read_unaligned</span>() }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Amem%3B%0A%0Afn%20read_usize(x%3A%20%26%5Bu8%5D)%20-%3E%20usize%20%7B%0A%20%20%20%20assert!(x.len()%20%3E%3D%20mem%3A%3Asize_of%3A%3A%3Cusize%3E())%3B%0A%0A%20%20%20%20let%20ptr%20%3D%20x.as_ptr()%20as%20*const%20usize%3B%0A%0A%20%20%20%20unsafe%20%7B%20ptr.read_unaligned()%20%7D%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

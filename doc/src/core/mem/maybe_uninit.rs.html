@@ -1,0 +1,2320 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\mem\maybe_uninit.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>maybe_uninit.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">   1</span>
+<span id="2">   2</span>
+<span id="3">   3</span>
+<span id="4">   4</span>
+<span id="5">   5</span>
+<span id="6">   6</span>
+<span id="7">   7</span>
+<span id="8">   8</span>
+<span id="9">   9</span>
+<span id="10">  10</span>
+<span id="11">  11</span>
+<span id="12">  12</span>
+<span id="13">  13</span>
+<span id="14">  14</span>
+<span id="15">  15</span>
+<span id="16">  16</span>
+<span id="17">  17</span>
+<span id="18">  18</span>
+<span id="19">  19</span>
+<span id="20">  20</span>
+<span id="21">  21</span>
+<span id="22">  22</span>
+<span id="23">  23</span>
+<span id="24">  24</span>
+<span id="25">  25</span>
+<span id="26">  26</span>
+<span id="27">  27</span>
+<span id="28">  28</span>
+<span id="29">  29</span>
+<span id="30">  30</span>
+<span id="31">  31</span>
+<span id="32">  32</span>
+<span id="33">  33</span>
+<span id="34">  34</span>
+<span id="35">  35</span>
+<span id="36">  36</span>
+<span id="37">  37</span>
+<span id="38">  38</span>
+<span id="39">  39</span>
+<span id="40">  40</span>
+<span id="41">  41</span>
+<span id="42">  42</span>
+<span id="43">  43</span>
+<span id="44">  44</span>
+<span id="45">  45</span>
+<span id="46">  46</span>
+<span id="47">  47</span>
+<span id="48">  48</span>
+<span id="49">  49</span>
+<span id="50">  50</span>
+<span id="51">  51</span>
+<span id="52">  52</span>
+<span id="53">  53</span>
+<span id="54">  54</span>
+<span id="55">  55</span>
+<span id="56">  56</span>
+<span id="57">  57</span>
+<span id="58">  58</span>
+<span id="59">  59</span>
+<span id="60">  60</span>
+<span id="61">  61</span>
+<span id="62">  62</span>
+<span id="63">  63</span>
+<span id="64">  64</span>
+<span id="65">  65</span>
+<span id="66">  66</span>
+<span id="67">  67</span>
+<span id="68">  68</span>
+<span id="69">  69</span>
+<span id="70">  70</span>
+<span id="71">  71</span>
+<span id="72">  72</span>
+<span id="73">  73</span>
+<span id="74">  74</span>
+<span id="75">  75</span>
+<span id="76">  76</span>
+<span id="77">  77</span>
+<span id="78">  78</span>
+<span id="79">  79</span>
+<span id="80">  80</span>
+<span id="81">  81</span>
+<span id="82">  82</span>
+<span id="83">  83</span>
+<span id="84">  84</span>
+<span id="85">  85</span>
+<span id="86">  86</span>
+<span id="87">  87</span>
+<span id="88">  88</span>
+<span id="89">  89</span>
+<span id="90">  90</span>
+<span id="91">  91</span>
+<span id="92">  92</span>
+<span id="93">  93</span>
+<span id="94">  94</span>
+<span id="95">  95</span>
+<span id="96">  96</span>
+<span id="97">  97</span>
+<span id="98">  98</span>
+<span id="99">  99</span>
+<span id="100"> 100</span>
+<span id="101"> 101</span>
+<span id="102"> 102</span>
+<span id="103"> 103</span>
+<span id="104"> 104</span>
+<span id="105"> 105</span>
+<span id="106"> 106</span>
+<span id="107"> 107</span>
+<span id="108"> 108</span>
+<span id="109"> 109</span>
+<span id="110"> 110</span>
+<span id="111"> 111</span>
+<span id="112"> 112</span>
+<span id="113"> 113</span>
+<span id="114"> 114</span>
+<span id="115"> 115</span>
+<span id="116"> 116</span>
+<span id="117"> 117</span>
+<span id="118"> 118</span>
+<span id="119"> 119</span>
+<span id="120"> 120</span>
+<span id="121"> 121</span>
+<span id="122"> 122</span>
+<span id="123"> 123</span>
+<span id="124"> 124</span>
+<span id="125"> 125</span>
+<span id="126"> 126</span>
+<span id="127"> 127</span>
+<span id="128"> 128</span>
+<span id="129"> 129</span>
+<span id="130"> 130</span>
+<span id="131"> 131</span>
+<span id="132"> 132</span>
+<span id="133"> 133</span>
+<span id="134"> 134</span>
+<span id="135"> 135</span>
+<span id="136"> 136</span>
+<span id="137"> 137</span>
+<span id="138"> 138</span>
+<span id="139"> 139</span>
+<span id="140"> 140</span>
+<span id="141"> 141</span>
+<span id="142"> 142</span>
+<span id="143"> 143</span>
+<span id="144"> 144</span>
+<span id="145"> 145</span>
+<span id="146"> 146</span>
+<span id="147"> 147</span>
+<span id="148"> 148</span>
+<span id="149"> 149</span>
+<span id="150"> 150</span>
+<span id="151"> 151</span>
+<span id="152"> 152</span>
+<span id="153"> 153</span>
+<span id="154"> 154</span>
+<span id="155"> 155</span>
+<span id="156"> 156</span>
+<span id="157"> 157</span>
+<span id="158"> 158</span>
+<span id="159"> 159</span>
+<span id="160"> 160</span>
+<span id="161"> 161</span>
+<span id="162"> 162</span>
+<span id="163"> 163</span>
+<span id="164"> 164</span>
+<span id="165"> 165</span>
+<span id="166"> 166</span>
+<span id="167"> 167</span>
+<span id="168"> 168</span>
+<span id="169"> 169</span>
+<span id="170"> 170</span>
+<span id="171"> 171</span>
+<span id="172"> 172</span>
+<span id="173"> 173</span>
+<span id="174"> 174</span>
+<span id="175"> 175</span>
+<span id="176"> 176</span>
+<span id="177"> 177</span>
+<span id="178"> 178</span>
+<span id="179"> 179</span>
+<span id="180"> 180</span>
+<span id="181"> 181</span>
+<span id="182"> 182</span>
+<span id="183"> 183</span>
+<span id="184"> 184</span>
+<span id="185"> 185</span>
+<span id="186"> 186</span>
+<span id="187"> 187</span>
+<span id="188"> 188</span>
+<span id="189"> 189</span>
+<span id="190"> 190</span>
+<span id="191"> 191</span>
+<span id="192"> 192</span>
+<span id="193"> 193</span>
+<span id="194"> 194</span>
+<span id="195"> 195</span>
+<span id="196"> 196</span>
+<span id="197"> 197</span>
+<span id="198"> 198</span>
+<span id="199"> 199</span>
+<span id="200"> 200</span>
+<span id="201"> 201</span>
+<span id="202"> 202</span>
+<span id="203"> 203</span>
+<span id="204"> 204</span>
+<span id="205"> 205</span>
+<span id="206"> 206</span>
+<span id="207"> 207</span>
+<span id="208"> 208</span>
+<span id="209"> 209</span>
+<span id="210"> 210</span>
+<span id="211"> 211</span>
+<span id="212"> 212</span>
+<span id="213"> 213</span>
+<span id="214"> 214</span>
+<span id="215"> 215</span>
+<span id="216"> 216</span>
+<span id="217"> 217</span>
+<span id="218"> 218</span>
+<span id="219"> 219</span>
+<span id="220"> 220</span>
+<span id="221"> 221</span>
+<span id="222"> 222</span>
+<span id="223"> 223</span>
+<span id="224"> 224</span>
+<span id="225"> 225</span>
+<span id="226"> 226</span>
+<span id="227"> 227</span>
+<span id="228"> 228</span>
+<span id="229"> 229</span>
+<span id="230"> 230</span>
+<span id="231"> 231</span>
+<span id="232"> 232</span>
+<span id="233"> 233</span>
+<span id="234"> 234</span>
+<span id="235"> 235</span>
+<span id="236"> 236</span>
+<span id="237"> 237</span>
+<span id="238"> 238</span>
+<span id="239"> 239</span>
+<span id="240"> 240</span>
+<span id="241"> 241</span>
+<span id="242"> 242</span>
+<span id="243"> 243</span>
+<span id="244"> 244</span>
+<span id="245"> 245</span>
+<span id="246"> 246</span>
+<span id="247"> 247</span>
+<span id="248"> 248</span>
+<span id="249"> 249</span>
+<span id="250"> 250</span>
+<span id="251"> 251</span>
+<span id="252"> 252</span>
+<span id="253"> 253</span>
+<span id="254"> 254</span>
+<span id="255"> 255</span>
+<span id="256"> 256</span>
+<span id="257"> 257</span>
+<span id="258"> 258</span>
+<span id="259"> 259</span>
+<span id="260"> 260</span>
+<span id="261"> 261</span>
+<span id="262"> 262</span>
+<span id="263"> 263</span>
+<span id="264"> 264</span>
+<span id="265"> 265</span>
+<span id="266"> 266</span>
+<span id="267"> 267</span>
+<span id="268"> 268</span>
+<span id="269"> 269</span>
+<span id="270"> 270</span>
+<span id="271"> 271</span>
+<span id="272"> 272</span>
+<span id="273"> 273</span>
+<span id="274"> 274</span>
+<span id="275"> 275</span>
+<span id="276"> 276</span>
+<span id="277"> 277</span>
+<span id="278"> 278</span>
+<span id="279"> 279</span>
+<span id="280"> 280</span>
+<span id="281"> 281</span>
+<span id="282"> 282</span>
+<span id="283"> 283</span>
+<span id="284"> 284</span>
+<span id="285"> 285</span>
+<span id="286"> 286</span>
+<span id="287"> 287</span>
+<span id="288"> 288</span>
+<span id="289"> 289</span>
+<span id="290"> 290</span>
+<span id="291"> 291</span>
+<span id="292"> 292</span>
+<span id="293"> 293</span>
+<span id="294"> 294</span>
+<span id="295"> 295</span>
+<span id="296"> 296</span>
+<span id="297"> 297</span>
+<span id="298"> 298</span>
+<span id="299"> 299</span>
+<span id="300"> 300</span>
+<span id="301"> 301</span>
+<span id="302"> 302</span>
+<span id="303"> 303</span>
+<span id="304"> 304</span>
+<span id="305"> 305</span>
+<span id="306"> 306</span>
+<span id="307"> 307</span>
+<span id="308"> 308</span>
+<span id="309"> 309</span>
+<span id="310"> 310</span>
+<span id="311"> 311</span>
+<span id="312"> 312</span>
+<span id="313"> 313</span>
+<span id="314"> 314</span>
+<span id="315"> 315</span>
+<span id="316"> 316</span>
+<span id="317"> 317</span>
+<span id="318"> 318</span>
+<span id="319"> 319</span>
+<span id="320"> 320</span>
+<span id="321"> 321</span>
+<span id="322"> 322</span>
+<span id="323"> 323</span>
+<span id="324"> 324</span>
+<span id="325"> 325</span>
+<span id="326"> 326</span>
+<span id="327"> 327</span>
+<span id="328"> 328</span>
+<span id="329"> 329</span>
+<span id="330"> 330</span>
+<span id="331"> 331</span>
+<span id="332"> 332</span>
+<span id="333"> 333</span>
+<span id="334"> 334</span>
+<span id="335"> 335</span>
+<span id="336"> 336</span>
+<span id="337"> 337</span>
+<span id="338"> 338</span>
+<span id="339"> 339</span>
+<span id="340"> 340</span>
+<span id="341"> 341</span>
+<span id="342"> 342</span>
+<span id="343"> 343</span>
+<span id="344"> 344</span>
+<span id="345"> 345</span>
+<span id="346"> 346</span>
+<span id="347"> 347</span>
+<span id="348"> 348</span>
+<span id="349"> 349</span>
+<span id="350"> 350</span>
+<span id="351"> 351</span>
+<span id="352"> 352</span>
+<span id="353"> 353</span>
+<span id="354"> 354</span>
+<span id="355"> 355</span>
+<span id="356"> 356</span>
+<span id="357"> 357</span>
+<span id="358"> 358</span>
+<span id="359"> 359</span>
+<span id="360"> 360</span>
+<span id="361"> 361</span>
+<span id="362"> 362</span>
+<span id="363"> 363</span>
+<span id="364"> 364</span>
+<span id="365"> 365</span>
+<span id="366"> 366</span>
+<span id="367"> 367</span>
+<span id="368"> 368</span>
+<span id="369"> 369</span>
+<span id="370"> 370</span>
+<span id="371"> 371</span>
+<span id="372"> 372</span>
+<span id="373"> 373</span>
+<span id="374"> 374</span>
+<span id="375"> 375</span>
+<span id="376"> 376</span>
+<span id="377"> 377</span>
+<span id="378"> 378</span>
+<span id="379"> 379</span>
+<span id="380"> 380</span>
+<span id="381"> 381</span>
+<span id="382"> 382</span>
+<span id="383"> 383</span>
+<span id="384"> 384</span>
+<span id="385"> 385</span>
+<span id="386"> 386</span>
+<span id="387"> 387</span>
+<span id="388"> 388</span>
+<span id="389"> 389</span>
+<span id="390"> 390</span>
+<span id="391"> 391</span>
+<span id="392"> 392</span>
+<span id="393"> 393</span>
+<span id="394"> 394</span>
+<span id="395"> 395</span>
+<span id="396"> 396</span>
+<span id="397"> 397</span>
+<span id="398"> 398</span>
+<span id="399"> 399</span>
+<span id="400"> 400</span>
+<span id="401"> 401</span>
+<span id="402"> 402</span>
+<span id="403"> 403</span>
+<span id="404"> 404</span>
+<span id="405"> 405</span>
+<span id="406"> 406</span>
+<span id="407"> 407</span>
+<span id="408"> 408</span>
+<span id="409"> 409</span>
+<span id="410"> 410</span>
+<span id="411"> 411</span>
+<span id="412"> 412</span>
+<span id="413"> 413</span>
+<span id="414"> 414</span>
+<span id="415"> 415</span>
+<span id="416"> 416</span>
+<span id="417"> 417</span>
+<span id="418"> 418</span>
+<span id="419"> 419</span>
+<span id="420"> 420</span>
+<span id="421"> 421</span>
+<span id="422"> 422</span>
+<span id="423"> 423</span>
+<span id="424"> 424</span>
+<span id="425"> 425</span>
+<span id="426"> 426</span>
+<span id="427"> 427</span>
+<span id="428"> 428</span>
+<span id="429"> 429</span>
+<span id="430"> 430</span>
+<span id="431"> 431</span>
+<span id="432"> 432</span>
+<span id="433"> 433</span>
+<span id="434"> 434</span>
+<span id="435"> 435</span>
+<span id="436"> 436</span>
+<span id="437"> 437</span>
+<span id="438"> 438</span>
+<span id="439"> 439</span>
+<span id="440"> 440</span>
+<span id="441"> 441</span>
+<span id="442"> 442</span>
+<span id="443"> 443</span>
+<span id="444"> 444</span>
+<span id="445"> 445</span>
+<span id="446"> 446</span>
+<span id="447"> 447</span>
+<span id="448"> 448</span>
+<span id="449"> 449</span>
+<span id="450"> 450</span>
+<span id="451"> 451</span>
+<span id="452"> 452</span>
+<span id="453"> 453</span>
+<span id="454"> 454</span>
+<span id="455"> 455</span>
+<span id="456"> 456</span>
+<span id="457"> 457</span>
+<span id="458"> 458</span>
+<span id="459"> 459</span>
+<span id="460"> 460</span>
+<span id="461"> 461</span>
+<span id="462"> 462</span>
+<span id="463"> 463</span>
+<span id="464"> 464</span>
+<span id="465"> 465</span>
+<span id="466"> 466</span>
+<span id="467"> 467</span>
+<span id="468"> 468</span>
+<span id="469"> 469</span>
+<span id="470"> 470</span>
+<span id="471"> 471</span>
+<span id="472"> 472</span>
+<span id="473"> 473</span>
+<span id="474"> 474</span>
+<span id="475"> 475</span>
+<span id="476"> 476</span>
+<span id="477"> 477</span>
+<span id="478"> 478</span>
+<span id="479"> 479</span>
+<span id="480"> 480</span>
+<span id="481"> 481</span>
+<span id="482"> 482</span>
+<span id="483"> 483</span>
+<span id="484"> 484</span>
+<span id="485"> 485</span>
+<span id="486"> 486</span>
+<span id="487"> 487</span>
+<span id="488"> 488</span>
+<span id="489"> 489</span>
+<span id="490"> 490</span>
+<span id="491"> 491</span>
+<span id="492"> 492</span>
+<span id="493"> 493</span>
+<span id="494"> 494</span>
+<span id="495"> 495</span>
+<span id="496"> 496</span>
+<span id="497"> 497</span>
+<span id="498"> 498</span>
+<span id="499"> 499</span>
+<span id="500"> 500</span>
+<span id="501"> 501</span>
+<span id="502"> 502</span>
+<span id="503"> 503</span>
+<span id="504"> 504</span>
+<span id="505"> 505</span>
+<span id="506"> 506</span>
+<span id="507"> 507</span>
+<span id="508"> 508</span>
+<span id="509"> 509</span>
+<span id="510"> 510</span>
+<span id="511"> 511</span>
+<span id="512"> 512</span>
+<span id="513"> 513</span>
+<span id="514"> 514</span>
+<span id="515"> 515</span>
+<span id="516"> 516</span>
+<span id="517"> 517</span>
+<span id="518"> 518</span>
+<span id="519"> 519</span>
+<span id="520"> 520</span>
+<span id="521"> 521</span>
+<span id="522"> 522</span>
+<span id="523"> 523</span>
+<span id="524"> 524</span>
+<span id="525"> 525</span>
+<span id="526"> 526</span>
+<span id="527"> 527</span>
+<span id="528"> 528</span>
+<span id="529"> 529</span>
+<span id="530"> 530</span>
+<span id="531"> 531</span>
+<span id="532"> 532</span>
+<span id="533"> 533</span>
+<span id="534"> 534</span>
+<span id="535"> 535</span>
+<span id="536"> 536</span>
+<span id="537"> 537</span>
+<span id="538"> 538</span>
+<span id="539"> 539</span>
+<span id="540"> 540</span>
+<span id="541"> 541</span>
+<span id="542"> 542</span>
+<span id="543"> 543</span>
+<span id="544"> 544</span>
+<span id="545"> 545</span>
+<span id="546"> 546</span>
+<span id="547"> 547</span>
+<span id="548"> 548</span>
+<span id="549"> 549</span>
+<span id="550"> 550</span>
+<span id="551"> 551</span>
+<span id="552"> 552</span>
+<span id="553"> 553</span>
+<span id="554"> 554</span>
+<span id="555"> 555</span>
+<span id="556"> 556</span>
+<span id="557"> 557</span>
+<span id="558"> 558</span>
+<span id="559"> 559</span>
+<span id="560"> 560</span>
+<span id="561"> 561</span>
+<span id="562"> 562</span>
+<span id="563"> 563</span>
+<span id="564"> 564</span>
+<span id="565"> 565</span>
+<span id="566"> 566</span>
+<span id="567"> 567</span>
+<span id="568"> 568</span>
+<span id="569"> 569</span>
+<span id="570"> 570</span>
+<span id="571"> 571</span>
+<span id="572"> 572</span>
+<span id="573"> 573</span>
+<span id="574"> 574</span>
+<span id="575"> 575</span>
+<span id="576"> 576</span>
+<span id="577"> 577</span>
+<span id="578"> 578</span>
+<span id="579"> 579</span>
+<span id="580"> 580</span>
+<span id="581"> 581</span>
+<span id="582"> 582</span>
+<span id="583"> 583</span>
+<span id="584"> 584</span>
+<span id="585"> 585</span>
+<span id="586"> 586</span>
+<span id="587"> 587</span>
+<span id="588"> 588</span>
+<span id="589"> 589</span>
+<span id="590"> 590</span>
+<span id="591"> 591</span>
+<span id="592"> 592</span>
+<span id="593"> 593</span>
+<span id="594"> 594</span>
+<span id="595"> 595</span>
+<span id="596"> 596</span>
+<span id="597"> 597</span>
+<span id="598"> 598</span>
+<span id="599"> 599</span>
+<span id="600"> 600</span>
+<span id="601"> 601</span>
+<span id="602"> 602</span>
+<span id="603"> 603</span>
+<span id="604"> 604</span>
+<span id="605"> 605</span>
+<span id="606"> 606</span>
+<span id="607"> 607</span>
+<span id="608"> 608</span>
+<span id="609"> 609</span>
+<span id="610"> 610</span>
+<span id="611"> 611</span>
+<span id="612"> 612</span>
+<span id="613"> 613</span>
+<span id="614"> 614</span>
+<span id="615"> 615</span>
+<span id="616"> 616</span>
+<span id="617"> 617</span>
+<span id="618"> 618</span>
+<span id="619"> 619</span>
+<span id="620"> 620</span>
+<span id="621"> 621</span>
+<span id="622"> 622</span>
+<span id="623"> 623</span>
+<span id="624"> 624</span>
+<span id="625"> 625</span>
+<span id="626"> 626</span>
+<span id="627"> 627</span>
+<span id="628"> 628</span>
+<span id="629"> 629</span>
+<span id="630"> 630</span>
+<span id="631"> 631</span>
+<span id="632"> 632</span>
+<span id="633"> 633</span>
+<span id="634"> 634</span>
+<span id="635"> 635</span>
+<span id="636"> 636</span>
+<span id="637"> 637</span>
+<span id="638"> 638</span>
+<span id="639"> 639</span>
+<span id="640"> 640</span>
+<span id="641"> 641</span>
+<span id="642"> 642</span>
+<span id="643"> 643</span>
+<span id="644"> 644</span>
+<span id="645"> 645</span>
+<span id="646"> 646</span>
+<span id="647"> 647</span>
+<span id="648"> 648</span>
+<span id="649"> 649</span>
+<span id="650"> 650</span>
+<span id="651"> 651</span>
+<span id="652"> 652</span>
+<span id="653"> 653</span>
+<span id="654"> 654</span>
+<span id="655"> 655</span>
+<span id="656"> 656</span>
+<span id="657"> 657</span>
+<span id="658"> 658</span>
+<span id="659"> 659</span>
+<span id="660"> 660</span>
+<span id="661"> 661</span>
+<span id="662"> 662</span>
+<span id="663"> 663</span>
+<span id="664"> 664</span>
+<span id="665"> 665</span>
+<span id="666"> 666</span>
+<span id="667"> 667</span>
+<span id="668"> 668</span>
+<span id="669"> 669</span>
+<span id="670"> 670</span>
+<span id="671"> 671</span>
+<span id="672"> 672</span>
+<span id="673"> 673</span>
+<span id="674"> 674</span>
+<span id="675"> 675</span>
+<span id="676"> 676</span>
+<span id="677"> 677</span>
+<span id="678"> 678</span>
+<span id="679"> 679</span>
+<span id="680"> 680</span>
+<span id="681"> 681</span>
+<span id="682"> 682</span>
+<span id="683"> 683</span>
+<span id="684"> 684</span>
+<span id="685"> 685</span>
+<span id="686"> 686</span>
+<span id="687"> 687</span>
+<span id="688"> 688</span>
+<span id="689"> 689</span>
+<span id="690"> 690</span>
+<span id="691"> 691</span>
+<span id="692"> 692</span>
+<span id="693"> 693</span>
+<span id="694"> 694</span>
+<span id="695"> 695</span>
+<span id="696"> 696</span>
+<span id="697"> 697</span>
+<span id="698"> 698</span>
+<span id="699"> 699</span>
+<span id="700"> 700</span>
+<span id="701"> 701</span>
+<span id="702"> 702</span>
+<span id="703"> 703</span>
+<span id="704"> 704</span>
+<span id="705"> 705</span>
+<span id="706"> 706</span>
+<span id="707"> 707</span>
+<span id="708"> 708</span>
+<span id="709"> 709</span>
+<span id="710"> 710</span>
+<span id="711"> 711</span>
+<span id="712"> 712</span>
+<span id="713"> 713</span>
+<span id="714"> 714</span>
+<span id="715"> 715</span>
+<span id="716"> 716</span>
+<span id="717"> 717</span>
+<span id="718"> 718</span>
+<span id="719"> 719</span>
+<span id="720"> 720</span>
+<span id="721"> 721</span>
+<span id="722"> 722</span>
+<span id="723"> 723</span>
+<span id="724"> 724</span>
+<span id="725"> 725</span>
+<span id="726"> 726</span>
+<span id="727"> 727</span>
+<span id="728"> 728</span>
+<span id="729"> 729</span>
+<span id="730"> 730</span>
+<span id="731"> 731</span>
+<span id="732"> 732</span>
+<span id="733"> 733</span>
+<span id="734"> 734</span>
+<span id="735"> 735</span>
+<span id="736"> 736</span>
+<span id="737"> 737</span>
+<span id="738"> 738</span>
+<span id="739"> 739</span>
+<span id="740"> 740</span>
+<span id="741"> 741</span>
+<span id="742"> 742</span>
+<span id="743"> 743</span>
+<span id="744"> 744</span>
+<span id="745"> 745</span>
+<span id="746"> 746</span>
+<span id="747"> 747</span>
+<span id="748"> 748</span>
+<span id="749"> 749</span>
+<span id="750"> 750</span>
+<span id="751"> 751</span>
+<span id="752"> 752</span>
+<span id="753"> 753</span>
+<span id="754"> 754</span>
+<span id="755"> 755</span>
+<span id="756"> 756</span>
+<span id="757"> 757</span>
+<span id="758"> 758</span>
+<span id="759"> 759</span>
+<span id="760"> 760</span>
+<span id="761"> 761</span>
+<span id="762"> 762</span>
+<span id="763"> 763</span>
+<span id="764"> 764</span>
+<span id="765"> 765</span>
+<span id="766"> 766</span>
+<span id="767"> 767</span>
+<span id="768"> 768</span>
+<span id="769"> 769</span>
+<span id="770"> 770</span>
+<span id="771"> 771</span>
+<span id="772"> 772</span>
+<span id="773"> 773</span>
+<span id="774"> 774</span>
+<span id="775"> 775</span>
+<span id="776"> 776</span>
+<span id="777"> 777</span>
+<span id="778"> 778</span>
+<span id="779"> 779</span>
+<span id="780"> 780</span>
+<span id="781"> 781</span>
+<span id="782"> 782</span>
+<span id="783"> 783</span>
+<span id="784"> 784</span>
+<span id="785"> 785</span>
+<span id="786"> 786</span>
+<span id="787"> 787</span>
+<span id="788"> 788</span>
+<span id="789"> 789</span>
+<span id="790"> 790</span>
+<span id="791"> 791</span>
+<span id="792"> 792</span>
+<span id="793"> 793</span>
+<span id="794"> 794</span>
+<span id="795"> 795</span>
+<span id="796"> 796</span>
+<span id="797"> 797</span>
+<span id="798"> 798</span>
+<span id="799"> 799</span>
+<span id="800"> 800</span>
+<span id="801"> 801</span>
+<span id="802"> 802</span>
+<span id="803"> 803</span>
+<span id="804"> 804</span>
+<span id="805"> 805</span>
+<span id="806"> 806</span>
+<span id="807"> 807</span>
+<span id="808"> 808</span>
+<span id="809"> 809</span>
+<span id="810"> 810</span>
+<span id="811"> 811</span>
+<span id="812"> 812</span>
+<span id="813"> 813</span>
+<span id="814"> 814</span>
+<span id="815"> 815</span>
+<span id="816"> 816</span>
+<span id="817"> 817</span>
+<span id="818"> 818</span>
+<span id="819"> 819</span>
+<span id="820"> 820</span>
+<span id="821"> 821</span>
+<span id="822"> 822</span>
+<span id="823"> 823</span>
+<span id="824"> 824</span>
+<span id="825"> 825</span>
+<span id="826"> 826</span>
+<span id="827"> 827</span>
+<span id="828"> 828</span>
+<span id="829"> 829</span>
+<span id="830"> 830</span>
+<span id="831"> 831</span>
+<span id="832"> 832</span>
+<span id="833"> 833</span>
+<span id="834"> 834</span>
+<span id="835"> 835</span>
+<span id="836"> 836</span>
+<span id="837"> 837</span>
+<span id="838"> 838</span>
+<span id="839"> 839</span>
+<span id="840"> 840</span>
+<span id="841"> 841</span>
+<span id="842"> 842</span>
+<span id="843"> 843</span>
+<span id="844"> 844</span>
+<span id="845"> 845</span>
+<span id="846"> 846</span>
+<span id="847"> 847</span>
+<span id="848"> 848</span>
+<span id="849"> 849</span>
+<span id="850"> 850</span>
+<span id="851"> 851</span>
+<span id="852"> 852</span>
+<span id="853"> 853</span>
+<span id="854"> 854</span>
+<span id="855"> 855</span>
+<span id="856"> 856</span>
+<span id="857"> 857</span>
+<span id="858"> 858</span>
+<span id="859"> 859</span>
+<span id="860"> 860</span>
+<span id="861"> 861</span>
+<span id="862"> 862</span>
+<span id="863"> 863</span>
+<span id="864"> 864</span>
+<span id="865"> 865</span>
+<span id="866"> 866</span>
+<span id="867"> 867</span>
+<span id="868"> 868</span>
+<span id="869"> 869</span>
+<span id="870"> 870</span>
+<span id="871"> 871</span>
+<span id="872"> 872</span>
+<span id="873"> 873</span>
+<span id="874"> 874</span>
+<span id="875"> 875</span>
+<span id="876"> 876</span>
+<span id="877"> 877</span>
+<span id="878"> 878</span>
+<span id="879"> 879</span>
+<span id="880"> 880</span>
+<span id="881"> 881</span>
+<span id="882"> 882</span>
+<span id="883"> 883</span>
+<span id="884"> 884</span>
+<span id="885"> 885</span>
+<span id="886"> 886</span>
+<span id="887"> 887</span>
+<span id="888"> 888</span>
+<span id="889"> 889</span>
+<span id="890"> 890</span>
+<span id="891"> 891</span>
+<span id="892"> 892</span>
+<span id="893"> 893</span>
+<span id="894"> 894</span>
+<span id="895"> 895</span>
+<span id="896"> 896</span>
+<span id="897"> 897</span>
+<span id="898"> 898</span>
+<span id="899"> 899</span>
+<span id="900"> 900</span>
+<span id="901"> 901</span>
+<span id="902"> 902</span>
+<span id="903"> 903</span>
+<span id="904"> 904</span>
+<span id="905"> 905</span>
+<span id="906"> 906</span>
+<span id="907"> 907</span>
+<span id="908"> 908</span>
+<span id="909"> 909</span>
+<span id="910"> 910</span>
+<span id="911"> 911</span>
+<span id="912"> 912</span>
+<span id="913"> 913</span>
+<span id="914"> 914</span>
+<span id="915"> 915</span>
+<span id="916"> 916</span>
+<span id="917"> 917</span>
+<span id="918"> 918</span>
+<span id="919"> 919</span>
+<span id="920"> 920</span>
+<span id="921"> 921</span>
+<span id="922"> 922</span>
+<span id="923"> 923</span>
+<span id="924"> 924</span>
+<span id="925"> 925</span>
+<span id="926"> 926</span>
+<span id="927"> 927</span>
+<span id="928"> 928</span>
+<span id="929"> 929</span>
+<span id="930"> 930</span>
+<span id="931"> 931</span>
+<span id="932"> 932</span>
+<span id="933"> 933</span>
+<span id="934"> 934</span>
+<span id="935"> 935</span>
+<span id="936"> 936</span>
+<span id="937"> 937</span>
+<span id="938"> 938</span>
+<span id="939"> 939</span>
+<span id="940"> 940</span>
+<span id="941"> 941</span>
+<span id="942"> 942</span>
+<span id="943"> 943</span>
+<span id="944"> 944</span>
+<span id="945"> 945</span>
+<span id="946"> 946</span>
+<span id="947"> 947</span>
+<span id="948"> 948</span>
+<span id="949"> 949</span>
+<span id="950"> 950</span>
+<span id="951"> 951</span>
+<span id="952"> 952</span>
+<span id="953"> 953</span>
+<span id="954"> 954</span>
+<span id="955"> 955</span>
+<span id="956"> 956</span>
+<span id="957"> 957</span>
+<span id="958"> 958</span>
+<span id="959"> 959</span>
+<span id="960"> 960</span>
+<span id="961"> 961</span>
+<span id="962"> 962</span>
+<span id="963"> 963</span>
+<span id="964"> 964</span>
+<span id="965"> 965</span>
+<span id="966"> 966</span>
+<span id="967"> 967</span>
+<span id="968"> 968</span>
+<span id="969"> 969</span>
+<span id="970"> 970</span>
+<span id="971"> 971</span>
+<span id="972"> 972</span>
+<span id="973"> 973</span>
+<span id="974"> 974</span>
+<span id="975"> 975</span>
+<span id="976"> 976</span>
+<span id="977"> 977</span>
+<span id="978"> 978</span>
+<span id="979"> 979</span>
+<span id="980"> 980</span>
+<span id="981"> 981</span>
+<span id="982"> 982</span>
+<span id="983"> 983</span>
+<span id="984"> 984</span>
+<span id="985"> 985</span>
+<span id="986"> 986</span>
+<span id="987"> 987</span>
+<span id="988"> 988</span>
+<span id="989"> 989</span>
+<span id="990"> 990</span>
+<span id="991"> 991</span>
+<span id="992"> 992</span>
+<span id="993"> 993</span>
+<span id="994"> 994</span>
+<span id="995"> 995</span>
+<span id="996"> 996</span>
+<span id="997"> 997</span>
+<span id="998"> 998</span>
+<span id="999"> 999</span>
+<span id="1000">1000</span>
+<span id="1001">1001</span>
+<span id="1002">1002</span>
+<span id="1003">1003</span>
+<span id="1004">1004</span>
+<span id="1005">1005</span>
+<span id="1006">1006</span>
+<span id="1007">1007</span>
+<span id="1008">1008</span>
+<span id="1009">1009</span>
+<span id="1010">1010</span>
+<span id="1011">1011</span>
+<span id="1012">1012</span>
+<span id="1013">1013</span>
+<span id="1014">1014</span>
+<span id="1015">1015</span>
+<span id="1016">1016</span>
+<span id="1017">1017</span>
+<span id="1018">1018</span>
+<span id="1019">1019</span>
+<span id="1020">1020</span>
+<span id="1021">1021</span>
+<span id="1022">1022</span>
+<span id="1023">1023</span>
+<span id="1024">1024</span>
+<span id="1025">1025</span>
+<span id="1026">1026</span>
+<span id="1027">1027</span>
+<span id="1028">1028</span>
+<span id="1029">1029</span>
+<span id="1030">1030</span>
+<span id="1031">1031</span>
+<span id="1032">1032</span>
+<span id="1033">1033</span>
+<span id="1034">1034</span>
+<span id="1035">1035</span>
+<span id="1036">1036</span>
+<span id="1037">1037</span>
+<span id="1038">1038</span>
+<span id="1039">1039</span>
+<span id="1040">1040</span>
+<span id="1041">1041</span>
+<span id="1042">1042</span>
+<span id="1043">1043</span>
+<span id="1044">1044</span>
+<span id="1045">1045</span>
+<span id="1046">1046</span>
+<span id="1047">1047</span>
+<span id="1048">1048</span>
+<span id="1049">1049</span>
+<span id="1050">1050</span>
+<span id="1051">1051</span>
+<span id="1052">1052</span>
+<span id="1053">1053</span>
+<span id="1054">1054</span>
+<span id="1055">1055</span>
+<span id="1056">1056</span>
+<span id="1057">1057</span>
+<span id="1058">1058</span>
+<span id="1059">1059</span>
+<span id="1060">1060</span>
+<span id="1061">1061</span>
+<span id="1062">1062</span>
+<span id="1063">1063</span>
+<span id="1064">1064</span>
+<span id="1065">1065</span>
+<span id="1066">1066</span>
+<span id="1067">1067</span>
+<span id="1068">1068</span>
+<span id="1069">1069</span>
+<span id="1070">1070</span>
+<span id="1071">1071</span>
+<span id="1072">1072</span>
+<span id="1073">1073</span>
+<span id="1074">1074</span>
+<span id="1075">1075</span>
+<span id="1076">1076</span>
+<span id="1077">1077</span>
+<span id="1078">1078</span>
+<span id="1079">1079</span>
+<span id="1080">1080</span>
+<span id="1081">1081</span>
+<span id="1082">1082</span>
+<span id="1083">1083</span>
+<span id="1084">1084</span>
+<span id="1085">1085</span>
+<span id="1086">1086</span>
+<span id="1087">1087</span>
+<span id="1088">1088</span>
+<span id="1089">1089</span>
+<span id="1090">1090</span>
+<span id="1091">1091</span>
+<span id="1092">1092</span>
+<span id="1093">1093</span>
+<span id="1094">1094</span>
+<span id="1095">1095</span>
+<span id="1096">1096</span>
+<span id="1097">1097</span>
+<span id="1098">1098</span>
+<span id="1099">1099</span>
+<span id="1100">1100</span>
+<span id="1101">1101</span>
+<span id="1102">1102</span>
+<span id="1103">1103</span>
+<span id="1104">1104</span>
+<span id="1105">1105</span>
+<span id="1106">1106</span>
+<span id="1107">1107</span>
+<span id="1108">1108</span>
+<span id="1109">1109</span>
+<span id="1110">1110</span>
+<span id="1111">1111</span>
+<span id="1112">1112</span>
+<span id="1113">1113</span>
+<span id="1114">1114</span>
+<span id="1115">1115</span>
+<span id="1116">1116</span>
+<span id="1117">1117</span>
+<span id="1118">1118</span>
+<span id="1119">1119</span>
+<span id="1120">1120</span>
+<span id="1121">1121</span>
+<span id="1122">1122</span>
+<span id="1123">1123</span>
+<span id="1124">1124</span>
+<span id="1125">1125</span>
+<span id="1126">1126</span>
+<span id="1127">1127</span>
+<span id="1128">1128</span>
+<span id="1129">1129</span>
+<span id="1130">1130</span>
+<span id="1131">1131</span>
+<span id="1132">1132</span>
+<span id="1133">1133</span>
+<span id="1134">1134</span>
+<span id="1135">1135</span>
+<span id="1136">1136</span>
+<span id="1137">1137</span>
+<span id="1138">1138</span>
+<span id="1139">1139</span>
+<span id="1140">1140</span>
+<span id="1141">1141</span>
+<span id="1142">1142</span>
+<span id="1143">1143</span>
+<span id="1144">1144</span>
+<span id="1145">1145</span>
+<span id="1146">1146</span>
+<span id="1147">1147</span>
+<span id="1148">1148</span>
+<span id="1149">1149</span>
+<span id="1150">1150</span>
+<span id="1151">1151</span>
+<span id="1152">1152</span>
+<span id="1153">1153</span>
+<span id="1154">1154</span>
+<span id="1155">1155</span>
+<span id="1156">1156</span>
+<span id="1157">1157</span>
+<span id="1158">1158</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::any::type_name</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::fmt</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::intrinsics</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::mem::ManuallyDrop</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ptr</span>;
+
+<span class="doccomment">/// 包装器类型，用于创建 `T` 的未初始化实例。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 初始化不变式</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 通常，编译器假定已根据变量类型的要求正确初始化了变量。例如，引用类型的变量必须对齐且非空。</span>
+<span class="doccomment">/// 即使在不安全的代码中，这也必须始终保持不变。</span>
+<span class="doccomment">/// 结果，将引用类型的变量初始化为零会导致瞬时 [undefined behavior][ub]，无论引用是否曾经被用来访问内存:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust,no_run</span>
+<span class="doccomment">/// # #![allow(invalid_value)]</span>
+<span class="doccomment">/// use std::mem::{self, MaybeUninit};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let x: &amp;i32 = unsafe { mem::zeroed() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// // 与 `MaybeUninit&lt;&amp;i32&gt;` 等效的代码:</span>
+<span class="doccomment">/// let x: &amp;i32 = unsafe { MaybeUninit::zeroed().assume_init() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 编译器将其用于各种优化，例如消除运行时检查和优化 `enum` 布局。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 同样，完全未初始化的存储器可以包含任何内容，而 `bool` 必须始终为 `true` 或 `false`。因此，创建未初始化的 `bool` 是未定义的行为:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust,no_run</span>
+<span class="doccomment">/// # #![allow(invalid_value)]</span>
+<span class="doccomment">/// use std::mem::{self, MaybeUninit};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let b: bool = unsafe { mem::uninitialized() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// // 与 `MaybeUninit&lt;bool&gt;` 等效的代码:</span>
+<span class="doccomment">/// let b: bool = unsafe { MaybeUninit::uninit().assume_init() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此外，未初始化的存储器的特殊之处在于它没有固定的值 (&quot;fixed&quot; 表示 &quot;it won&#39;t change without being written to&quot;)。多次读取相同的未初始化字节会产生不同的结果。</span>
+<span class="doccomment">/// 这使得在变量中具有未初始化的数据成为未定义的行为，即使该变量具有整数类型也可以保留任何固定位模式</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust,no_run</span>
+<span class="doccomment">/// # #![allow(invalid_value)]</span>
+<span class="doccomment">/// use std::mem::{self, MaybeUninit};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let x: i32 = unsafe { mem::uninitialized() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// // 与 `MaybeUninit&lt;i32&gt;` 等效的代码:</span>
+<span class="doccomment">/// let x: i32 = unsafe { MaybeUninit::uninit().assume_init() }; // 未定义的行为! ⚠️</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// (请注意，关于未初始化整数的规则尚未最终确定，但是除非被确定，否则建议避免使用它们。)</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 最重要的是，请记住，大多数类型具有其他不变式，而不仅仅是在类型级别被初始化。</span>
+<span class="doccomment">/// 例如，将 `1` 初始化的 [`Vec&lt;T&gt;`] 视为已初始化 (在当前实现下; 这并不构成稳定的保证)，因为编译器知道的唯一要求是数据指针必须为非空值。</span>
+<span class="doccomment">/// 创建这样的 `Vec&lt;T&gt;` 不会立即导致未定义的行为，但是在大多数安全操作 (包括丢弃操作) 中都将导致未定义的行为。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`Vec&lt;T&gt;`]: ../../std/vec/struct.Vec.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `MaybeUninit&lt;T&gt;` 用于使不安全的代码能够处理未初始化的数据。</span>
+<span class="doccomment">/// 这是向编译器发出的信号，指示此处的数据可能不被初始化:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::mem::MaybeUninit;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 创建一个显式未初始化的引用。</span>
+<span class="doccomment">/// // 编译器知道 `MaybeUninit&lt;T&gt;` 内部的数据可能无效，因此不是 UB:</span>
+<span class="doccomment">/// let mut x = MaybeUninit::&lt;&amp;i32&gt;::uninit();</span>
+<span class="doccomment">/// // 将其设置为有效值。</span>
+<span class="doccomment">/// x.write(&amp;0);</span>
+<span class="doccomment">/// // 提取已初始化的数据 - 仅在正确初始化 `x` 之后 * 才允许这样做!</span>
+<span class="comment">/////</span>
+<span class="doccomment">/// let x = unsafe { x.assume_init() };</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 然后，编译器知道不会对此代码进行任何错误的假设或优化。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 您可以认为 `MaybeUninit&lt;T&gt;` 有点像 `Option&lt;T&gt;`，但是没有任何运行时跟踪且没有任何安全检查。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ## out-pointers</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 您可以使用 `MaybeUninit&lt;T&gt;` 来实现 &quot;out-pointers&quot;: 与其从函数中返回数据，还不如将其传递给某个 (uninitialized) 内存的指针以将结果放入其中。</span>
+<span class="doccomment">/// 当对调用方来说，控制结果存储在内存中的分配方式很重要并且您希望避免不必要的移动时，这很有用。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::mem::MaybeUninit;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// unsafe fn make_vec(out: *mut Vec&lt;i32&gt;) {</span>
+<span class="doccomment">///     // `write` 不会丢弃老的内容，这一点很重要。</span>
+<span class="doccomment">///     out.write(vec![1, 2, 3]);</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let mut v = MaybeUninit::uninit();</span>
+<span class="doccomment">/// unsafe { make_vec(v.as_mut_ptr()); }</span>
+<span class="doccomment">/// // 现在我们知道 `v` 已初始化! 这也可以确保正确丢弃 vector。</span>
+<span class="comment">/////</span>
+<span class="doccomment">/// let v = unsafe { v.assume_init() };</span>
+<span class="doccomment">/// assert_eq!(&amp;v, &amp;[1, 2, 3]);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ## 逐元素初始化数组</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `MaybeUninit&lt;T&gt;` 可用于按元素初始化大型数组:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::mem::{self, MaybeUninit};</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let data = {</span>
+<span class="doccomment">///     // 创建一个未初始化的 `MaybeUninit` 数组。</span>
+<span class="doccomment">///     // `assume_init` 是安全的，因为我们声称这里已经初始化的类型是一堆 `MaybeUninit`，不需要初始化。</span>
+<span class="comment">/////</span>
+<span class="doccomment">///     let mut data: [MaybeUninit&lt;Vec&lt;u32&gt;&gt;; 1000] = unsafe {</span>
+<span class="doccomment">///         MaybeUninit::uninit().assume_init()</span>
+<span class="doccomment">///     };</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     // 丢弃 `MaybeUninit` 不会执行任何操作。</span>
+<span class="doccomment">///     // 因此，使用裸指针分配代替 `ptr::write` 不会导致旧的未初始化值被丢弃。</span>
+<span class="comment">/////</span>
+<span class="doccomment">///     // 此外，如果在此循环期间存在 panic，则可能会发生内存泄漏，但不会出现内存安全问题。</span>
+<span class="comment">/////</span>
+<span class="doccomment">///     for elem in &amp;mut data[..] {</span>
+<span class="doccomment">///         elem.write(vec![42]);</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     // 一切都已初始化。</span>
+<span class="doccomment">///     // 将数组转换为初始化的类型。</span>
+<span class="doccomment">///     unsafe { mem::transmute::&lt;_, [Vec&lt;u32&gt;; 1000]&gt;(data) }</span>
+<span class="doccomment">/// };</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// assert_eq!(&amp;data[0], &amp;[42]);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 您也可以使用部分初始化的数组，这些数组可以在不稳定的数据结构中找到。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use std::mem::MaybeUninit;</span>
+<span class="doccomment">/// use std::ptr;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 创建一个未初始化的 `MaybeUninit` 数组。</span>
+<span class="doccomment">/// // `assume_init` 是安全的，因为我们声称这里已经初始化的类型是一堆 `MaybeUninit`，不需要初始化。</span>
+<span class="comment">/////</span>
+<span class="doccomment">/// let mut data: [MaybeUninit&lt;String&gt;; 1000] = unsafe { MaybeUninit::uninit().assume_init() };</span>
+<span class="doccomment">/// // 计算我们分配的元素数。</span>
+<span class="doccomment">/// let mut data_len: usize = 0;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// for elem in &amp;mut data[0..500] {</span>
+<span class="doccomment">///     elem.write(String::from(&quot;hello&quot;));</span>
+<span class="doccomment">///     data_len += 1;</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// // 对于数组中的每个项，如果我们分配了它，则将其丢弃。</span>
+<span class="doccomment">/// for elem in &amp;mut data[0..data_len] {</span>
+<span class="doccomment">///     unsafe { ptr::drop_in_place(elem.as_mut_ptr()); }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ## 逐场初始化结构体</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 您可以使用 `MaybeUninit&lt;T&gt;` 和 [`std::ptr::addr_of_mut`] 宏来逐字段初始化结构体:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::mem::MaybeUninit;</span>
+<span class="doccomment">/// use std::ptr::addr_of_mut;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// #[derive(Debug, PartialEq)]</span>
+<span class="doccomment">/// pub struct Foo {</span>
+<span class="doccomment">///     name: String,</span>
+<span class="doccomment">///     list: Vec&lt;u8&gt;,</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let foo = {</span>
+<span class="doccomment">///     let mut uninit: MaybeUninit&lt;Foo&gt; = MaybeUninit::uninit();</span>
+<span class="doccomment">///     let ptr = uninit.as_mut_ptr();</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     // 初始化 `name` 字段 使用 `write` 而不是通过 `=` 赋值，而不是在旧的、未初始化的值上调用 `drop`。</span>
+<span class="comment">/////</span>
+<span class="comment">/////</span>
+<span class="doccomment">///     unsafe { addr_of_mut!((*ptr).name).write(&quot;Bob&quot;.to_string()); }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     // 初始化 `list` 字段如果此处存在 panic，则 `name` 字段中的 `String` 泄漏。</span>
+<span class="comment">/////</span>
+<span class="doccomment">///     unsafe { addr_of_mut!((*ptr).list).write(vec![0, 1, 2]); }</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     // 所有字段都已初始化，因此我们调用 `assume_init` 来获取已初始化的 Foo。</span>
+<span class="doccomment">///     unsafe { uninit.assume_init() }</span>
+<span class="doccomment">/// };</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// assert_eq!(</span>
+<span class="doccomment">///     foo,</span>
+<span class="doccomment">///     Foo {</span>
+<span class="doccomment">///         name: &quot;Bob&quot;.to_string(),</span>
+<span class="doccomment">///         list: vec![0, 1, 2]</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// );</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// [`std::ptr::addr_of_mut`]: crate::ptr::addr_of_mut</span>
+<span class="doccomment">/// [ub]: ../../reference/behavior-considered-undefined.html</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Layout</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `MaybeUninit&lt;T&gt;` 保证具有与 `T` 相同的大小，对齐方式和 ABI:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// use std::mem::{MaybeUninit, size_of, align_of};</span>
+<span class="doccomment">/// assert_eq!(size_of::&lt;MaybeUninit&lt;u64&gt;&gt;(), size_of::&lt;u64&gt;());</span>
+<span class="doccomment">/// assert_eq!(align_of::&lt;MaybeUninit&lt;u64&gt;&gt;(), align_of::&lt;u64&gt;());</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 但是请记住，*包含*`MaybeUninit&lt;T&gt;` 的类型不一定是相同的布局。Rust 通常不保证 `Foo&lt;T&gt;` 的字段具有与 `Foo&lt;U&gt;` 相同的顺序，即使 `T` 和 `U` 具有相同的大小和对齐方式。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此外，由于任何位值对于 `MaybeUninit&lt;T&gt;` 都是有效的，因此编译器无法应用 non-zero/niche-filling 优化，从而可能导致更大的大小:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```rust</span>
+<span class="doccomment">/// # use std::mem::{MaybeUninit, size_of};</span>
+<span class="doccomment">/// assert_eq!(size_of::&lt;Option&lt;bool&gt;&gt;(), 1);</span>
+<span class="doccomment">/// assert_eq!(size_of::&lt;Option&lt;MaybeUninit&lt;bool&gt;&gt;&gt;(), 2);</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 如果 `T` 是 FFI 安全的，则 `MaybeUninit&lt;T&gt;` 也是如此。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 虽然 `MaybeUninit` 是 `#[repr(transparent)]` (表示它保证与 `T` 相同的大小，对齐方式和 ABI)，但是这 *不会* 更改任何先前的警告。</span>
+<span class="doccomment">/// `Option&lt;T&gt;` 和 `Option&lt;MaybeUninit&lt;T&gt;&gt;` 可能仍具有不同的大小，并且包含 `T` 类型的字段的类型的布局 (和大小) 可能与该字段为 `MaybeUninit&lt;T&gt;` 的情况不同。</span>
+<span class="doccomment">/// `MaybeUninit` 是一个是联合类型，并且 union 上的 `#[repr(transparent)]` 是不稳定的 (请参见 [跟踪问题](https://github.com/rust-lang/rust/issues/60405))。</span>
+<span class="doccomment">/// 随着时间的推移，对 union 的 `#[repr(transparent)]` 的确切保证可能会发生变化，并且 `MaybeUninit` 可能会或可能不会保留 `#[repr(transparent)]`。</span>
+<span class="doccomment">/// 就是说，`MaybeUninit&lt;T&gt;` 将总是保证它具有与 `T` 有相同的大小、对齐方式和 ABI; 只是 `MaybeUninit` 实现保证的方式可能会演变。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+<span class="comment">// Lang 项，因此我们可以在其中包装其他类型。这对于生成器很有用。</span>
+<span class="attribute">#[<span class="ident">lang</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>)]</span>
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
+<span class="kw">pub</span> <span class="ident">union</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="ident">uninit</span>: (),
+    <span class="ident">value</span>: <span class="ident">ManuallyDrop</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="comment">// 不调用 `T::clone()`，我们不知道我们是否已足够初始化。</span>
+        <span class="kw-2">*</span><span class="self">self</span>
+    }
+}
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_debug&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.41.0&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="ident">f</span>.<span class="ident">pad</span>(<span class="ident">type_name</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>())
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 创建一个使用给定值初始化的新 `MaybeUninit&lt;T&gt;`。</span>
+    <span class="doccomment">/// 在此函数的返回值上调用 [`assume_init`] 是安全的。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 注意，丢弃 `MaybeUninit&lt;T&gt;` 永远不会调用 T 的丢弃代码。</span>
+    <span class="doccomment">/// 确保 `T` 在初始化时被丢弃是您的责任。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Example</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let v: MaybeUninit&lt;Vec&lt;u8&gt;&gt; = MaybeUninit::new(vec![42]);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`assume_init`]: MaybeUninit::assume_init</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">val</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="ident">MaybeUninit</span> { <span class="ident">value</span>: <span class="ident">ManuallyDrop::new</span>(<span class="ident">val</span>) }
+    }
+
+    <span class="doccomment">/// 以未初始化的状态创建一个新的 `MaybeUninit&lt;T&gt;`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 注意，丢弃 `MaybeUninit&lt;T&gt;` 永远不会调用 T 的丢弃代码。</span>
+    <span class="doccomment">/// 确保 `T` 在初始化时被丢弃是您的责任。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 有关一些示例，请参见 [类型级文档][MaybeUninit]。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Example</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let v: MaybeUninit&lt;String&gt; = MaybeUninit::uninit();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_uninit&quot;</span>]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">uninit</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="ident">MaybeUninit</span> { <span class="ident">uninit</span>: () }
+    }
+
+    <span class="doccomment">/// 在未初始化状态下创建 `MaybeUninit&lt;T&gt;` 项的新数组。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note: 在 future Rust 版本中，当 Rust 允许 [inline const expressions](https://github.com/rust-lang/rust/issues/76001) 时，此方法可能变得不必要。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 下面的示例可以使用 `let mut buf = [const { MaybeUninit::&lt;u8&gt;::uninit() }; 32];`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```no_run</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_uninit_array, maybe_uninit_extra, maybe_uninit_slice)]</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// extern &quot;C&quot; {</span>
+    <span class="doccomment">///     fn read_into_buffer(ptr: *mut u8, max_len: usize) -&gt; usize;</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// /// 返回实际读取的 (可能较小的) 数据切片</span>
+    <span class="doccomment">/// fn read(buf: &amp;mut [MaybeUninit&lt;u8&gt;]) -&gt; &amp;[u8] {</span>
+    <span class="doccomment">///     unsafe {</span>
+    <span class="doccomment">///         let len = read_into_buffer(buf.as_mut_ptr() as *mut u8, buf.len());</span>
+    <span class="doccomment">///         MaybeUninit::slice_assume_init_ref(&amp;buf[..len])</span>
+    <span class="doccomment">///     }</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut buf: [MaybeUninit&lt;u8&gt;; 32] = MaybeUninit::uninit_array();</span>
+    <span class="doccomment">/// let data = read(&amp;mut buf);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_uninit_array&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_uninit_array&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">uninit_array</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">LEN</span>: <span class="ident">usize</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> [<span class="self">Self</span>; <span class="ident">LEN</span>] {
+        <span class="comment">// SAFETY: 未初始化的 `[MaybeUninit&lt;_&gt;; LEN]` 有效。</span>
+        <span class="kw">unsafe</span> { <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span>[<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>; <span class="ident">LEN</span>]<span class="op">&gt;</span><span class="ident">::uninit</span>().<span class="ident">assume_init</span>() }
+    }
+
+    <span class="doccomment">/// 在未初始化状态下创建新的 `MaybeUninit&lt;T&gt;`，并用 `0` 字节填充内存。取决于 `T` 是否已经进行了正确的初始化。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 例如，初始化 `MaybeUninit&lt;usize&gt;::zeroed()`，但不初始化 `MaybeUninit&lt;&amp;&#39;static i32&gt;::zeroed()`，因为引用不能为空。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 注意，丢弃 `MaybeUninit&lt;T&gt;` 永远不会调用 T 的丢弃代码。</span>
+    <span class="doccomment">/// 确保 `T` 在初始化时被丢弃是您的责任。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Example</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此函数的正确用法: 用零初始化结构体，其中结构体的所有字段都可以将位模式 0 保留为有效值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let x = MaybeUninit::&lt;(u8, bool)&gt;::zeroed();</span>
+    <span class="doccomment">/// let x = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// assert_eq!(x, (0, false));</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 该函数的 *错误* 用法: 当 `0` 不是该类型的有效位模式时，调用 `x.zeroed().assume_init()`:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// enum NotZero { One = 1, Two = 2 }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let x = MaybeUninit::&lt;(u8, NotZero)&gt;::zeroed();</span>
+    <span class="doccomment">/// let x = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// // 在一个对中，我们创建一个没有有效判别式的 `NotZero`。</span>
+    <span class="doccomment">/// // 这是未定义的行为。⚠️</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_zeroed&quot;</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">zeroed</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u</span> <span class="op">=</span> <span class="ident">MaybeUninit</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="ident">::uninit</span>();
+        <span class="comment">// SAFETY: `u.as_mut_ptr()` 指向分配的内存。</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">u</span>.<span class="ident">as_mut_ptr</span>().<span class="ident">write_bytes</span>(<span class="number">0u8</span>, <span class="number">1</span>);
+        }
+        <span class="ident">u</span>
+    }
+
+    <span class="doccomment">/// 设置 `MaybeUninit&lt;T&gt;` 的值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这将覆盖任何先前的值而不将其丢弃，因此请注意不要重复使用此两次，除非您要跳过运行析构函数。</span>
+    <span class="doccomment">/// 为了您的方便，这也将 `self` 的内容 (现在已安全初始化) 返回变量引用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 由于内容存储在 `MaybeUninit` 中，如果 MaybeUninit 离开作用域而没有调用到 [`assume_init`]、[`assume_init_drop`] 或类似对象，则不会为内部数据运行析构函数。</span>
+    <span class="doccomment">/// 接收这个函数返回的附属引用引用的代码需要记住这一点。</span>
+    <span class="doccomment">/// Rust 的安全模型认为泄漏是安全的，但它们通常仍然是不可取的。</span>
+    <span class="doccomment">/// 话虽这么说，但借用引用与其他任何一个借用引用一样，因此为其赋予新的值将摒弃旧的内容。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`assume_init`]: Self::assume_init</span>
+    <span class="doccomment">/// [`assume_init_drop`]: Self::assume_init_drop</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Vec&lt;u8&gt;&gt;::uninit();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// {</span>
+    <span class="doccomment">///     let hello = x.write((&amp;b&quot;Hello, world!&quot;).to_vec());</span>
+    <span class="doccomment">///     // 设置 hello 不会预先分配，但不会泄漏它们</span>
+    <span class="doccomment">///     *hello = (&amp;b&quot;Hello&quot;).to_vec();</span>
+    <span class="doccomment">///     hello[0] = &#39;h&#39; as u8;</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// // x 现在初始化:</span>
+    <span class="doccomment">/// let s = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// assert_eq!(b&quot;hello&quot;, s.as_slice());</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 该方法的这种用法会导致泄漏:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;String&gt;::uninit();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// x.write(&quot;Hello&quot;.to_string());</span>
+    <span class="doccomment">/// // 这会泄漏包含的字符串:</span>
+    <span class="doccomment">/// x.write(&quot;hello&quot;.to_string());</span>
+    <span class="doccomment">/// // x 现在初始化:</span>
+    <span class="doccomment">/// let s = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这种方法可以用来避免在某些情况下不安全。下面的例子展示了一个固定大小的 arena 实现的一部分，它提供了固定的引用。</span>
+    <span class="doccomment">/// 有了 `write`，我们就可以避免通过裸指针路径来写:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_extra)]</span>
+    <span class="doccomment">/// use core::pin::Pin;</span>
+    <span class="doccomment">/// use core::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// struct PinArena&lt;T&gt; {</span>
+    <span class="doccomment">///     memory: Box&lt;[MaybeUninit&lt;T&gt;]&gt;,</span>
+    <span class="doccomment">///     len: usize,</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// impl &lt;T&gt; PinArena&lt;T&gt; {</span>
+    <span class="doccomment">///     pub fn capacity(&amp;self) -&gt; usize {</span>
+    <span class="doccomment">///         self.memory.len()</span>
+    <span class="doccomment">///     }</span>
+    <span class="doccomment">///     pub fn push(&amp;mut self, val: T) -&gt; Pin&lt;&amp;mut T&gt; {</span>
+    <span class="doccomment">///         if self.len &gt;= self.capacity() {</span>
+    <span class="doccomment">///             panic!(&quot;Attempted to push to a full pin arena!&quot;);</span>
+    <span class="doccomment">///         }</span>
+    <span class="doccomment">///         let ref_ = self.memory[self.len].write(val);</span>
+    <span class="doccomment">///         self.len += 1;</span>
+    <span class="doccomment">///         unsafe { Pin::new_unchecked(ref_) }</span>
+    <span class="doccomment">///     }</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_write&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.55.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_write&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63567&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">val</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="ident">val</span>);
+        <span class="comment">// SAFETY: 我们只是初始化了这个值。</span>
+        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">assume_init_mut</span>() }
+    }
+
+    <span class="doccomment">/// 获取指向包含值的指针。</span>
+    <span class="doccomment">/// 除非初始化 `MaybeUninit&lt;T&gt;`，否则从该指针读取或将其转换为 quot 是未定义的行为。</span>
+    <span class="doccomment">/// 写入该指针 (non-transitively) 指向的内存是未定义的行为 (`UnsafeCell&lt;T&gt;` 内部除外)。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(vec![0, 1, 2]);</span>
+    <span class="doccomment">/// // 在 `MaybeUninit&lt;T&gt;` 中创建引用。可以，因为我们已将其初始化。</span>
+    <span class="doccomment">/// let x_vec = unsafe { &amp;*x.as_ptr() };</span>
+    <span class="doccomment">/// assert_eq!(x_vec.len(), 3);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// let x_vec = unsafe { &amp;*x.as_ptr() };</span>
+    <span class="doccomment">/// // 我们创建了对未初始化的 vector 的引用! 这是未定义的行为。⚠️</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// (请注意，围绕未初始化数据引用的规则尚未最终确定，但是除非被确定，否则建议避免使用它们。)</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_as_ptr&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;75251&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">as_ptr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span> {
+        <span class="comment">// `MaybeUninit` 和 `ManuallyDrop` 都是 `repr(transparent)`，因此我们可以强制转换指针。</span>
+        <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span>
+    }
+
+    <span class="doccomment">/// 获取指向包含值的可变指针。</span>
+    <span class="doccomment">/// 除非初始化 `MaybeUninit&lt;T&gt;`，否则从该指针读取或将其转换为 quot 是未定义的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(vec![0, 1, 2]);</span>
+    <span class="doccomment">/// // 在 `MaybeUninit&lt;Vec&lt;u32&gt;&gt;` 中创建引用。</span>
+    <span class="doccomment">/// // 可以，因为我们已将其初始化。</span>
+    <span class="doccomment">/// let x_vec = unsafe { &amp;mut *x.as_mut_ptr() };</span>
+    <span class="doccomment">/// x_vec.push(3);</span>
+    <span class="doccomment">/// assert_eq!(x_vec.len(), 4);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// let x_vec = unsafe { &amp;mut *x.as_mut_ptr() };</span>
+    <span class="doccomment">/// // 我们创建了对未初始化的 vector 的引用! 这是未定义的行为。⚠️</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// (请注意，围绕未初始化数据引用的规则尚未最终确定，但是除非被确定，否则建议避免使用它们。)</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_as_ptr&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;75251&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">as_mut_ptr</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="comment">// `MaybeUninit` 和 `ManuallyDrop` 都是 `repr(transparent)`，因此我们可以强制转换指针。</span>
+        <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span>
+    }
+
+    <span class="doccomment">/// 从 `MaybeUninit&lt;T&gt;` 容器中提取值。这是确保数据将被丢弃的好方法，因为生成的 `T` 受到通常的丢弃处理。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 确实处于初始化状态。在内容尚未完全初始化时调用此方法会立即导致未定义的行为。</span>
+    <span class="doccomment">/// [类型级文档][inv] 中包含了有关此初始化不可变变量的更多信息。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [inv]: #initialization-invariant</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 最重要的是，请记住，大多数类型具有其他不变式，而不仅仅是在类型级别被初始化。</span>
+    <span class="doccomment">/// 例如，将 `1` 初始化的 [`Vec&lt;T&gt;`] 视为已初始化 (在当前实现下; 这并不构成稳定的保证)，因为编译器知道的唯一要求是数据指针必须为非空值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 创建这样的 `Vec&lt;T&gt;` 不会立即导致未定义的行为，但是在大多数安全操作 (包括丢弃操作) 中都将导致未定义的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`Vec&lt;T&gt;`]: ../../std/vec/struct.Vec.html</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;bool&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(true);</span>
+    <span class="doccomment">/// let x_init = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// assert_eq!(x_init, true);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// let x_init = unsafe { x.assume_init() };</span>
+    <span class="doccomment">/// // `x` 尚未初始化，因此这最后一行导致未定义的行为。⚠️</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_diagnostic_item</span> <span class="op">=</span> <span class="string">&quot;assume_init&quot;</span>]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_init</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+        <span class="comment">// SAFETY: 调用者必须保证 `self` 已初始化。</span>
+        <span class="comment">// 这也意味着 `self` 必须是 `value` 成员。</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">intrinsics::assert_inhabited</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+            <span class="ident">ManuallyDrop::into_inner</span>(<span class="self">self</span>.<span class="ident">value</span>)
+        }
+    }
+
+    <span class="doccomment">/// 从 `MaybeUninit&lt;T&gt;` 容器中读取值。结果 `T` 受通常的 drop 处理影响。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 只要有可能，最好改用 [`assume_init`]，这样可以防止重复 `MaybeUninit&lt;T&gt;` 的内容。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 确实处于初始化状态。在内容尚未完全初始化时调用此方法会导致未定义的行为。</span>
+    <span class="doccomment">/// [类型级文档][inv] 中包含了有关此初始化不可变变量的更多信息。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 此外，类似于 [`ptr::read`] 函数，该函数创建内容的按位副本，无论所包含的类型是否实现 [`Copy`] trait。</span>
+    <span class="doccomment">/// 使用数据的多个副本时 (通过多次调用 `assume_init_read`，或先调用 `assume_init_read`，然后再调用 [`assume_init`])，您有责任确保确实可以复制数据。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [inv]: #initialization-invariant</span>
+    <span class="doccomment">/// [`assume_init`]: MaybeUninit::assume_init</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_extra)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;u32&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(13);</span>
+    <span class="doccomment">/// let x1 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// // `u32` 是 `Copy`，因此我们可能会多次读取。</span>
+    <span class="doccomment">/// let x2 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// assert_eq!(x1, x2);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Option&lt;Vec&lt;u32&gt;&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(None);</span>
+    <span class="doccomment">/// let x1 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// // 复制 `None` 值是可以的，因此我们可能会多次读取。</span>
+    <span class="doccomment">/// let x2 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// assert_eq!(x1, x2);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_extra)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Option&lt;Vec&lt;u32&gt;&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// x.write(Some(vec![0, 1, 2]));</span>
+    <span class="doccomment">/// let x1 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// let x2 = unsafe { x.assume_init_read() };</span>
+    <span class="doccomment">/// // 现在，我们创建了同一 vector 的两个副本，当它们都被丢弃时，将导致双重释放!</span>
+    <span class="comment">/////</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_extra&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63567&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_extra&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63567&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_init_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+        <span class="comment">// SAFETY: 调用者必须保证 `self` 已初始化。</span>
+        <span class="comment">// 从 `self.as_ptr()` 读取数据是安全的，因为应该初始化 `self`。</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">intrinsics::assert_inhabited</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+            <span class="self">self</span>.<span class="ident">as_ptr</span>().<span class="ident">read</span>()
+        }
+    }
+
+    <span class="doccomment">/// 将包含的值放置到位。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果您拥有 `MaybeUninit`，您也可以使用 [`assume_init`] 作为替代。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 确实处于初始化状态。</span>
+    <span class="doccomment">/// 在内容尚未完全初始化时调用此方法会导致未定义的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 最重要的是，必须满足类型 `T` 的所有其他不可变变量，因为 `T` (或其成员) 的 `Drop` 实现可能依赖于此。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 例如，将 [`Vec&lt;T&gt;`] 设置为无效但非空的地址使其初始化 (在当前实现下;</span>
+    <span class="doccomment">/// 这并不构成稳定的保证)，因为编译器知道的唯一要求是数据指针必须非空。</span>
+    <span class="doccomment">/// 但是，丢弃这样的 `Vec&lt;T&gt;` 会导致不确定的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`assume_init`]: MaybeUninit::assume_init</span>
+    <span class="doccomment">/// [`Vec&lt;T&gt;`]: ../../std/vec/struct.Vec.html</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_extra&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63567&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_init_drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="comment">// SAFETY: 调用者必须保证 `self` 已初始化并且满足 `T` 的所有不可变变量。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 在这种情况下，将值放到适当的位置是安全的。</span>
+        <span class="kw">unsafe</span> { <span class="ident">ptr::drop_in_place</span>(<span class="self">self</span>.<span class="ident">as_mut_ptr</span>()) }
+    }
+
+    <span class="doccomment">/// 获取对包含值的共享引用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 当我们要访问已初始化但没有 `MaybeUninit` 所有权 (防止使用 `.assume_init()`) 的 `MaybeUninit` 时，这很有用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 在内容尚未完全初始化时调用此方法会导致未定义的行为: 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 确实处于初始化状态。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// // 初始化 `x`:</span>
+    <span class="doccomment">/// x.write(vec![1, 2, 3]);</span>
+    <span class="doccomment">/// // 现在已知我们的 `MaybeUninit&lt;_&gt;` 已初始化，可以创建对其的共享引用:</span>
+    <span class="comment">/////</span>
+    <span class="doccomment">/// let x: &amp;Vec&lt;u32&gt; = unsafe {</span>
+    <span class="doccomment">///     // SAFETY: `x` 已初始化。</span>
+    <span class="doccomment">///     x.assume_init_ref()</span>
+    <span class="doccomment">/// };</span>
+    <span class="doccomment">/// assert_eq!(x, &amp;vec![1, 2, 3]);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let x = MaybeUninit::&lt;Vec&lt;u32&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// let x_vec: &amp;Vec&lt;u32&gt; = unsafe { x.assume_init_ref() };</span>
+    <span class="doccomment">/// // 我们创建了对未初始化的 vector 的引用! 这是未定义的行为。⚠️</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::{cell::Cell, mem::MaybeUninit};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let b = MaybeUninit::&lt;Cell&lt;bool&gt;&gt;::uninit();</span>
+    <span class="doccomment">/// // 使用 `Cell::set` 初始化 `MaybeUninit`:</span>
+    <span class="doccomment">/// unsafe {</span>
+    <span class="doccomment">///     b.assume_init_ref().set(true);</span>
+    <span class="doccomment">///    // ^^^^^^^^^^^^^^^</span>
+    <span class="doccomment">///    // 引用未初始化的 `Cell&lt;bool&gt;`: UB!</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_ref&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.55.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="comment">// SAFETY: 调用者必须保证 `self` 已初始化。</span>
+        <span class="comment">// 这也意味着 `self` 必须是 `value` 成员。</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">intrinsics::assert_inhabited</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+            <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">as_ptr</span>()
+        }
+    }
+
+    <span class="doccomment">/// 获取所包含值的可变 (unique) 引用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 当我们要访问已初始化但没有 `MaybeUninit` 所有权 (防止使用 `.assume_init()`) 的 `MaybeUninit` 时，这很有用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 在内容尚未完全初始化时调用此方法会导致未定义的行为: 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 确实处于初始化状态。</span>
+    <span class="doccomment">/// 例如，`.assume_init_mut()` 不能用于初始化 `MaybeUninit`。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### 正确使用此方法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # unsafe extern &quot;C&quot; fn initialize_buffer(buf: *mut [u8; 1024]) { *buf = [0; 1024] }</span>
+    <span class="doccomment">/// # #[cfg(FALSE)]</span>
+    <span class="doccomment">/// extern &quot;C&quot; {</span>
+    <span class="doccomment">///     /// 初始化所有输入缓冲区的字节。</span>
+    <span class="doccomment">///     fn initialize_buffer(buf: *mut [u8; 1024]);</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut buf = MaybeUninit::&lt;[u8; 1024]&gt;::uninit();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // 初始化 `buf`:</span>
+    <span class="doccomment">/// unsafe { initialize_buffer(buf.as_mut_ptr()); }</span>
+    <span class="doccomment">/// // 现在我们知道 `buf` 已被初始化，因此我们可以对其进行 `.assume_init()`。</span>
+    <span class="doccomment">/// // 但是，使用 `.assume_init()` 可能会触发 1024 字节的 `memcpy`。</span>
+    <span class="doccomment">/// // 为了断言我们的缓冲区已经初始化而不复制它，我们将 `&amp;mut MaybeUninit&lt;[u8; 1024]&gt;` 升级为 `&amp;mut [u8; 1024]`:</span>
+    <span class="comment">/////</span>
+    <span class="doccomment">/// let buf: &amp;mut [u8; 1024] = unsafe {</span>
+    <span class="doccomment">///     // SAFETY: `buf` 已初始化。</span>
+    <span class="doccomment">///     buf.assume_init_mut()</span>
+    <span class="doccomment">/// };</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // 现在我们可以将 `buf` 用作普通切片:</span>
+    <span class="doccomment">/// buf.sort_unstable();</span>
+    <span class="doccomment">/// assert!(</span>
+    <span class="doccomment">///     buf.windows(2).all(|pair| pair[0] &lt;= pair[1]),</span>
+    <span class="doccomment">///     &quot;buffer is sorted&quot;,</span>
+    <span class="doccomment">/// );</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### 这个方法的错误用法:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 您不能使用 `.assume_init_mut()` 初始化值:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut b = MaybeUninit::&lt;bool&gt;::uninit();</span>
+    <span class="doccomment">/// unsafe {</span>
+    <span class="doccomment">///     *b.assume_init_mut() = true;</span>
+    <span class="doccomment">///     // 我们已经创建了 (mutable) 引用未初始化的 `bool`!</span>
+    <span class="doccomment">///     // 这是未定义的行为。⚠️</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 例如，您不能 [`Read`] 进入未初始化的缓冲区:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`Read`]: https://doc.rust-lang.org/std/io/trait.Read.html</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::{io, mem::MaybeUninit};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// fn read_chunk (reader: &amp;&#39;_ mut dyn io::Read) -&gt; io::Result&lt;[u8; 64]&gt;</span>
+    <span class="doccomment">/// {</span>
+    <span class="doccomment">///     let mut buffer = MaybeUninit::&lt;[u8; 64]&gt;::uninit();</span>
+    <span class="doccomment">///     reader.read_exact(unsafe { buffer.assume_init_mut() })?;</span>
+    <span class="doccomment">///                             // ^^^^^^^^^^^^^^^^^^^^^^^^</span>
+    <span class="doccomment">///                             // (mutable) 引用未初始化的内存!</span>
+    <span class="doccomment">///                             // 这是未定义的行为。</span>
+    <span class="doccomment">///     Ok(unsafe { buffer.assume_init() })</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 也不能使用直接字段访问来进行逐字段逐步初始化:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```rust,no_run</span>
+    <span class="doccomment">/// use std::{mem::MaybeUninit, ptr};</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// struct Foo {</span>
+    <span class="doccomment">///     a: u32,</span>
+    <span class="doccomment">///     b: u8,</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let foo: Foo = unsafe {</span>
+    <span class="doccomment">///     let mut foo = MaybeUninit::&lt;Foo&gt;::uninit();</span>
+    <span class="doccomment">///     ptr::write(&amp;mut foo.assume_init_mut().a as *mut u32, 1337);</span>
+    <span class="doccomment">///                  // ^^^^^^^^^^^^^^^^^^^^^</span>
+    <span class="doccomment">///                  // (mutable) 引用未初始化的内存!</span>
+    <span class="doccomment">///                  // 这是未定义的行为。</span>
+    <span class="doccomment">///     ptr::write(&amp;mut foo.assume_init_mut().b as *mut u8, 42);</span>
+    <span class="doccomment">///                  // ^^^^^^^^^^^^^^^^^^^^^</span>
+    <span class="doccomment">///                  // (mutable) 引用未初始化的内存!</span>
+    <span class="doccomment">///                  // 这是未定义的行为。</span>
+    <span class="doccomment">///     foo.assume_init()</span>
+    <span class="doccomment">/// };</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_ref&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.55.0&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="comment">// SAFETY: 调用者必须保证 `self` 已初始化。</span>
+        <span class="comment">// 这也意味着 `self` 必须是 `value` 成员。</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">intrinsics::assert_inhabited</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+            <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">as_mut_ptr</span>()
+        }
+    }
+
+    <span class="doccomment">/// 从 `MaybeUninit` 容器数组中提取值。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 调用方有责任保证数组的所有元素都处于初始化状态。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_uninit_array)]</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_array_assume_init)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut array: [MaybeUninit&lt;i32&gt;; 3] = MaybeUninit::uninit_array();</span>
+    <span class="doccomment">/// array[0].write(0);</span>
+    <span class="doccomment">/// array[1].write(1);</span>
+    <span class="doccomment">/// array[2].write(2);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // SAFETY: 现在安全了，因为我们初始化了所有元素</span>
+    <span class="doccomment">/// let array = unsafe {</span>
+    <span class="doccomment">///     MaybeUninit::array_assume_init(array)</span>
+    <span class="doccomment">/// };</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(array, [0, 1, 2]);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_array_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;80908&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">array_assume_init</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span>(<span class="ident">array</span>: [<span class="self">Self</span>; <span class="ident">N</span>]) <span class="op">-</span><span class="op">&gt;</span> [<span class="ident">T</span>; <span class="ident">N</span>] {
+        <span class="comment">// SAFETY:</span>
+        <span class="comment">// * 调用者保证数组的所有元素都已初始化</span>
+        <span class="comment">// * `MaybeUninit&lt;T&gt;` 和 T 保证具有相同的布局</span>
+        <span class="comment">// * `MaybeUninit` 不丢弃就没有双重释放，因此转换是安全的</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> {
+            <span class="ident">intrinsics::assert_inhabited</span>::<span class="op">&lt;</span>[<span class="ident">T</span>; <span class="ident">N</span>]<span class="op">&gt;</span>();
+            (<span class="kw-2">&amp;</span><span class="ident">array</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> [<span class="ident">T</span>; <span class="ident">N</span>]).<span class="ident">read</span>()
+        }
+    }
+
+    <span class="doccomment">/// 假设所有元素都已初始化，请对其进行切片。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 元素确实处于初始化状态。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 在内容尚未完全初始化时调用此方法会导致未定义的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 有关更多详细信息和示例，请参见 [`assume_init_ref`]。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`assume_init_ref`]: MaybeUninit::assume_init_ref</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">slice_assume_init_ref</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="self">Self</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="ident">T</span>] {
+        <span class="comment">// SAFETY: 将切片转换为 `*const [T]` 是安全的，因为调用方保证已初始化 `slice`，并保证 `MaybeUninit` 具有与 `T` 相同的布局。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 所获得的指针是有效的，因为它引用 `slice` 拥有的内存，该内存是一个引用，因此可以保证对读取有效。</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">*</span>(<span class="ident">slice</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> [<span class="self">Self</span>] <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> [<span class="ident">T</span>]) }
+    }
+
+    <span class="doccomment">/// 假设所有元素都已初始化，请为其获取可变切片。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 取决于调用方，以确保 `MaybeUninit&lt;T&gt;` 元素确实处于初始化状态。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 在内容尚未完全初始化时调用此方法会导致未定义的行为。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 有关更多详细信息和示例，请参见 [`assume_init_mut`]。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`assume_init_mut`]: MaybeUninit::assume_init_mut</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_maybe_uninit_assume_init&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">slice_assume_init_mut</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="self">Self</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">T</span>] {
+        <span class="comment">// SAFETY: 类似于 `slice_get_ref` 的安全说明，但我们有一个可变引用，也保证对写操作有效。</span>
+        <span class="comment">//</span>
+        <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span>(<span class="ident">slice</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="self">Self</span>] <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> [<span class="ident">T</span>]) }
+    }
+
+    <span class="doccomment">/// 获取一个指向数组第一个元素的指针。</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">slice_as_ptr</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span>[<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span> {
+        <span class="ident">this</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">T</span>
+    }
+
+    <span class="doccomment">/// 获取指向数组第一个元素的可变指针。</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">rustc_const_unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;63569&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">slice_as_mut_ptr</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="ident">this</span>.<span class="ident">as_mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span>
+    }
+
+    <span class="doccomment">/// 从 `src` 复制元素，将 `this` 现在初始化的内容返回给 `this` 的资源引用。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果 `T` 未实现 `Copy`，请使用 [`write_slice_cloned`]</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这类似于 [`slice::copy_from_slice`]。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果两个切片的长度不同，则此函数将为 panic。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_write_slice)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut dst = [MaybeUninit::uninit(); 32];</span>
+    <span class="doccomment">/// let src = [0; 32];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let init = MaybeUninit::write_slice(&amp;mut dst, &amp;src);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(init, src);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_write_slice, vec_spare_capacity)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut vec = Vec::with_capacity(32);</span>
+    <span class="doccomment">/// let src = [0; 16];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// MaybeUninit::write_slice(&amp;mut vec.spare_capacity_mut()[..src.len()], &amp;src);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // SAFETY: 我们刚刚将 len 的所有元素复制到了备用容量中，vec 的第一个 src.len() 元素现在有效。</span>
+    <span class="comment">/////</span>
+    <span class="doccomment">/// unsafe {</span>
+    <span class="doccomment">///     vec.set_len(src.len());</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(vec, src);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`write_slice_cloned`]: MaybeUninit::write_slice_cloned</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_write_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;79995&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_slice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>], <span class="ident">src</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">T</span>]
+    <span class="kw">where</span>
+        <span class="ident">T</span>: <span class="ident">Copy</span>,
+    {
+        <span class="comment">// SAFETY: &amp;[T] and &amp;[MaybeUninit&lt;T&gt;] 具有相同的布局</span>
+        <span class="kw">let</span> <span class="ident">uninit_src</span>: <span class="kw-2">&amp;</span>[<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>] <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw">super</span><span class="ident">::transmute</span>(<span class="ident">src</span>) };
+
+        <span class="ident">this</span>.<span class="ident">copy_from_slice</span>(<span class="ident">uninit_src</span>);
+
+        <span class="comment">// SAFETY: 有效元素刚刚被复制到 `this` 中，因此它被初始化</span>
+        <span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="ident">this</span>) }
+    }
+
+    <span class="doccomment">/// 将元素从 `src` 克隆到 `this`，返回一个资源引用引用到 `this` 现在初始化的内容。</span>
+    <span class="doccomment">/// 任何已经初始化的元素都不会被丢弃。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果 `T` 实现 `Copy`，请使用 [`write_slice`]</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这类似于 [`slice::clone_from_slice`]，但不会丢弃现有元素。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果两个切片的长度不同，或者 `Clone` panics 的实现，则此函数将为 panic。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果存在 panic，将丢弃已经克隆的元素。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_write_slice)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut dst = [MaybeUninit::uninit(), MaybeUninit::uninit(), MaybeUninit::uninit(), MaybeUninit::uninit(), MaybeUninit::uninit()];</span>
+    <span class="doccomment">/// let src = [&quot;wibbly&quot;.to_string(), &quot;wobbly&quot;.to_string(), &quot;timey&quot;.to_string(), &quot;wimey&quot;.to_string(), &quot;stuff&quot;.to_string()];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let init = MaybeUninit::write_slice_cloned(&amp;mut dst, &amp;src);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(init, src);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// #![feature(maybe_uninit_write_slice, vec_spare_capacity)]</span>
+    <span class="doccomment">/// use std::mem::MaybeUninit;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut vec = Vec::with_capacity(32);</span>
+    <span class="doccomment">/// let src = [&quot;rust&quot;, &quot;is&quot;, &quot;a&quot;, &quot;pretty&quot;, &quot;cool&quot;, &quot;language&quot;];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// MaybeUninit::write_slice_cloned(&amp;mut vec.spare_capacity_mut()[..src.len()], &amp;src);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // SAFETY: 我们刚刚将 len 的所有元素克隆到了备用容量中，vec 的第一个 src.len() 元素现在有效。</span>
+    <span class="comment">/////</span>
+    <span class="doccomment">/// unsafe {</span>
+    <span class="doccomment">///     vec.set_len(src.len());</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// assert_eq!(vec, src);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`write_slice`]: MaybeUninit::write_slice</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;maybe_uninit_write_slice&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;79995&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write_slice_cloned</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">this</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>], <span class="ident">src</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">T</span>]
+    <span class="kw">where</span>
+        <span class="ident">T</span>: <span class="ident">Clone</span>,
+    {
+        <span class="comment">// 与 copy_from_slice 不同，这不会在切片上调用 clone_from_slice，这是因为 `MaybeUninit&lt;T: Clone&gt;` 没有实现 Clone。</span>
+        <span class="comment">//</span>
+
+        <span class="kw">struct</span> <span class="ident">Guard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+            <span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>],
+            <span class="ident">initialized</span>: <span class="ident">usize</span>,
+        }
+
+        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Guard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+                <span class="kw">let</span> <span class="ident">initialized_part</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">slice</span>[..<span class="self">self</span>.<span class="ident">initialized</span>];
+                <span class="comment">// SAFETY: 此原始切片将仅包含初始化的对象，这就是为什么允许将其丢弃。</span>
+                <span class="comment">//</span>
+                <span class="kw">unsafe</span> {
+                    <span class="kw">crate</span><span class="ident">::ptr::drop_in_place</span>(<span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="ident">initialized_part</span>));
+                }
+            }
+        }
+
+        <span class="macro">assert_eq!</span>(<span class="ident">this</span>.<span class="ident">len</span>(), <span class="ident">src</span>.<span class="ident">len</span>(), <span class="string">&quot;destination and source slices have different lengths&quot;</span>);
+        <span class="comment">// NOTE: 我们需要显式地将它们切成相同的长度，以消除边界检查，优化器将为简单情况生成 memcpy (例如 T= u8)。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">this</span>.<span class="ident">len</span>();
+        <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">src</span>[..<span class="ident">len</span>];
+
+        <span class="comment">// 需要保护 b/c 在克隆过程中可能会发生 panic</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">guard</span> <span class="op">=</span> <span class="ident">Guard</span> { <span class="ident">slice</span>: <span class="ident">this</span>, <span class="ident">initialized</span>: <span class="number">0</span> };
+
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">len</span> {
+            <span class="ident">guard</span>.<span class="ident">slice</span>[<span class="ident">i</span>].<span class="ident">write</span>(<span class="ident">src</span>[<span class="ident">i</span>].<span class="ident">clone</span>());
+            <span class="ident">guard</span>.<span class="ident">initialized</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        }
+
+        <span class="kw">super</span><span class="ident">::forget</span>(<span class="ident">guard</span>);
+
+        <span class="comment">// SAFETY: 有效元素刚刚被写入 `this`，因此它被初始化</span>
+        <span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="ident">this</span>) }
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script><script src="../../../source-script1.55.0.js"></script><script src="../../../source-files1.55.0.js"></script></body></html>

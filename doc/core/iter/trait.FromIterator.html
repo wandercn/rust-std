@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="从 [`Iterator`] 转换。"><meta name="keywords" content="rust, rustlang, rust-lang, FromIterator"><title>FromIterator in core::iter - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Trait FromIterator</h2><div class="sidebar-elems"><div class="block items"><h3 class="sidebar-title"><a href="#required-methods">Required Methods</a></h3><div class="sidebar-links"><a href="#tymethod.from_iter">from_iter</a></div><h3 class="sidebar-title"><a href="#implementors">Implementors</a></h3></div><h2 class="location">Other items in<br><a href="../index.html">core</a>::<wbr><a href="index.html">iter</a></h2><div id="sidebar-vars" data-name="FromIterator" data-ty="trait" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Trait <a href="../index.html">core</a>::<wbr><a href="index.html">iter</a>::<wbr><a class="trait" href="#">FromIterator</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/iter/traits/collect.rs.html#93-115" title="goto source code">[src]</a></span></h1><div class="docblock type-decl"><pre class="rust trait">pub trait FromIterator&lt;A&gt;: <a class="trait" href="../marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> {
+    fn <a href="#tymethod.from_iter" class="fnname">from_iter</a>&lt;T:&nbsp;<a class="trait" href="trait.IntoIterator.html" title="trait core::iter::IntoIterator">IntoIterator</a>&lt;Item = A&gt;&gt;(iter: T) -&gt; Self;
+}</pre></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>从 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 转换。</p>
+<p>通过为类型实现 <code>FromIterator</code>，可以定义如何从迭代器创建它。
+这对于描述某种集合的类型很常见。</p>
+<p><a href="trait.FromIterator.html#tymethod.from_iter" title="FromIterator::from_iter()"><code>FromIterator::from_iter()</code></a> 很少显式调用，而是通过 <a href="trait.Iterator.html#method.collect" title="Iterator::collect()"><code>Iterator::collect()</code></a> 方法使用。</p>
+<p>有关更多示例，请参见 [<code>Iterator::collect () </code>] 的文档。</p>
+<p>也可以看看: <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a>.</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>基本用法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
+
+<span class="kw">let</span> <span class="ident">five_fives</span> <span class="op">=</span> <span class="ident">std::iter::repeat</span>(<span class="number">5</span>).<span class="ident">take</span>(<span class="number">5</span>);
+
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Vec::from_iter</span>(<span class="ident">five_fives</span>);
+
+<span class="macro">assert_eq!</span>(<span class="ident">v</span>, <span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aiter%3A%3AFromIterator%3B%0A%0Alet%20five_fives%20%3D%20std%3A%3Aiter%3A%3Arepeat(5).take(5)%3B%0A%0Alet%20v%20%3D%20Vec%3A%3Afrom_iter(five_fives)%3B%0A%0Aassert_eq!(v%2C%20vec!%5B5%2C%205%2C%205%2C%205%2C%205%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>使用 <a href="trait.Iterator.html#method.collect" title="Iterator::collect()"><code>Iterator::collect()</code></a> 隐式使用 <code>FromIterator</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">five_fives</span> <span class="op">=</span> <span class="ident">std::iter::repeat</span>(<span class="number">5</span>).<span class="ident">take</span>(<span class="number">5</span>);
+
+<span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">five_fives</span>.<span class="ident">collect</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">v</span>, <span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20five_fives%20%3D%20std%3A%3Aiter%3A%3Arepeat(5).take(5)%3B%0A%0Alet%20v%3A%20Vec%3Ci32%3E%20%3D%20five_fives.collect()%3B%0A%0Aassert_eq!(v%2C%20vec!%5B5%2C%205%2C%205%2C%205%2C%205%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>为您的类型实现 <code>FromIterator</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
+
+<span class="comment">// 一个样本集合，这只是 Vec&lt;T&gt; 的包装</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">struct</span> <span class="ident">MyCollection</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>);
+
+<span class="comment">// 让我们给它一些方法，以便我们可以创建一个方法并向其中添加一些东西。</span>
+<span class="kw">impl</span> <span class="ident">MyCollection</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MyCollection</span> {
+        <span class="ident">MyCollection</span>(<span class="ident">Vec::new</span>())
+    }
+
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">elem</span>: <span class="ident">i32</span>) {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">push</span>(<span class="ident">elem</span>);
+    }
+}
+
+<span class="comment">// 我们将实现 FromIterator</span>
+<span class="kw">impl</span> <span class="ident">FromIterator</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MyCollection</span> {
+    <span class="kw">fn</span> <span class="ident">from_iter</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span><span class="ident">i32</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">MyCollection::new</span>();
+
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">iter</span> {
+            <span class="ident">c</span>.<span class="ident">add</span>(<span class="ident">i</span>);
+        }
+
+        <span class="ident">c</span>
+    }
+}
+
+<span class="comment">// 现在我们可以创建一个新的迭代器...</span>
+<span class="kw">let</span> <span class="ident">iter</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">5</span>).<span class="ident">into_iter</span>();
+
+<span class="comment">// ... 并用它制作一个 MyCollection</span>
+<span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">MyCollection::from_iter</span>(<span class="ident">iter</span>);
+
+<span class="macro">assert_eq!</span>(<span class="ident">c</span>.<span class="number">0</span>, <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
+
+<span class="comment">// 也收集作品!</span>
+
+<span class="kw">let</span> <span class="ident">iter</span> <span class="op">=</span> (<span class="number">0</span>..<span class="number">5</span>).<span class="ident">into_iter</span>();
+<span class="kw">let</span> <span class="ident">c</span>: <span class="ident">MyCollection</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">collect</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">c</span>.<span class="number">0</span>, <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aiter%3A%3AFromIterator%3B%0A%0A%2F%2F%20%E4%B8%80%E4%B8%AA%E6%A0%B7%E6%9C%AC%E9%9B%86%E5%90%88%EF%BC%8C%E8%BF%99%E5%8F%AA%E6%98%AF%20Vec%3CT%3E%20%E7%9A%84%E5%8C%85%E8%A3%85%0A%23%5Bderive(Debug)%5D%0Astruct%20MyCollection(Vec%3Ci32%3E)%3B%0A%0A%2F%2F%20%E8%AE%A9%E6%88%91%E4%BB%AC%E7%BB%99%E5%AE%83%E4%B8%80%E4%BA%9B%E6%96%B9%E6%B3%95%EF%BC%8C%E4%BB%A5%E4%BE%BF%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%96%B9%E6%B3%95%E5%B9%B6%E5%90%91%E5%85%B6%E4%B8%AD%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%BA%9B%E4%B8%9C%E8%A5%BF%E3%80%82%0Aimpl%20MyCollection%20%7B%0A%20%20%20%20fn%20new()%20-%3E%20MyCollection%20%7B%0A%20%20%20%20%20%20%20%20MyCollection(Vec%3A%3Anew())%0A%20%20%20%20%7D%0A%0A%20%20%20%20fn%20add(%26mut%20self%2C%20elem%3A%20i32)%20%7B%0A%20%20%20%20%20%20%20%20self.0.push(elem)%3B%0A%20%20%20%20%7D%0A%7D%0A%0A%2F%2F%20%E6%88%91%E4%BB%AC%E5%B0%86%E5%AE%9E%E7%8E%B0%20FromIterator%0Aimpl%20FromIterator%3Ci32%3E%20for%20MyCollection%20%7B%0A%20%20%20%20fn%20from_iter%3CI%3A%20IntoIterator%3CItem%3Di32%3E%3E(iter%3A%20I)%20-%3E%20Self%20%7B%0A%20%20%20%20%20%20%20%20let%20mut%20c%20%3D%20MyCollection%3A%3Anew()%3B%0A%0A%20%20%20%20%20%20%20%20for%20i%20in%20iter%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20c.add(i)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20%20%20c%0A%20%20%20%20%7D%0A%7D%0A%0A%2F%2F%20%E7%8E%B0%E5%9C%A8%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%96%B0%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8...%0Alet%20iter%20%3D%20(0..5).into_iter()%3B%0A%0A%2F%2F%20...%20%E5%B9%B6%E7%94%A8%E5%AE%83%E5%88%B6%E4%BD%9C%E4%B8%80%E4%B8%AA%20MyCollection%0Alet%20c%20%3D%20MyCollection%3A%3Afrom_iter(iter)%3B%0A%0Aassert_eq!(c.0%2C%20vec!%5B0%2C%201%2C%202%2C%203%2C%204%5D)%3B%0A%0A%2F%2F%20%E4%B9%9F%E6%94%B6%E9%9B%86%E4%BD%9C%E5%93%81!%0A%0Alet%20iter%20%3D%20(0..5).into_iter()%3B%0Alet%20c%3A%20MyCollection%20%3D%20iter.collect()%3B%0A%0Aassert_eq!(c.0%2C%20vec!%5B0%2C%201%2C%202%2C%203%2C%204%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div></details><h2 id="required-methods" class="small-section-header">Required methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><details class="rustdoc-toggle" open><summary><div id="tymethod.from_iter" class="method has-srclink"><h4 class="code-header">fn <a href="#tymethod.from_iter" class="fnname">from_iter</a>&lt;T:&nbsp;<a class="trait" href="trait.IntoIterator.html" title="trait core::iter::IntoIterator">IntoIterator</a>&lt;Item = A&gt;&gt;(iter: T) -&gt; Self</h4><a class="srclink" href="../../src/core/iter/traits/collect.rs.html#114" title="goto source code">[src]</a></div></summary><div class="docblock"><p>从迭代器创建一个值。</p>
+<p>有关更多信息，请参见 <a href="index.html">module-level documentation</a>。</p>
+<h1 id="examples-1" class="section-header"><a href="#examples-1">Examples</a></h1>
+<p>基本用法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
+
+<span class="kw">let</span> <span class="ident">five_fives</span> <span class="op">=</span> <span class="ident">std::iter::repeat</span>(<span class="number">5</span>).<span class="ident">take</span>(<span class="number">5</span>);
+
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="ident">Vec::from_iter</span>(<span class="ident">five_fives</span>);
+
+<span class="macro">assert_eq!</span>(<span class="ident">v</span>, <span class="macro">vec!</span>[<span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aiter%3A%3AFromIterator%3B%0A%0Alet%20five_fives%20%3D%20std%3A%3Aiter%3A%3Arepeat(5).take(5)%3B%0A%0Alet%20v%20%3D%20Vec%3A%3Afrom_iter(five_fives)%3B%0A%0Aassert_eq!(v%2C%20vec!%5B5%2C%205%2C%205%2C%205%2C%205%5D)%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div></details></div><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor"></a></h2><div class="item-list" id="implementors-list"><details class="rustdoc-toggle implementors-toggle"><summary><div id="impl-FromIterator%3C()%3E" class="impl has-srclink"><h3 class="code-header in-band">impl <a class="trait" href="trait.FromIterator.html" title="trait core::iter::FromIterator">FromIterator</a>&lt;()&gt; for ()</h3><a href="#impl-FromIterator%3C()%3E" class="anchor"></a><span class="since" title="Stable since Rust version 1.23.0">1.23.0</span><a class="srclink" href="../../src/core/unit.rs.html#17-21" title="goto source code">[src]</a></div></summary><div class="docblock"><p>将一个迭代器中的所有 unit 项折叠为一个。</p>
+<p>与更高级别的抽象结合使用时，此功能尤其有用，例如收集到仅关心错误的 <code>Result&lt;(), E&gt;</code> 上:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">std::io</span>::<span class="kw-2">*</span>;
+<span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="macro">writeln!</span>(<span class="ident">stdout</span>(), <span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>))
+    .<span class="ident">collect</span>();
+<span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">is_ok</span>());</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Ause%20std%3A%3Aio%3A%3A*%3B%0Alet%20data%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0Alet%20res%3A%20Result%3C()%3E%20%3D%20data.iter()%0A%20%20%20%20.map(%7Cx%7C%20writeln!(stdout()%2C%20%22%7B%7D%22%2C%20x))%0A%20%20%20%20.collect()%3B%0Aassert!(res.is_ok())%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div><div class="impl-items"><div id="method.from_iter" class="method trait-impl has-srclink"><h4 class="code-header">fn <a href="#tymethod.from_iter" class="fnname">from_iter</a>&lt;I:&nbsp;<a class="trait" href="trait.IntoIterator.html" title="trait core::iter::IntoIterator">IntoIterator</a>&lt;Item = ()&gt;&gt;(iter: I) -&gt; Self</h4><a href="#method.from_iter" class="anchor"></a><a class="srclink" href="../../src/core/unit.rs.html#18-20" title="goto source code">[src]</a></div></div></details><details class="rustdoc-toggle implementors-toggle"><summary><div id="impl-FromIterator%3CResult%3CA%2C%20E%3E%3E" class="impl has-srclink"><h3 class="code-header in-band">impl&lt;A, E, V:&nbsp;<a class="trait" href="trait.FromIterator.html" title="trait core::iter::FromIterator">FromIterator</a>&lt;A&gt;&gt; <a class="trait" href="trait.FromIterator.html" title="trait core::iter::FromIterator">FromIterator</a>&lt;<a class="enum" href="../result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;A, E&gt;&gt; for <a class="enum" href="../result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;V, E&gt;</h3><a href="#impl-FromIterator%3CResult%3CA%2C%20E%3E%3E" class="anchor"></a><a class="srclink" href="../../src/core/result.rs.html#1821-1871" title="goto source code">[src]</a></div></summary><div class="impl-items"><details class="rustdoc-toggle method-toggle" open><summary><div id="method.from_iter-1" class="method trait-impl has-srclink"><h4 class="code-header">fn <a href="#tymethod.from_iter" class="fnname">from_iter</a>&lt;I:&nbsp;<a class="trait" href="trait.IntoIterator.html" title="trait core::iter::IntoIterator">IntoIterator</a>&lt;Item = <a class="enum" href="../result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;A, E&gt;&gt;&gt;(iter: I) -&gt; <a class="enum" href="../result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;V, E&gt;</h4><a href="#method.from_iter-1" class="anchor"></a><a class="srclink" href="../../src/core/result.rs.html#1865-1870" title="goto source code">[src]</a></div></summary><div class="docblock"><p>接受 <code>Iterator</code> 中的每个元素: 如果它是 <code>Err</code>，则不再获取其他元素，并返回 <code>Err</code>。
+如果没有发生 <code>Err</code>，则返回包含每个 <code>Result</code> 值的容器。</p>
+<p>这是一个示例，该示例将 vector 中的每个整数递增，并检查溢出:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>];
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">u32</span><span class="op">|</span>
+    <span class="ident">x</span>.<span class="ident">checked_add</span>(<span class="number">1</span>).<span class="ident">ok_or</span>(<span class="string">&quot;Overflow!&quot;</span>)
+).<span class="ident">collect</span>();
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]));</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B1%2C%202%5D%3B%0Alet%20res%3A%20Result%3CVec%3Cu32%3E%2C%20%26'static%20str%3E%20%3D%20v.iter().map(%7Cx%3A%20%26u32%7C%0A%20%20%20%20x.checked_add(1).ok_or(%22Overflow!%22)%0A).collect()%3B%0Aassert_eq!(res%2C%20Ok(vec!%5B2%2C%203%5D))%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>这是另一个示例，尝试从另一个整数列表中减去一个，这次检查下溢:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>];
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">u32</span><span class="op">|</span>
+    <span class="ident">x</span>.<span class="ident">checked_sub</span>(<span class="number">1</span>).<span class="ident">ok_or</span>(<span class="string">&quot;Underflow!&quot;</span>)
+).<span class="ident">collect</span>();
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">Err</span>(<span class="string">&quot;Underflow!&quot;</span>));</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B1%2C%202%2C%200%5D%3B%0Alet%20res%3A%20Result%3CVec%3Cu32%3E%2C%20%26'static%20str%3E%20%3D%20v.iter().map(%7Cx%3A%20%26u32%7C%0A%20%20%20%20x.checked_sub(1).ok_or(%22Underflow!%22)%0A).collect()%3B%0Aassert_eq!(res%2C%20Err(%22Underflow!%22))%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>这是前一个示例的变体，显示在第一个 <code>Err</code> 之后不再从 <code>iter</code> 提取其他元素。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">10</span>];
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="ident">u32</span><span class="op">|</span> {
+    <span class="ident">shared</span> <span class="op">+</span><span class="op">=</span> <span class="ident">x</span>;
+    <span class="ident">x</span>.<span class="ident">checked_sub</span>(<span class="number">2</span>).<span class="ident">ok_or</span>(<span class="string">&quot;Underflow!&quot;</span>)
+}).<span class="ident">collect</span>();
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">Err</span>(<span class="string">&quot;Underflow!&quot;</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">shared</span>, <span class="number">6</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B3%2C%202%2C%201%2C%2010%5D%3B%0Alet%20mut%20shared%20%3D%200%3B%0Alet%20res%3A%20Result%3CVec%3Cu32%3E%2C%20%26'static%20str%3E%20%3D%20v.iter().map(%7Cx%3A%20%26u32%7C%20%7B%0A%20%20%20%20shared%20%2B%3D%20x%3B%0A%20%20%20%20x.checked_sub(2).ok_or(%22Underflow!%22)%0A%7D).collect()%3B%0Aassert_eq!(res%2C%20Err(%22Underflow!%22))%3B%0Aassert_eq!(shared%2C%206)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于第三个元素引起下溢，因此不再使用其他元素，因此 <code>shared</code> 的最终值为 6 (= <code>3 + 2 + 1</code>)，而不是 16。</p>
+</div></details></div></details><details class="rustdoc-toggle implementors-toggle"><summary><div id="impl-FromIterator%3COption%3CA%3E%3E" class="impl has-srclink"><h3 class="code-header in-band">impl&lt;A, V:&nbsp;<a class="trait" href="trait.FromIterator.html" title="trait core::iter::FromIterator">FromIterator</a>&lt;A&gt;&gt; <a class="trait" href="trait.FromIterator.html" title="trait core::iter::FromIterator">FromIterator</a>&lt;<a class="enum" href="../option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;A&gt;&gt; for <a class="enum" href="../option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;V&gt;</h3><a href="#impl-FromIterator%3COption%3CA%3E%3E" class="anchor"></a><a class="srclink" href="../../src/core/option.rs.html#1904-1972" title="goto source code">[src]</a></div></summary><div class="impl-items"><details class="rustdoc-toggle method-toggle" open><summary><div id="method.from_iter-2" class="method trait-impl has-srclink"><h4 class="code-header">fn <a href="#tymethod.from_iter" class="fnname">from_iter</a>&lt;I:&nbsp;<a class="trait" href="trait.IntoIterator.html" title="trait core::iter::IntoIterator">IntoIterator</a>&lt;Item = <a class="enum" href="../option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;A&gt;&gt;&gt;(iter: I) -&gt; <a class="enum" href="../option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;V&gt;</h4><a href="#method.from_iter-2" class="anchor"></a><a class="srclink" href="../../src/core/option.rs.html#1966-1971" title="goto source code">[src]</a></div></summary><div class="docblock"><p>接受 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 中的每个元素: 如果为 <a href="../option/enum.Option.html#variant.None" title="Option::None"><code>None</code></a>，则不再获取其他元素，并返回 <a href="../option/enum.Option.html#variant.None" title="Option::None"><code>None</code></a>。
+如果没有发生 <a href="../option/enum.Option.html#variant.None" title="Option::None"><code>None</code></a>，则返回包含每个 <a href="../option/enum.Option.html" title="Option"><code>Option</code></a> 值的容器。</p>
+<h1 id="examples-2" class="section-header"><a href="#examples-2">Examples</a></h1>
+<p>这是一个使 vector 中的每个整数递增的示例。
+当计算将导致溢出时，我们使用 <code>add</code> 的检查成员返回 <code>None</code>。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0_u16</span>, <span class="number">1</span>, <span class="number">2</span>];
+
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">items</span>
+    .<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">checked_add</span>(<span class="number">1</span>))
+    .<span class="ident">collect</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]));</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20items%20%3D%20vec!%5B0_u16%2C%201%2C%202%5D%3B%0A%0Alet%20res%3A%20Option%3CVec%3Cu16%3E%3E%20%3D%20items%0A%20%20%20%20.iter()%0A%20%20%20%20.map(%7Cx%7C%20x.checked_add(1))%0A%20%20%20%20.collect()%3B%0A%0Aassert_eq!(res%2C%20Some(vec!%5B1%2C%202%2C%203%5D))%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>如您所见，这将返回预期的有效项。</p>
+<p>这是另一个示例，尝试从另一个整数列表中减去一个，这次检查下溢:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">2_u16</span>, <span class="number">1</span>, <span class="number">0</span>];
+
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">items</span>
+    .<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">checked_sub</span>(<span class="number">1</span>))
+    .<span class="ident">collect</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">None</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20items%20%3D%20vec!%5B2_u16%2C%201%2C%200%5D%3B%0A%0Alet%20res%3A%20Option%3CVec%3Cu16%3E%3E%20%3D%20items%0A%20%20%20%20.iter()%0A%20%20%20%20.map(%7Cx%7C%20x.checked_sub(1))%0A%20%20%20%20.collect()%3B%0A%0Aassert_eq!(res%2C%20None)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于最后一个元素为零，因此会下溢。因此，结果值为 <code>None</code>。</p>
+<p>这是前一个示例的变体，显示在第一个 <code>None</code> 之后不再从 <code>iter</code> 提取其他元素。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">3_u16</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">10</span>];
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shared</span> <span class="op">=</span> <span class="number">0</span>;
+
+<span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">items</span>
+    .<span class="ident">iter</span>()
+    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> { <span class="ident">shared</span> <span class="op">+</span><span class="op">=</span> <span class="ident">x</span>; <span class="ident">x</span>.<span class="ident">checked_sub</span>(<span class="number">2</span>) })
+    .<span class="ident">collect</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="prelude-val">None</span>);
+<span class="macro">assert_eq!</span>(<span class="ident">shared</span>, <span class="number">6</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20items%20%3D%20vec!%5B3_u16%2C%202%2C%201%2C%2010%5D%3B%0A%0Alet%20mut%20shared%20%3D%200%3B%0A%0Alet%20res%3A%20Option%3CVec%3Cu16%3E%3E%20%3D%20items%0A%20%20%20%20.iter()%0A%20%20%20%20.map(%7Cx%7C%20%7B%20shared%20%2B%3D%20x%3B%20x.checked_sub(2)%20%7D)%0A%20%20%20%20.collect()%3B%0A%0Aassert_eq!(res%2C%20None)%3B%0Aassert_eq!(shared%2C%206)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>由于第三个元素引起下溢，因此不再使用其他元素，因此 <code>shared</code> 的最终值为 6 (= <code>3 + 2 + 1</code>)，而不是 16。</p>
+</div></details></div></details></div><script type="text/javascript" src="../../implementors/core/iter/trait.FromIterator.js" async></script></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="可以是几个成员中任何一个的类型。"><meta name="keywords" content="rust, rustlang, rust-lang, enum"><title>enum - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="enum" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">enum</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#373" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>可以是几个成员中任何一个的类型。</p>
+<p>Rust 中的枚举与其他编译语言 (如 C) 相似，但有一些重要区别，使它们的功能更加强大。
+如果您来自函数式编程背景，那么 Rust 所谓的枚举通常被称为 <a href="https://en.wikipedia.org/wiki/Algebraic_data_type">代数数据类型</a>。
+重要的细节是每个枚举成员都可以拥有数据。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">enum</span> <span class="ident">SimpleEnum</span> {
+    <span class="ident">FirstVariant</span>,
+    <span class="ident">SecondVariant</span>,
+    <span class="ident">ThirdVariant</span>,
+}
+
+<span class="kw">enum</span> <span class="ident">Location</span> {
+    <span class="ident">Unknown</span>,
+    <span class="ident">Anonymous</span>,
+    <span class="ident">Known</span>(<span class="ident">Coord</span>),
+}
+
+<span class="kw">enum</span> <span class="ident">ComplexEnum</span> {
+    <span class="ident">Nothing</span>,
+    <span class="ident">Something</span>(<span class="ident">u32</span>),
+    <span class="ident">LotsOfThings</span> {
+        <span class="ident">usual_struct_stuff</span>: <span class="ident">bool</span>,
+        <span class="ident">blah</span>: <span class="ident">String</span>,
+    }
+}
+
+<span class="kw">enum</span> <span class="ident">EmptyEnum</span> { }</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Astruct%20Coord%3B%0Aenum%20SimpleEnum%20%7B%0A%20%20%20%20FirstVariant%2C%0A%20%20%20%20SecondVariant%2C%0A%20%20%20%20ThirdVariant%2C%0A%7D%0A%0Aenum%20Location%20%7B%0A%20%20%20%20Unknown%2C%0A%20%20%20%20Anonymous%2C%0A%20%20%20%20Known(Coord)%2C%0A%7D%0A%0Aenum%20ComplexEnum%20%7B%0A%20%20%20%20Nothing%2C%0A%20%20%20%20Something(u32)%2C%0A%20%20%20%20LotsOfThings%20%7B%0A%20%20%20%20%20%20%20%20usual_struct_stuff%3A%20bool%2C%0A%20%20%20%20%20%20%20%20blah%3A%20String%2C%0A%20%20%20%20%7D%0A%7D%0A%0Aenum%20EmptyEnum%20%7B%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>显示的第一个枚举是在 C 风格语言中常见的一种枚举。
+第二个示例展示了一个存储位置数据的假设示例，其中 <code>Coord</code> 是需要的任何其他类型，例如结构体。
+第三个示例演示了成员可以存储的数据类型，从无到有，到元组，再到匿名结构体。</p>
+<p>实例化枚举成员涉及显式地使用枚举的名称作为它的命名空间，后跟一个成员。
+<code>SimpleEnum::SecondVariant</code> 从上面是一个例子。
+当数据跟一个成员一起使用时，例如 rust 的内置 <a href="option/enum.Option.html" title="Option"><code>Option</code></a> 类型，该数据将按类型描述添加，例如 <code>Option::Some(123)</code>。</p>
+<p>类似于结构体的成员也是如此，类似 <code> ComplexEnum::LotsOfThings {通常 _struct_stuff: true, blah: &quot;hello!&quot;.to_string(), }</code>.
+空枚举与 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.never.html" title="!"><code>!</code></a> 相似，因为它们根本无法实例化，并且主要用于以有趣的方式弄乱类型系统。</p>
+<p>有关更多信息，请查看 <a href="../book/ch06-01-defining-an-enum.html">Rust Book</a> 或 <a href="../reference/items/enumerations.html">Reference</a></p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

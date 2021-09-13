@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["Clone","派生宏，生成 trait `Clone` 的 impl。"]],"trait":[["Clone","通用的 trait，用于显式复制对象。"]]});

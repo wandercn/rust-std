@@ -1,0 +1,780 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\num\flt2dec\strategy\dragon.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dragon.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../../storage1.55.0.js"></script><script src="../../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img src="../../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+</pre><pre class="rust">
+<span class="doccomment">//! 快速，准确地打印浮点数 [^1] 图 3 的几乎直接 (但略有优化) 的 Rust 翻译。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [^1]: Burger, R. G. 和 Dybvig，R. K.1996. 打印浮点数</span>
+<span class="doccomment">//!   快速准确。SIGPLAN 不是。31, 5 (May. 1996), 108-116.</span>
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::cmp::Ordering</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::mem::MaybeUninit</span>;
+
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::bignum::Big32x40</span> <span class="kw">as</span> <span class="ident">Big</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::bignum::Digit32</span> <span class="kw">as</span> <span class="ident">Digit</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::flt2dec::estimator::estimate_scaling_factor</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::num::flt2dec</span>::{<span class="ident">round_up</span>, <span class="ident">Decoded</span>, <span class="ident">MAX_SIG_DIGITS</span>};
+
+<span class="kw">static</span> <span class="ident">POW10</span>: [<span class="ident">Digit</span>; <span class="number">10</span>] <span class="op">=</span>
+    [<span class="number">1</span>, <span class="number">10</span>, <span class="number">100</span>, <span class="number">1000</span>, <span class="number">10000</span>, <span class="number">100000</span>, <span class="number">1000000</span>, <span class="number">10000000</span>, <span class="number">100000000</span>, <span class="number">1000000000</span>];
+<span class="kw">static</span> <span class="ident">TWOPOW10</span>: [<span class="ident">Digit</span>; <span class="number">10</span>] <span class="op">=</span>
+    [<span class="number">2</span>, <span class="number">20</span>, <span class="number">200</span>, <span class="number">2000</span>, <span class="number">20000</span>, <span class="number">200000</span>, <span class="number">2000000</span>, <span class="number">20000000</span>, <span class="number">200000000</span>, <span class="number">2000000000</span>];
+
+<span class="comment">// 为 10^(2^n) 预先计算的 `Digit` 数组</span>
+<span class="kw">static</span> <span class="ident">POW10TO16</span>: [<span class="ident">Digit</span>; <span class="number">2</span>] <span class="op">=</span> [<span class="number">0x6fc10000</span>, <span class="number">0x2386f2</span>];
+<span class="kw">static</span> <span class="ident">POW10TO32</span>: [<span class="ident">Digit</span>; <span class="number">4</span>] <span class="op">=</span> [<span class="number">0</span>, <span class="number">0x85acef81</span>, <span class="number">0x2d6d415b</span>, <span class="number">0x4ee</span>];
+<span class="kw">static</span> <span class="ident">POW10TO64</span>: [<span class="ident">Digit</span>; <span class="number">7</span>] <span class="op">=</span> [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0xbf6a1f01</span>, <span class="number">0x6e38ed64</span>, <span class="number">0xdaa797ed</span>, <span class="number">0xe93ff9f4</span>, <span class="number">0x184f03</span>];
+<span class="kw">static</span> <span class="ident">POW10TO128</span>: [<span class="ident">Digit</span>; <span class="number">14</span>] <span class="op">=</span> [
+    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0x2e953e01</span>, <span class="number">0x3df9909</span>, <span class="number">0xf1538fd</span>, <span class="number">0x2374e42f</span>, <span class="number">0xd3cff5ec</span>, <span class="number">0xc404dc08</span>, <span class="number">0xbccdb0da</span>,
+    <span class="number">0xa6337f19</span>, <span class="number">0xe91f2603</span>, <span class="number">0x24e</span>,
+];
+<span class="kw">static</span> <span class="ident">POW10TO256</span>: [<span class="ident">Digit</span>; <span class="number">27</span>] <span class="op">=</span> [
+    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0x982e7c01</span>, <span class="number">0xbed3875b</span>, <span class="number">0xd8d99f72</span>, <span class="number">0x12152f87</span>, <span class="number">0x6bde50c6</span>, <span class="number">0xcf4a6e70</span>,
+    <span class="number">0xd595d80f</span>, <span class="number">0x26b2716e</span>, <span class="number">0xadc666b0</span>, <span class="number">0x1d153624</span>, <span class="number">0x3c42d35a</span>, <span class="number">0x63ff540e</span>, <span class="number">0xcc5573c0</span>, <span class="number">0x65f9ef17</span>,
+    <span class="number">0x55bc28f2</span>, <span class="number">0x80dcc7f7</span>, <span class="number">0xf46eeddc</span>, <span class="number">0x5fdcefce</span>, <span class="number">0x553f7</span>,
+];
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">mul_pow10</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Big</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Big</span> {
+    <span class="macro">debug_assert!</span>(<span class="ident">n</span> <span class="op">&lt;</span> <span class="number">512</span>);
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">7</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_small</span>(<span class="ident">POW10</span>[<span class="ident">n</span> <span class="op">&amp;</span> <span class="number">7</span>]);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">8</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_small</span>(<span class="ident">POW10</span>[<span class="number">8</span>]);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">16</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_digits</span>(<span class="kw-2">&amp;</span><span class="ident">POW10TO16</span>);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">32</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_digits</span>(<span class="kw-2">&amp;</span><span class="ident">POW10TO32</span>);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">64</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_digits</span>(<span class="kw-2">&amp;</span><span class="ident">POW10TO64</span>);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">128</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_digits</span>(<span class="kw-2">&amp;</span><span class="ident">POW10TO128</span>);
+    }
+    <span class="kw">if</span> <span class="ident">n</span> <span class="op">&amp;</span> <span class="number">256</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">x</span>.<span class="ident">mul_digits</span>(<span class="kw-2">&amp;</span><span class="ident">POW10TO256</span>);
+    }
+    <span class="ident">x</span>
+}
+
+<span class="kw">fn</span> <span class="ident">div_2pow10</span>(<span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Big</span>, <span class="kw-2">mut</span> <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Big</span> {
+    <span class="kw">let</span> <span class="ident">largest</span> <span class="op">=</span> <span class="ident">POW10</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>;
+    <span class="kw">while</span> <span class="ident">n</span> <span class="op">&gt;</span> <span class="ident">largest</span> {
+        <span class="ident">x</span>.<span class="ident">div_rem_small</span>(<span class="ident">POW10</span>[<span class="ident">largest</span>]);
+        <span class="ident">n</span> <span class="op">-</span><span class="op">=</span> <span class="ident">largest</span>;
+    }
+    <span class="ident">x</span>.<span class="ident">div_rem_small</span>(<span class="ident">TWOPOW10</span>[<span class="ident">n</span>]);
+    <span class="ident">x</span>
+}
+
+<span class="comment">// 仅在 `x &lt; 16 * scale` 时可用; `scaleN` 应该是 `scale.mul_small(N)`</span>
+<span class="kw">fn</span> <span class="ident">div_rem_upto_16</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">x</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Big</span>,
+    <span class="ident">scale</span>: <span class="kw-2">&amp;</span><span class="ident">Big</span>,
+    <span class="ident">scale2</span>: <span class="kw-2">&amp;</span><span class="ident">Big</span>,
+    <span class="ident">scale4</span>: <span class="kw-2">&amp;</span><span class="ident">Big</span>,
+    <span class="ident">scale8</span>: <span class="kw-2">&amp;</span><span class="ident">Big</span>,
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">u8</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Big</span>) {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">d</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">scale8</span> {
+        <span class="ident">x</span>.<span class="ident">sub</span>(<span class="ident">scale8</span>);
+        <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">8</span>;
+    }
+    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">scale4</span> {
+        <span class="ident">x</span>.<span class="ident">sub</span>(<span class="ident">scale4</span>);
+        <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">4</span>;
+    }
+    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">scale2</span> {
+        <span class="ident">x</span>.<span class="ident">sub</span>(<span class="ident">scale2</span>);
+        <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">2</span>;
+    }
+    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">scale</span> {
+        <span class="ident">x</span>.<span class="ident">sub</span>(<span class="ident">scale</span>);
+        <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    }
+    <span class="macro">debug_assert!</span>(<span class="kw-2">*</span><span class="ident">x</span> <span class="op">&lt;</span> <span class="kw-2">*</span><span class="ident">scale</span>);
+    (<span class="ident">d</span>, <span class="ident">x</span>)
+}
+
+<span class="doccomment">/// Dragon 的最短模式实现。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_shortest</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>) {
+    <span class="comment">// 已知要格式化的数字 `v` 为:</span>
+    <span class="comment">// - 等于 `mant * 2^exp`;</span>
+    <span class="comment">// - 原始类型前面带有 `(mant - 2 *minus)* 2^exp`; and</span>
+    <span class="comment">// - 后面是原始类型的 `(mant + 2 *plus)* 2^exp`。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 显然，`minus` 和 `plus` 不能为零。(对于无穷大，我们使用越界的值。) 我们还假定至少生成一个数字，即 `mant` 也不能为零。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 这也意味着 `low = (mant - minus)*2^exp` 和 `high = (mant + plus)* 2^exp` 之间的任何数字都将 map 转换为该精确的浮点数，并包括原始尾数为偶数 (即 `!mant_was_odd`) 时的范围。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">minus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">plus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_add</span>(<span class="ident">d</span>.<span class="ident">plus</span>).<span class="ident">is_some</span>());
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_sub</span>(<span class="ident">d</span>.<span class="ident">minus</span>).<span class="ident">is_some</span>());
+    <span class="macro">assert!</span>(<span class="ident">buf</span>.<span class="ident">len</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="ident">MAX_SIG_DIGITS</span>);
+
+    <span class="comment">// `a.cmp(&amp;b) &lt; rounding` 是 `if d.inclusive {a &lt;= b} else {a &lt; b}`</span>
+    <span class="kw">let</span> <span class="ident">rounding</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">d</span>.<span class="ident">inclusive</span> { <span class="ident">Ordering::Greater</span> } <span class="kw">else</span> { <span class="ident">Ordering::Equal</span> };
+
+    <span class="comment">// 从满足 `10^(k_0-1) &lt; high &lt;= 10^(k_0+1)` 的原始输入中估算 `k_0`。</span>
+    <span class="comment">// 满足 `10^(k-1) &lt; high &lt;= 10^k` 的紧定 `k` 稍后计算。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">estimate_scaling_factor</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">+</span> <span class="ident">d</span>.<span class="ident">plus</span>, <span class="ident">d</span>.<span class="ident">exp</span>);
+
+    <span class="comment">// 将 `{mant, plus, minus} * 2^exp` 转换为小数形式，以便:</span>
+    <span class="comment">// - `v = mant / scale`</span>
+    <span class="comment">// - `low = (mant - minus) / scale`</span>
+    <span class="comment">// - `high = (mant + plus) / scale`</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mant</span> <span class="op">=</span> <span class="ident">Big::from_u64</span>(<span class="ident">d</span>.<span class="ident">mant</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">minus</span> <span class="op">=</span> <span class="ident">Big::from_u64</span>(<span class="ident">d</span>.<span class="ident">minus</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">plus</span> <span class="op">=</span> <span class="ident">Big::from_u64</span>(<span class="ident">d</span>.<span class="ident">plus</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale</span> <span class="op">=</span> <span class="ident">Big::from_small</span>(<span class="number">1</span>);
+    <span class="kw">if</span> <span class="ident">d</span>.<span class="ident">exp</span> <span class="op">&lt;</span> <span class="number">0</span> {
+        <span class="ident">scale</span>.<span class="ident">mul_pow2</span>(<span class="op">-</span><span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    } <span class="kw">else</span> {
+        <span class="ident">mant</span>.<span class="ident">mul_pow2</span>(<span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="ident">minus</span>.<span class="ident">mul_pow2</span>(<span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="ident">plus</span>.<span class="ident">mul_pow2</span>(<span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    }
+
+    <span class="comment">// 将 `mant` 除以 `10^k`。现在是 `scale / 10 &lt; mant + plus &lt;= scale * 10`。</span>
+    <span class="kw">if</span> <span class="ident">k</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">scale</span>, <span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    } <span class="kw">else</span> {
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">mant</span>, <span class="op">-</span><span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">minus</span>, <span class="op">-</span><span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">plus</span>, <span class="op">-</span><span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    }
+
+    <span class="comment">// `mant + plus &gt; scale` (或 `&gt;=`) 时修正。</span>
+    <span class="comment">// 我们实际上并没有修改 `scale`，因为我们可以跳过初始乘法。</span>
+    <span class="comment">// 现在 `scale &lt; mant + plus &lt;= scale * 10`，我们准备生成数字。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 请注意，当 `scale - plus &lt; mant &lt; scale` 时，`d[0]`*可以* 为零。</span>
+    <span class="comment">// 在这种情况下，将立即触发舍入条件 (下面的 `up`)。</span>
+    <span class="kw">if</span> <span class="ident">scale</span>.<span class="ident">cmp</span>(<span class="ident">mant</span>.<span class="ident">clone</span>().<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">plus</span>)) <span class="op">&lt;</span> <span class="ident">rounding</span> {
+        <span class="comment">// 相当于将 `scale` 缩放 10</span>
+        <span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    } <span class="kw">else</span> {
+        <span class="ident">mant</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+        <span class="ident">minus</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+        <span class="ident">plus</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+    }
+
+    <span class="comment">// 缓存 `(2, 4, 8) * scale` 用于数字生成。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale2</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+    <span class="ident">scale2</span>.<span class="ident">mul_pow2</span>(<span class="number">1</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale4</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+    <span class="ident">scale4</span>.<span class="ident">mul_pow2</span>(<span class="number">2</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale8</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+    <span class="ident">scale8</span>.<span class="ident">mul_pow2</span>(<span class="number">3</span>);
+
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">down</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">up</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">loop</span> {
+        <span class="comment">// 不可变变量，其中 `d[0..n-1]` 是到目前为止生成的数字:</span>
+        <span class="comment">// - `v = mant / scale * 10^(k-n-1) + d[0..n-1] * 10^(k-n)`</span>
+        <span class="comment">// - `v - low = minus / scale * 10^(k-n-1)`</span>
+        <span class="comment">// - `high - v = plus / scale * 10^(k-n-1)`</span>
+        <span class="comment">// - `(mant + plus) / scale &lt;= 10` (因此 `mant / scale &lt; 10`)，其中 `d[i..j]` 是 `d[i] * 10^(j-i) + ... 的简写</span>
+        <span class="comment">// + d[j-1] * 10 + d[j]`.</span>
+
+        <span class="comment">// 产生一位数字: `d[n] = floor(mant / scale) &lt; 10`.</span>
+        <span class="kw">let</span> (<span class="ident">d</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">div_rem_upto_16</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">mant</span>, <span class="kw-2">&amp;</span><span class="ident">scale</span>, <span class="kw-2">&amp;</span><span class="ident">scale2</span>, <span class="kw-2">&amp;</span><span class="ident">scale4</span>, <span class="kw-2">&amp;</span><span class="ident">scale8</span>);
+        <span class="macro">debug_assert!</span>(<span class="ident">d</span> <span class="op">&lt;</span> <span class="number">10</span>);
+        <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">d</span>);
+        <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="comment">// 这是对修改后的 Dragon 算法的简化描述。</span>
+        <span class="comment">// 为了方便起见，省略了许多中间派生和完整性参数。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 从修改的不可变变量开始，因为我们更新了 `n`:</span>
+        <span class="comment">// - `v = mant / scale * 10^(k-n) + d[0..n-1] * 10^(k-n)`</span>
+        <span class="comment">// - `v - low = minus / scale * 10^(k-n)`</span>
+        <span class="comment">// - `high - v = plus / scale * 10^(k-n)`</span>
+        <span class="comment">//</span>
+        <span class="comment">// 假定 `d[0..n-1]` 是 `low` 和 `high` 之间的最短表示形式，即 `d[0..n-1]` 满足以下两个条件，但 `d[0..n-2]` 不满足:</span>
+        <span class="comment">//</span>
+        <span class="comment">// - `low &lt; d[0..n-1] * 10^(k-n) &lt; high` (双射性: 数字四舍五入为 `v`) ; and</span>
+        <span class="comment">// - `abs(v / 10^(k-n) - d[0..n-1]) &lt;= 1/2` (最后一位数字正确)。</span>
+        <span class="comment">//</span>
+        <span class="comment">// 第二个条件简化为 `2 * mant &lt;= scale`。</span>
+        <span class="comment">// 根据 `mant`，`low` 和 `high` 求解不可变变量产生第一个条件的简单版本: `-plus &lt; mant &lt; minus`.</span>
+        <span class="comment">// 自 `-plus &lt; 0 &lt;= mant` 以来，我们拥有正确的最短表示形式 `mant &lt; minus` 和 `2 * mant &lt;= scale`。</span>
+        <span class="comment">// (当原始尾数为偶数时，前者变为 `mant &lt;= minus`。)</span>
+        <span class="comment">//</span>
+        <span class="comment">// 当第二个不保存 (`2 * mant &gt; scale`) 时，我们需要增加最后一位。</span>
+        <span class="comment">// 这足以恢复该条件: 我们已经知道数字生成可以保证 `0 &lt;= v / 10^(k-n) - d[0..n-1] &lt; 1`。</span>
+        <span class="comment">// 在这种情况下，第一个条件变为 `-plus &lt; mant - scale &lt; minus`。</span>
+        <span class="comment">// 自从 `mant &lt; scale` 产生以来，我们有了 `scale &lt; mant + plus`。</span>
+        <span class="comment">// (同样，当原始尾数为偶数时，它变为 `scale &lt;= mant + plus`。)</span>
+        <span class="comment">//</span>
+        <span class="comment">// 简而言之:</span>
+        <span class="comment">// - `mant &lt; minus` (或 `&lt;=`) 时，停止并四舍五入 `down` (保持数字不变)。</span>
+        <span class="comment">// - `scale &lt; mant + plus` (或 `&lt;=`) 时，停止并四舍五入 `up` (增加最后一位)。</span>
+        <span class="comment">// - 否则继续生成。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="ident">down</span> <span class="op">=</span> <span class="ident">mant</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">minus</span>) <span class="op">&lt;</span> <span class="ident">rounding</span>;
+        <span class="ident">up</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">cmp</span>(<span class="ident">mant</span>.<span class="ident">clone</span>().<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">plus</span>)) <span class="op">&lt;</span> <span class="ident">rounding</span>;
+        <span class="kw">if</span> <span class="ident">down</span> <span class="op">|</span><span class="op">|</span> <span class="ident">up</span> {
+            <span class="kw">break</span>;
+        } <span class="comment">// 我们具有最短的表示，请继续进行四舍五入</span>
+
+        <span class="comment">// 恢复不变式。</span>
+        <span class="comment">// 这使得算法总是终止: `minus` 和 `plus` 总是增加，但是 `mant` 被裁剪为 `scale` 模，并且 `scale` 是固定的。</span>
+        <span class="comment">//</span>
+        <span class="ident">mant</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+        <span class="ident">minus</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+        <span class="ident">plus</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+    }
+
+    <span class="comment">// 当 i) 仅触发了舍入条件，或者 ii) 两个条件都被触发并且平局打破更倾向于舍入时，发生舍入。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="kw">if</span> <span class="ident">up</span> <span class="op">&amp;&amp;</span> (<span class="op">!</span><span class="ident">down</span> <span class="op">|</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">mant</span>.<span class="ident">mul_pow2</span>(<span class="number">1</span>) <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale</span>) {
+        <span class="comment">// 如果四舍五入改变了长度，则指数也应改变。</span>
+        <span class="comment">// 似乎很难满足这个条件 (可能是不可能的)，但是我们在这里只是安全和一致的。</span>
+        <span class="comment">//</span>
+        <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">round_up</span>(<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[..<span class="ident">i</span>]) }) {
+            <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="ident">c</span>);
+            <span class="ident">i</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        }
+    }
+
+    <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+    (<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="ident">i</span>]) }, <span class="ident">k</span>)
+}
+
+<span class="doccomment">/// Dragon 的确切和固定模式实现。</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">format_exact</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">d</span>: <span class="kw-2">&amp;</span><span class="ident">Decoded</span>,
+    <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>],
+    <span class="ident">limit</span>: <span class="ident">i16</span>,
+) <span class="op">-</span><span class="op">&gt;</span> (<span class="comment">/*digits*/</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="comment">/*exp*/</span> <span class="ident">i16</span>) {
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">minus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">plus</span> <span class="op">&gt;</span> <span class="number">0</span>);
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_add</span>(<span class="ident">d</span>.<span class="ident">plus</span>).<span class="ident">is_some</span>());
+    <span class="macro">assert!</span>(<span class="ident">d</span>.<span class="ident">mant</span>.<span class="ident">checked_sub</span>(<span class="ident">d</span>.<span class="ident">minus</span>).<span class="ident">is_some</span>());
+
+    <span class="comment">// 从满足 `10^(k_0-1) &lt; v &lt;= 10^(k_0+1)` 的原始输入中估算 `k_0`。</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">estimate_scaling_factor</span>(<span class="ident">d</span>.<span class="ident">mant</span>, <span class="ident">d</span>.<span class="ident">exp</span>);
+
+    <span class="comment">// `v = mant / scale`.</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mant</span> <span class="op">=</span> <span class="ident">Big::from_u64</span>(<span class="ident">d</span>.<span class="ident">mant</span>);
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale</span> <span class="op">=</span> <span class="ident">Big::from_small</span>(<span class="number">1</span>);
+    <span class="kw">if</span> <span class="ident">d</span>.<span class="ident">exp</span> <span class="op">&lt;</span> <span class="number">0</span> {
+        <span class="ident">scale</span>.<span class="ident">mul_pow2</span>(<span class="op">-</span><span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    } <span class="kw">else</span> {
+        <span class="ident">mant</span>.<span class="ident">mul_pow2</span>(<span class="ident">d</span>.<span class="ident">exp</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    }
+
+    <span class="comment">// 将 `mant` 除以 `10^k`。现在 `scale / 10 &lt; mant &lt;= scale * 10`。</span>
+    <span class="kw">if</span> <span class="ident">k</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">scale</span>, <span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    } <span class="kw">else</span> {
+        <span class="ident">mul_pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">mant</span>, <span class="op">-</span><span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    }
+
+    <span class="comment">// `mant + plus &gt;= scale` 时的修正，`plus / scale = 10^-buf.len() / 2` 时的修正。</span>
+    <span class="comment">// 为了保留固定大小的 bignum，我们实际上使用 `mant + floor(plus) &gt;= scale`。</span>
+    <span class="comment">// 我们实际上并没有修改 `scale`，因为我们可以跳过初始乘法。</span>
+    <span class="comment">// 再次使用最短算法，`d[0]` 可以为零，但最终会四舍五入。</span>
+    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">div_2pow10</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">scale</span>.<span class="ident">clone</span>(), <span class="ident">buf</span>.<span class="ident">len</span>()).<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">mant</span>) <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale</span> {
+        <span class="comment">// 相当于将 `scale` 缩放 10</span>
+        <span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+    } <span class="kw">else</span> {
+        <span class="ident">mant</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+    }
+
+    <span class="comment">// 如果使用的是最后一位数字的限制，则需要在实际渲染之前缩短缓冲区，以避免双舍入。</span>
+    <span class="comment">//</span>
+    <span class="comment">// 请注意，在进行舍入操作时，我们必须再次扩大缓冲区!</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">len</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">k</span> <span class="op">&lt;</span> <span class="ident">limit</span> {
+        <span class="comment">// 糟糕，我们甚至无法产生 *一位* 数字。</span>
+        <span class="comment">// 例如，当我们有类似 9.5 的值并将其四舍五入时，这是可能的。</span>
+        <span class="comment">// 我们返回一个空缓冲区，但以后的向上舍入情况除外，后者发生在 `k == limit` 且必须产生一位数字的情况下。</span>
+        <span class="comment">//</span>
+        <span class="number">0</span>
+    } <span class="kw">else</span> <span class="kw">if</span> ((<span class="ident">k</span> <span class="kw">as</span> <span class="ident">i32</span> <span class="op">-</span> <span class="ident">limit</span> <span class="kw">as</span> <span class="ident">i32</span>) <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">&lt;</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
+        (<span class="ident">k</span> <span class="op">-</span> <span class="ident">limit</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    } <span class="kw">else</span> {
+        <span class="ident">buf</span>.<span class="ident">len</span>()
+    };
+
+    <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span> {
+        <span class="comment">// 缓存 `(2, 4, 8) * scale` 用于数字生成。</span>
+        <span class="comment">// (这可能很昂贵，因此在缓冲区为空时不要计算它们。)</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale2</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+        <span class="ident">scale2</span>.<span class="ident">mul_pow2</span>(<span class="number">1</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale4</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+        <span class="ident">scale4</span>.<span class="ident">mul_pow2</span>(<span class="number">2</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">scale8</span> <span class="op">=</span> <span class="ident">scale</span>.<span class="ident">clone</span>();
+        <span class="ident">scale8</span>.<span class="ident">mul_pow2</span>(<span class="number">3</span>);
+
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">len</span> {
+            <span class="kw">if</span> <span class="ident">mant</span>.<span class="ident">is_zero</span>() {
+                <span class="comment">// 以下数字全为零，我们在这里停止 *不要* 尝试进行舍入! 而是填写剩余的数字。</span>
+                <span class="comment">//</span>
+                <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[<span class="ident">i</span>..<span class="ident">len</span>] {
+                    <span class="kw-2">*</span><span class="ident">c</span> <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span>);
+                }
+                <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+                <span class="kw">return</span> (<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="ident">len</span>]) }, <span class="ident">k</span>);
+            }
+
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">d</span> <span class="op">=</span> <span class="number">0</span>;
+            <span class="kw">if</span> <span class="ident">mant</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale8</span> {
+                <span class="ident">mant</span>.<span class="ident">sub</span>(<span class="kw-2">&amp;</span><span class="ident">scale8</span>);
+                <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">8</span>;
+            }
+            <span class="kw">if</span> <span class="ident">mant</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale4</span> {
+                <span class="ident">mant</span>.<span class="ident">sub</span>(<span class="kw-2">&amp;</span><span class="ident">scale4</span>);
+                <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">4</span>;
+            }
+            <span class="kw">if</span> <span class="ident">mant</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale2</span> {
+                <span class="ident">mant</span>.<span class="ident">sub</span>(<span class="kw-2">&amp;</span><span class="ident">scale2</span>);
+                <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">2</span>;
+            }
+            <span class="kw">if</span> <span class="ident">mant</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">scale</span> {
+                <span class="ident">mant</span>.<span class="ident">sub</span>(<span class="kw-2">&amp;</span><span class="ident">scale</span>);
+                <span class="ident">d</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            }
+            <span class="macro">debug_assert!</span>(<span class="ident">mant</span> <span class="op">&lt;</span> <span class="ident">scale</span>);
+            <span class="macro">debug_assert!</span>(<span class="ident">d</span> <span class="op">&lt;</span> <span class="number">10</span>);
+            <span class="ident">buf</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="string">b&#39;0&#39;</span> <span class="op">+</span> <span class="ident">d</span>);
+            <span class="ident">mant</span>.<span class="ident">mul_small</span>(<span class="number">10</span>);
+        }
+    }
+
+    <span class="comment">// 如果以下几位恰好是 5000，则四舍五入，如果我们停在数字的中间，请检查前一位并尝试四舍五入为偶数 (即，避免在前一位为偶数时四舍五入)。</span>
+    <span class="comment">//</span>
+    <span class="comment">//</span>
+    <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">mant</span>.<span class="ident">cmp</span>(<span class="ident">scale</span>.<span class="ident">mul_small</span>(<span class="number">5</span>));
+    <span class="kw">if</span> <span class="ident">order</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Ordering::Greater</span>
+        <span class="op">|</span><span class="op">|</span> (<span class="ident">order</span> <span class="op">=</span><span class="op">=</span> <span class="ident">Ordering::Equal</span>
+            <span class="comment">// SAFETY: `buf[len-1]` 被初始化。</span>
+            <span class="op">&amp;&amp;</span> (<span class="ident">len</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="ident">buf</span>[<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>].<span class="ident">assume_init</span>() } <span class="op">&amp;</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>))
+    {
+        <span class="comment">// 如果四舍五入改变了长度，则指数也应改变。</span>
+        <span class="comment">// 但是我们被要求提供固定数量的数字，所以请不要更改缓冲区...</span>
+        <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">round_up</span>(<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">buf</span>[..<span class="ident">len</span>]) }) {
+            <span class="comment">// ... 除非我们被要求使用固定精度。</span>
+            <span class="comment">// 我们还需要检查一下，如果原始缓冲区为空，则只能在 `k == limit` (edge 情况) 下添加附加数字。</span>
+            <span class="comment">//</span>
+            <span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="kw">if</span> <span class="ident">k</span> <span class="op">&gt;</span> <span class="ident">limit</span> <span class="op">&amp;&amp;</span> <span class="ident">len</span> <span class="op">&lt;</span> <span class="ident">buf</span>.<span class="ident">len</span>() {
+                <span class="ident">buf</span>[<span class="ident">len</span>] <span class="op">=</span> <span class="ident">MaybeUninit::new</span>(<span class="ident">c</span>);
+                <span class="ident">len</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            }
+        }
+    }
+
+    <span class="comment">// SAFETY: 我们在上面初始化了该内存。</span>
+    (<span class="kw">unsafe</span> { <span class="ident">MaybeUninit::slice_assume_init_ref</span>(<span class="kw-2">&amp;</span><span class="ident">buf</span>[..<span class="ident">len</span>]) }, <span class="ident">k</span>)
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="core" data-search-index-js="../../../../../search-index1.55.0.js" data-search-js="../../../../../search1.55.0.js"></div><script src="../../../../../main1.55.0.js"></script><script src="../../../../../source-script1.55.0.js"></script><script src="../../../../../source-files1.55.0.js"></script></body></html>

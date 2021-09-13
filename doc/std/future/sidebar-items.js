@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["pending","创建一个永不解析的 future，表示永不结束的计算。"],["poll_fn","创建一个 future，它包装返回 [`Poll`] 的函数。"],["ready","创建一个立即准备好值的 future。"]],"struct":[["Pending","创建一个永不解析的 future，表示永不结束的计算。"],["PollFn","Future，它包装返回 [`Poll`] 的函数。"],["Ready","创建一个立即准备好值的 future。"]],"trait":[["Future","future 表示异步计算。"],["IntoFuture","转换为 `Future`。"]]});

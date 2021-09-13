@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Result","`Result` 是代表成功 ([`Ok`]) 或失败 ([`Err`]) 的类型。"]],"struct":[["IntoIter","[`Result`] 的 [`Ok`] 成员中的值的迭代器。"],["Iter","[`Result`] 的 [`Ok`] 成员的引用上的迭代器。"],["IterMut","[`Result`] 的 [`Ok`] 成员的可变引用上的迭代器。"]]});

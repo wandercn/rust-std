@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\..\..\stdarch\crates\core_arch\src\arm\armclang.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>armclang.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../../../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../../../../../../storage1.55.0.js"></script><script src="../../../../../../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../../../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../../../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../../../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../../../../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../../../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../../../../../settings.html" title="settings"><img src="../../../../../../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+</pre><pre class="rust">
+<span class="doccomment">//! ARM 编译器特定的内联函数</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # References</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - [ARM Compiler v 6.10 - armclang Reference Guide][arm_comp_ref]</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [arm_comp_ref]: https://developer.arm.com/docs/100067/0610</span>
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">use</span> <span class="ident">stdarch_test::assert_instr</span>;
+
+<span class="doccomment">/// 插入断点指令。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `VAL` 是范围 `[0, 255]` 中的编译时常量整数。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 插入的断点指令是 A32/T32 上的 `BKPT`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Note</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [ARM&#39;s documentation][arm_docs] 定义 `__breakpoint` 接受 `VAL` 的以下值:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - `0...65535` 编译为 A32 时，</span>
+<span class="doccomment">/// - `0...255` 当编译为 T32 时。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 当前的实现只接受 `[0, 255]` 范围内的值。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [arm_docs]: https://developer.arm.com/docs/100067/latest/compiler-specific-intrinsics/__breakpoint-intrinsic</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">assert_instr</span>(<span class="ident">bkpt</span>, <span class="ident">VAL</span> <span class="op">=</span> <span class="number">0</span>))]</span>
+<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+<span class="attribute">#[<span class="ident">rustc_legacy_const_generics</span>(<span class="number">0</span>)]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__breakpoint</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">VAL</span>: <span class="ident">i32</span><span class="op">&gt;</span>() {
+    <span class="macro">static_assert_imm8!</span>(<span class="ident">VAL</span>);
+    <span class="macro">asm!</span>(<span class="string">&quot;bkpt #{}&quot;</span>, <span class="kw">const</span> <span class="ident">VAL</span>);
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../../../../../" data-current-crate="core" data-search-index-js="../../../../../../../../../search-index1.55.0.js" data-search-js="../../../../../../../../../search1.55.0.js"></div><script src="../../../../../../../../../main1.55.0.js"></script><script src="../../../../../../../../../source-script1.55.0.js"></script><script src="../../../../../../../../../source-files1.55.0.js"></script></body></html>

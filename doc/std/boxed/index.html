@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="堆分配的指针类型。"><meta name="keywords" content="rust, rustlang, rust-lang, boxed"><title>std::boxed - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module boxed</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li></ul></div><div id="sidebar-vars" data-name="boxed" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">std</a>::<wbr><a class="mod" href="#">boxed</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/alloc/lib.rs.html#171" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>堆分配的指针类型。</p>
+<p><a href="struct.Box.html" title="Box&lt;T&gt;"><code>Box&lt;T&gt;</code></a>, 随意称为 ‘box’，它在 Rust 中提供了最简单的堆分配形式。Boxes 为这个分配提供所有权，并在离开作用域时丢弃它们的内容。Boxes 还确保它们分配的字节数永远不会超过 <code>isize::MAX</code> 字节。</p>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>通过创建 <a href="struct.Box.html" title="Box"><code>Box</code></a>，将值从栈移动到堆:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">val</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">5</span>;
+<span class="kw">let</span> <span class="ident">boxed</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">val</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20val%3A%20u8%20%3D%205%3B%0Alet%20boxed%3A%20Box%3Cu8%3E%20%3D%20Box%3A%3Anew(val)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>通过 <a href="../ops/trait.Deref.html">解引用</a> 将值从 <a href="struct.Box.html" title="Box"><code>Box</code></a> 移回栈:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">boxed</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="number">5</span>);
+<span class="kw">let</span> <span class="ident">val</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">boxed</span>;</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20boxed%3A%20Box%3Cu8%3E%20%3D%20Box%3A%3Anew(5)%3B%0Alet%20val%3A%20u8%20%3D%20*boxed%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>创建递归数据结构体:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">enum</span> <span class="ident">List</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="ident">Cons</span>(<span class="ident">T</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">List</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+    <span class="ident">Nil</span>,
+}
+
+<span class="kw">let</span> <span class="ident">list</span>: <span class="ident">List</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">List::Cons</span>(<span class="number">1</span>, <span class="ident">Box::new</span>(<span class="ident">List::Cons</span>(<span class="number">2</span>, <span class="ident">Box::new</span>(<span class="ident">List::Nil</span>))));
+<span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">list</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0A%23%5Bderive(Debug)%5D%0Aenum%20List%3CT%3E%20%7B%0A%20%20%20%20Cons(T%2C%20Box%3CList%3CT%3E%3E)%2C%0A%20%20%20%20Nil%2C%0A%7D%0A%0Alet%20list%3A%20List%3Ci32%3E%20%3D%20List%3A%3ACons(1%2C%20Box%3A%3Anew(List%3A%3ACons(2%2C%20Box%3A%3Anew(List%3A%3ANil))))%3B%0Aprintln!(%22%7B%3A%3F%7D%22%2C%20list)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>这将打印 <code>Cons(1, Cons(2, Nil))</code>。</p>
+<p>递归结构必须为 boxed，因为如果 <code>Cons</code> 的定义如下所示:</p>
+
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<span class="ident">Cons</span>(<span class="ident">T</span>, <span class="ident">List</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>),</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Aenum%20List%3CT%3E%20%7B%0ACons(T%2C%20List%3CT%3E)%2C%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>这行不通。这是因为 <code>List</code> 的大小取决于列表中有多少个元素，因此我们不知道为 <code>Cons</code> 分配多少内存。通过引入具有定义大小的 <a href="struct.Box.html" title="Box&lt;T&gt;"><code>Box&lt;T&gt;</code></a>，我们知道 <code>Cons</code> 的大小。</p>
+<h1 id="内存布局" class="section-header"><a href="#内存布局">内存布局</a></h1>
+<p>对于非零大小的值，<a href="struct.Box.html" title="Box"><code>Box</code></a> 将使用 <a href="../alloc/struct.Global.html"><code>Global</code></a> 分配器进行分配。假定与分配器一起使用的 <a href="../alloc/struct.Layout.html"><code>Layout</code></a> 对于该类型是正确的，则在 <a href="struct.Box.html" title="Box"><code>Box</code></a> 和使用 <a href="../alloc/struct.Global.html"><code>Global</code></a> 分配器分配的裸指针之间进行双向转换是有效的。</p>
+<p>更准确地说，已使用 <code>Layout::for_value(&amp;*value)</code> 与 <a href="../alloc/struct.Global.html"><code>Global</code></a> 分配器一起分配的 <code>value:* mut T</code> 可以使用 <a href="struct.Box.html#method.from_raw"><code>Box::&lt;T&gt;::from_raw(value)</code></a> 转换为 box。
+相反，可以使用带有 <a href="../alloc/struct.Layout.html#method.for_value"><code>Layout::for_value(&amp;*value)</code></a> 的 <a href="../alloc/struct.Global.html"><code>Global</code></a> 分配器重新分配支持从 <a href="struct.Box.html#method.into_raw" title="Box::&lt;T&gt;::into_raw"><code>Box::&lt;T&gt;::into_raw</code></a> 获得的 <code>value:* mut T</code> 的内存。</p>
+<p>对于零大小的值，<code>Box</code> 指针对于读取和写入仍必须为 <a href="../ptr/index.html#safety">有效的</a>，并且必须充分对齐。
+特别是，将任何对齐的非零整数字面量强制转换为裸指针都会产生有效的指针，但是指向先前分配的内存 (由于释放后的指针) 的指针无效。
+如果不能使用 <code>Box::new</code>，建议将 Box 生成到 ZST 的推荐方法是使用 <a href="../ptr/struct.NonNull.html#method.dangling" title="ptr::NonNull::dangling"><code>ptr::NonNull::dangling</code></a>。</p>
+<p>只要 <code>T: Sized</code>，就可以保证将 <code>Box&lt;T&gt;</code> 表示为单个指针，并且还与 C 指针 ABI 兼容 (即 C 类型 <code>T*</code>)。
+这意味着，如果您有从 C 调用的外部 “C” Rust 函数，则可以使用 <code>Box&lt;T&gt;</code> 类型定义那些 Rust 函数，并在 C 侧使用 <code>T*</code> 作为对应类型。
+例如，考虑下面的 C 头文件，该标头声明创建和销毁某种 <code>Foo</code> 值的函数:</p>
+<pre><code class="language-c">/* C 头文件 */
+
+/* 将所有权归还给调用者 */
+struct Foo* foo_new(void);
+
+/* 取得调用者的所有权; 使用 null 调用时无操作 */
+void foo_delete(struct Foo*);
+</code></pre>
+<p>这两个函数可以在 Rust 中实现，如下所示。在这里，来自 C 的 <code>struct Foo*</code> 类型被转换为 <code>Box&lt;Foo&gt;</code>，它捕获了所有权约束。
+还要注意，由于 <code>Box&lt;Foo&gt;</code> 不能为 null，因此 <code>foo_delete</code> 的 nullable 参数在 Rust 中表示为 <code>Option&lt;Box&lt;Foo&gt;&gt;</code>。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Foo</span>;
+
+<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">foo_new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Foo</span><span class="op">&gt;</span> {
+    <span class="ident">Box::new</span>(<span class="ident">Foo</span>)
+}
+
+<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">foo_delete</span>(<span class="kw">_</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">Foo</span><span class="op">&gt;</span><span class="op">&gt;</span>) {}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0A%23%5Brepr(C)%5D%0Apub%20struct%20Foo%3B%0A%0A%23%5Bno_mangle%5D%0Apub%20extern%20%22C%22%20fn%20foo_new()%20-%3E%20Box%3CFoo%3E%20%7B%0A%20%20%20%20Box%3A%3Anew(Foo)%0A%7D%0A%0A%23%5Bno_mangle%5D%0Apub%20extern%20%22C%22%20fn%20foo_delete(_%3A%20Option%3CBox%3CFoo%3E%3E)%20%7B%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>即使 <code>Box&lt;T&gt;</code> 具有与 C 指针相同的表示形式和 C ABI，但这并不意味着您可以将任意 <code>T*</code> 转换为 <code>Box&lt;T&gt;</code> 并期望一切正常。
+<code>Box&lt;T&gt;</code> 值将始终是完全对齐的非空指针。此外，<code>Box&lt;T&gt;</code> 的析构函数将尝试使用分配器释放该值。通常，最佳实践是仅对来自分配器的指针使用 <code>Box&lt;T&gt;</code>。</p>
+<p><strong>重要</strong> 至少目前，您应该避免对在 C 中定义但从 Rust 调用的函数使用 <code>Box&lt;T&gt;</code> 类型。在这些情况下，您应该尽可能直接地镜像 C 类型。
+如 <a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/198">rust-lang/unsafe-code-guidelines#198</a> 中所述，使用 C 定义仅使用 <code>T*</code> 的 <code>Box&lt;T&gt;</code> 这样的类型可能导致未定义的行为。</p>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.Box.html" title="std::boxed::Box struct">Box</a></td><td class="docblock-short"><p>堆分配的指针类型。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

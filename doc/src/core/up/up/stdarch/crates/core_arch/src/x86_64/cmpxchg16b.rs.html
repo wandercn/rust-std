@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\..\..\stdarch\crates\core_arch\src\x86_64\cmpxchg16b.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cmpxchg16b.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../../../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../../../../../../storage1.55.0.js"></script><script src="../../../../../../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../../../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../../../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../../../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../../../../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../../../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../../../../../settings.html" title="settings"><img src="../../../../../../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sync::atomic::Ordering</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">use</span> <span class="ident">stdarch_test::assert_instr</span>;
+
+<span class="doccomment">/// 自动比较和交换 16 字节 (128 位) 的数据。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此内联函数对应于 `x86_64` 处理器上的 `cmpxchg16b` 指令。</span>
+<span class="doccomment">/// 它执行原子比较和交换，如果内存中的当前值等于 `old`，则将 `ptr` 的内存位置更新为 `val`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 返回值</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此函数在内存位置返回前一个值。如果等于 `old`，则内存已更新为 `new`。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # 内存顺序</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 该原子操作与 `AtomicUsize::compare_exchange` 具有相同的内存顺序语义，只对 16 个字节的内存进行操作，而不仅仅是指针。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 有关此处的内存顺序的更多信息，请参见标准库中其他 `Atomic*` 类型的 `compare_exchange` 文档。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Unsafety</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此方法是不安全的，因为它使用裸指针，并且将尝试读取并可能在指针处写入内存。</span>
+<span class="doccomment">/// 指针还必须在 16 字节边界上对齐。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 此方法还要求 `cmpxchg16b` CPU 功能在运行时可用，才能正常工作。</span>
+<span class="doccomment">/// 如果运行二进制文件的 CPU 实际上不支持 `cmpxchg16b`，并且程序输入了最终会到达该函数的执行路径，则该行为未定义。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `success` 的顺序也必须大于或等于 `failure`，否则此函数调用是未定义的。</span>
+<span class="doccomment">/// 有关更多信息，请参见 `Atomic*` 文档的 `compare_exchange` 函数。</span>
+<span class="doccomment">/// 当 `compare_exchange` panics 时，这是未定义的行为。</span>
+<span class="doccomment">/// 当前，该函数使用未定义的指令中止进程。</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///</span>
+<span class="attribute">#[<span class="ident">inline</span>]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">assert_instr</span>(<span class="ident">cmpxchg16b</span>, <span class="ident">success</span> <span class="op">=</span> <span class="ident">Ordering::SeqCst</span>, <span class="ident">failure</span> <span class="op">=</span> <span class="ident">Ordering::SeqCst</span>))]</span>
+<span class="attribute">#[<span class="ident">target_feature</span>(<span class="ident">enable</span> <span class="op">=</span> <span class="string">&quot;cmpxchg16b&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">cmpxchg16b</span>(
+    <span class="ident">dst</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u128</span>,
+    <span class="ident">old</span>: <span class="ident">u128</span>,
+    <span class="ident">new</span>: <span class="ident">u128</span>,
+    <span class="ident">success</span>: <span class="ident">Ordering</span>,
+    <span class="ident">failure</span>: <span class="ident">Ordering</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u128</span> {
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">intrinsics</span>, <span class="ident">sync::atomic::Ordering</span>::<span class="kw-2">*</span>};
+
+    <span class="macro">debug_assert!</span>(<span class="ident">dst</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">%</span> <span class="number">16</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
+
+    <span class="kw">let</span> (<span class="ident">val</span>, <span class="ident">_ok</span>) <span class="op">=</span> <span class="kw">match</span> (<span class="ident">success</span>, <span class="ident">failure</span>) {
+        (<span class="ident">Acquire</span>, <span class="ident">Acquire</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_acq</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">Release</span>, <span class="ident">Relaxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_rel</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">AcqRel</span>, <span class="ident">Acquire</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_acqrel</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">Relaxed</span>, <span class="ident">Relaxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_relaxed</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">SeqCst</span>, <span class="ident">SeqCst</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">Acquire</span>, <span class="ident">Relaxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_acq_failrelaxed</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">AcqRel</span>, <span class="ident">Relaxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_acqrel_failrelaxed</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">SeqCst</span>, <span class="ident">Relaxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_failrelaxed</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+        (<span class="ident">SeqCst</span>, <span class="ident">Acquire</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">intrinsics::atomic_cxchg_failacq</span>(<span class="ident">dst</span>, <span class="ident">old</span>, <span class="ident">new</span>),
+
+        <span class="comment">// 上面的代码块都是从 libcore 复制的，该语句也是从 libcore 复制的，除了它是 libcore 中的 panic，我们这里还有一些轻量级的 panic。</span>
+        <span class="comment">//</span>
+        <span class="comment">//</span>
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::core_arch::x86::ud2</span>(),
+    };
+    <span class="ident">val</span>
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../../../../../" data-current-crate="core" data-search-index-js="../../../../../../../../../search-index1.55.0.js" data-search-js="../../../../../../../../../search1.55.0.js"></div><script src="../../../../../../../../../main1.55.0.js"></script><script src="../../../../../../../../../source-script1.55.0.js"></script><script src="../../../../../../../../../source-files1.55.0.js"></script></body></html>

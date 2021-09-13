@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="可组合的异步迭代。"><meta name="keywords" content="rust, rustlang, rust-lang, stream"><title>core::stream - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module stream</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#traits">Traits</a></li></ul></div><div id="sidebar-vars" data-name="stream" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">core</a>::<wbr><a class="mod" href="#">stream</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/stream/mod.rs.html#1-127" title="goto source code">[src]</a></span></h1><div class="item-info"><div class="stab unstable"><span class="emoji">🔬</span> This is a nightly-only experimental API. (<code>async_stream</code>&nbsp;<a href="https://github.com/rust-lang/rust/issues/79024">#79024</a>)</div></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>可组合的异步迭代。</p>
+<p>如果 futures 是异步值，则流是异步迭代器。
+如果您发现自己具有某种异步集合，并且需要对所述集合的元素执行操作，那么您会很快遇到 ‘streams’。
+流在惯用的异步 Rust 代码中大量使用，因此值得熟悉它们。</p>
+<p>在解释更多内容之前，让我们讨论一下该模块的结构:</p>
+<h1 id="organization" class="section-header"><a href="#organization">Organization</a></h1>
+<p>该模块主要是按类型来组织的:</p>
+<ul>
+<li><a href="#traits">Traits</a> 是核心部分: 这些 traits 定义了存在哪种类型的流以及可以对其进行处理。这些 traits 的方法值得投入一些额外的学习时间。</li>
+<li>函数提供了一些有用的方法来创建一些基本流。</li>
+<li>结构体通常是该模块的 traits 上各种方法的返回类型。通常，您将需要查看创建 <code>struct</code> 的方法，而不是 <code>struct</code> 本身。
+有关原因的更多详细信息，请参见 <a href="#implementing-stream">实现流</a>。</li>
+</ul>
+<p>就是这样! 让我们深入研究流。</p>
+<h1 id="stream" class="section-header"><a href="#stream">Stream</a></h1>
+<p>该模块的核心是 <a href="trait.Stream.html" title="Stream"><code>Stream</code></a> trait。<a href="trait.Stream.html" title="Stream"><code>Stream</code></a> 的核心如下所示:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">trait</span> <span class="ident">Stream</span> {
+    <span class="kw">type</span> <span class="ident">Item</span>;
+    <span class="kw">fn</span> <span class="ident">poll_next</span>(<span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Aextern%20crate%20r%23core%3B%0Afn%20main()%20%7B%0Ause%20core%3A%3Atask%3A%3A%7BContext%2C%20Poll%7D%3B%0Ause%20core%3A%3Apin%3A%3APin%3B%0Atrait%20Stream%20%7B%0A%20%20%20%20type%20Item%3B%0A%20%20%20%20fn%20poll_next(self%3A%20Pin%3C%26mut%20Self%3E%2C%20cx%3A%20%26mut%20Context%3C'_%3E)%20-%3E%20Poll%3COption%3CSelf%3A%3AItem%3E%3E%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>与 <code>Iterator</code> 不同，<code>Stream</code> 区分了实现 <code>Stream</code> 时使用的 <a href="trait.Stream.html#tymethod.poll_next"><code>poll_next</code></a> 方法和使用流时使用的 (to-be-implemented) <code>next</code> 方法。</p>
+<p><code>Stream</code> 的使用者只需要考虑 <code>next</code>，当调用 <code>next</code> 时，它会返回 future 并产生 <code>Option&lt;Stream::Item&gt;</code>。</p>
+<p>只要有元素，<code>next</code> 返回的 future 就会产生 <code>Some(Item)</code>，一旦所有元素用完，就会产生 <code>None</code> 来指示迭代已完成。
+如果我们正在等待异步处理，则 future 将等待，直到流准备再次屈服。</p>
+<p>各个流可能选择恢复迭代，因此再次调用 <code>next</code> 可能会或可能最终不会在某个时候再次产生 <code>Some(Item)</code>。</p>
+<p><a href="trait.Stream.html" title="Stream"><code>Stream</code></a> 的完整定义还包括许多其他方法，但是它们是默认方法，基于 <a href="trait.Stream.html#tymethod.poll_next"><code>poll_next</code></a> 构建，因此您可以免费获得它们。</p>
+<h1 id="实现流" class="section-header"><a href="#实现流">实现流</a></h1>
+<p>创建自己的流涉及两个步骤: 创建一个 <code>struct</code> 来保存流的状态，然后为该 <code>struct</code> 实现 <a href="trait.Stream.html" title="Stream"><code>Stream</code></a>。</p>
+<p>让我们创建一个名为 <code>Counter</code> 的流，它从 <code>1</code> 到 <code>5</code> 计数:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">async_stream</span>)]</span>
+
+<span class="comment">// 首先，结构体:</span>
+
+<span class="doccomment">/// 从一数到五的流</span>
+<span class="kw">struct</span> <span class="ident">Counter</span> {
+    <span class="ident">count</span>: <span class="ident">usize</span>,
+}
+
+<span class="comment">// 我们希望计数从一开始，所以让我们添加一个 new() 方法来提供帮助。</span>
+<span class="comment">// 这不是严格必要的，但很方便。</span>
+<span class="comment">// 请注意，我们将 `count` 从零开始，我们将在下面的 `poll_next () ` 的实现中看到其原因。</span>
+<span class="kw">impl</span> <span class="ident">Counter</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Counter</span> {
+        <span class="ident">Counter</span> { <span class="ident">count</span>: <span class="number">0</span> }
+    }
+}
+
+<span class="comment">// 然后，我们为 `Counter` 实现 `Stream`:</span>
+
+<span class="kw">impl</span> <span class="ident">Stream</span> <span class="kw">for</span> <span class="ident">Counter</span> {
+    <span class="comment">// 我们将使用 usize 进行计数</span>
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
+
+    <span class="comment">// poll_next() 是唯一需要的方法</span>
+    <span class="kw">fn</span> <span class="ident">poll_next</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">cx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="comment">// 增加我们的数量。这就是为什么我们从零开始。</span>
+        <span class="self">self</span>.<span class="ident">count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="comment">// 检查我们是否已经完成计数。</span>
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">count</span> <span class="op">&lt;</span> <span class="number">6</span> {
+            <span class="ident">Poll::Ready</span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">count</span>))
+        } <span class="kw">else</span> {
+            <span class="ident">Poll::Ready</span>(<span class="prelude-val">None</span>)
+        }
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23!%5Bfeature(async_stream)%5D%0Aextern%20crate%20r%23core%3B%0Afn%20main()%20%7B%0Ause%20core%3A%3Astream%3A%3AStream%3B%0Ause%20core%3A%3Atask%3A%3A%7BContext%2C%20Poll%7D%3B%0Ause%20core%3A%3Apin%3A%3APin%3B%0A%0A%2F%2F%20%E9%A6%96%E5%85%88%EF%BC%8C%E7%BB%93%E6%9E%84%E4%BD%93%3A%0A%0A%2F%2F%2F%20%E4%BB%8E%E4%B8%80%E6%95%B0%E5%88%B0%E4%BA%94%E7%9A%84%E6%B5%81%0Astruct%20Counter%20%7B%0A%20%20%20%20count%3A%20usize%2C%0A%7D%0A%0A%2F%2F%20%E6%88%91%E4%BB%AC%E5%B8%8C%E6%9C%9B%E8%AE%A1%E6%95%B0%E4%BB%8E%E4%B8%80%E5%BC%80%E5%A7%8B%EF%BC%8C%E6%89%80%E4%BB%A5%E8%AE%A9%E6%88%91%E4%BB%AC%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA%20new()%20%E6%96%B9%E6%B3%95%E6%9D%A5%E6%8F%90%E4%BE%9B%E5%B8%AE%E5%8A%A9%E3%80%82%0A%2F%2F%20%E8%BF%99%E4%B8%8D%E6%98%AF%E4%B8%A5%E6%A0%BC%E5%BF%85%E8%A6%81%E7%9A%84%EF%BC%8C%E4%BD%86%E5%BE%88%E6%96%B9%E4%BE%BF%E3%80%82%0A%2F%2F%20%E8%AF%B7%E6%B3%A8%E6%84%8F%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B0%86%20%60count%60%20%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B0%86%E5%9C%A8%E4%B8%8B%E9%9D%A2%E7%9A%84%20%60poll_next%20()%20%60%20%E7%9A%84%E5%AE%9E%E7%8E%B0%E4%B8%AD%E7%9C%8B%E5%88%B0%E5%85%B6%E5%8E%9F%E5%9B%A0%E3%80%82%0Aimpl%20Counter%20%7B%0A%20%20%20%20fn%20new()%20-%3E%20Counter%20%7B%0A%20%20%20%20%20%20%20%20Counter%20%7B%20count%3A%200%20%7D%0A%20%20%20%20%7D%0A%7D%0A%0A%2F%2F%20%E7%84%B6%E5%90%8E%EF%BC%8C%E6%88%91%E4%BB%AC%E4%B8%BA%20%60Counter%60%20%E5%AE%9E%E7%8E%B0%20%60Stream%60%3A%0A%0Aimpl%20Stream%20for%20Counter%20%7B%0A%20%20%20%20%2F%2F%20%E6%88%91%E4%BB%AC%E5%B0%86%E4%BD%BF%E7%94%A8%20usize%20%E8%BF%9B%E8%A1%8C%E8%AE%A1%E6%95%B0%0A%20%20%20%20type%20Item%20%3D%20usize%3B%0A%0A%20%20%20%20%2F%2F%20poll_next()%20%E6%98%AF%E5%94%AF%E4%B8%80%E9%9C%80%E8%A6%81%E7%9A%84%E6%96%B9%E6%B3%95%0A%20%20%20%20fn%20poll_next(mut%20self%3A%20Pin%3C%26mut%20Self%3E%2C%20cx%3A%20%26mut%20Context%3C'_%3E)%20-%3E%20Poll%3COption%3CSelf%3A%3AItem%3E%3E%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20%E5%A2%9E%E5%8A%A0%E6%88%91%E4%BB%AC%E7%9A%84%E6%95%B0%E9%87%8F%E3%80%82%E8%BF%99%E5%B0%B1%E6%98%AF%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E3%80%82%0A%20%20%20%20%20%20%20%20self.count%20%2B%3D%201%3B%0A%0A%20%20%20%20%20%20%20%20%2F%2F%20%E6%A3%80%E6%9F%A5%E6%88%91%E4%BB%AC%E6%98%AF%E5%90%A6%E5%B7%B2%E7%BB%8F%E5%AE%8C%E6%88%90%E8%AE%A1%E6%95%B0%E3%80%82%0A%20%20%20%20%20%20%20%20if%20self.count%20%3C%206%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20Poll%3A%3AReady(Some(self.count))%0A%20%20%20%20%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20Poll%3A%3AReady(None)%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%7D%0A%7D&amp;version=nightly&amp;edition=2018">Run</a></div>
+<h1 id="laziness" class="section-header"><a href="#laziness">Laziness</a></h1>
+<p>流是懒惰的。这意味着仅仅创建一个流并不能做很多事情。除非您调用 <code>next</code>，否则什么都不会发生。
+当仅出于其副作用创建流时，这有时会引起混乱。
+编译器将警告我们这种行为:</p>
+<pre><code class="language-text">warning: unused result that must be used: streams do nothing unless polled
+</code></pre>
+</div></details><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<table><tr class="unstable module-item"><td><a class="trait" href="trait.Stream.html" title="core::stream::Stream trait">Stream</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>用于处理异步迭代器的接口。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

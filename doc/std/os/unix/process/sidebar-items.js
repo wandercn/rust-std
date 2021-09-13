@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["parent_id","返回与此进程的父级关联的操作系统分配的进程标识符。"]],"trait":[["CommandExt","[`process::Command`] 构建器的特定于 Unix 的扩展。"],["ExitStatusExt","[`process::ExitStatus`] 和 `ExitStatusError` 的 Unix 特定扩展。"]]});

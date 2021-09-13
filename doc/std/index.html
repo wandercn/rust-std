@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Rust 标准库"><meta name="keywords" content="rust, rustlang, rust-lang, std"><title>std - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Crate std</h2><div class="block version"><p>Version 1.55.0-dev</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all std's items</p></a><div class="block items"><ul><li><a href="#primitives">Primitive Types</a></li><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#keywords">Keywords</a></li></ul></div><div id="sidebar-vars" data-name="std" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">std</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/lib.rs.html#1-589" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h1 id="rust-标准库" class="section-header"><a href="#rust-标准库">Rust 标准库</a></h1>
+<p>Rust 标准库是可移植 Rust 软件的基础，这是一组针对 <a href="https://crates.io">更广泛的 Rust 生态系统</a> 的最小且经过实战测试的共享抽象。
+它提供了核心类型，例如 <a href="vec/struct.Vec.html"><code>Vec&lt;T&gt;</code></a> 和 <a href="option/enum.Option.html"><code>Option&lt;T&gt;</code></a>，库定义的对 <a href="#primitives">语言原语</a> 的操作，<a href="#macros">标准库宏</a>，<a href="io/index.html">I/O</a> 和 <a href="thread/index.html">多线程</a>，以及许多 <a href="#what-is-in-the-standard-library-documentation">其他</a> 东西。</p>
+<p><code>std</code> 默认情况下可用于所有的 Rust crates。因此，可以通过 <a href="../book/ch07-02-defining-modules-to-control-scope-and-privacy.html"><code>use</code></a> 语句使用路径 <code>std</code> 来访问标准库，就像在 <a href="env/index.html"><code>use std::env</code></a> 中一样。</p>
+<h1 id="如何阅读本文档" class="section-header"><a href="#如何阅读本文档">如何阅读本文档</a></h1>
+<p>如果您已经知道要查找的内容的名称，最快的查找方法是使用页面顶部的 <a href="#" onclick="focusSearchBar();">搜索栏</a>。</p>
+<p>否则，您可能想跳转到以下有用的部分之一:</p>
+<ul>
+<li><a href="#modules"><code>std::*</code> modules</a></li>
+<li><a href="#primitives">Primitive types</a></li>
+<li><a href="#macros">Standard macros</a></li>
+<li><a href="prelude/index.html">The Rust Prelude</a></li>
+</ul>
+<p>如果这是您第一次来，那么标准库的文档可以被随意的阅读。点击有趣的东西通常会把您带到有趣的地方。
+尽管如此，您还是不想错过一些重要的内容，因此请继续阅读标准库及其文档!</p>
+<p>一旦您熟悉了标准库的内容，您可能会发现冗长的描述会使人分心。在开发阶段，您可能需要按页面顶部附近的 <code>[-]</code> 按钮，将其折叠为更易于阅读的视图。</p>
+<p>当您看到 <code>[-]</code> 按钮的时候，也请注意 <code>[src]</code> 按钮。Rust 的 API 文档附带了源代码，我们鼓励您阅读它。
+标准库的资源通常是高质量的，通常可以启发人们对幕后的了解。</p>
+<h1 id="标准库文档中有什么" class="section-header"><a href="#标准库文档中有什么">标准库文档中有什么?</a></h1>
+<p>首先，Rust 标准库分为多个重点 <a href="#modules">模块</a>，所有的这些模块都会在本页下方列出。这些模块是所有 Rust 锻造的基础，它们具有强大的名称，如 <a href="slice/index.html"><code>std::slice</code></a> 和 <a href="cmp/index.html"><code>std::cmp</code></a>。
+模块的文档通常包括模块的概述和示例，是开始熟悉库的好地方。</p>
+<p>其次，此处记录了 <a href="../book/ch03-02-data-types.html">primitive types</a> 上的隐式方法。造成混淆的原因有两个:</p>
+<ol>
+<li>虽然原语是由编译器实现的，但标准库是直接在原语类型上实现方法 (而且它是唯一一个这样做的库)。在 <a href="#primitives">原语</a> 部分中对此进行了说明。</li>
+<li>标准库导出了许多模块，这些模块的名称和原始类型的名称相同。它们定义了与原始类型有关的其他项，但没有定义所有重要的方法。</li>
+</ol>
+<p>例如，有一个 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.i32.html">基本类型为 <code>i32</code></a> 的页面列出了可以调用的所有方法
+32 位整数 (非常有用)，并且有一个 <a href="i32/index.html">page for the module <code>std::i32</code></a> 记录了常量值 <a href="i32/constant.MIN.html"><code>MIN</code></a> 和 <a href="i32/constant.MAX.html"><code>MAX</code></a> (很少有用)。</p>
+<p>请注意原始 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html"><code>str</code></a> 和 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.slice.html" title="slice"><code>[T]</code></a> (也称为 ‘slice’) 的文档。<a href="string/struct.String.html" title="String"><code>String</code></a> 和 <a href="vec/struct.Vec.html"><code>Vec&lt;T&gt;</code></a> 上许多方法的调用实际上都是通过 <a href="../book/ch15-02-deref.html#implicit-deref-coercions-with-functions-and-methods">解引用强制多态</a> 分别对 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html"><code>str</code></a> 和 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.slice.html" title="slice"><code>[T]</code></a> 上的方法的调用。</p>
+<p>第三，标准库还定义了 <a href="prelude/index.html">The Rust Prelude</a>，这是一小部分项目 - 主要是 traits - 导入到每个 crate 的每个模块中。
+prelude 中的 traits 无处不在，这使 prelude 文档成为了解该库的一个很好的切入点。</p>
+<p>最后，标准库导出了许多标准宏，并且在 <a href="#macros">此页面</a> 上列出了它们 (从技术上讲，并不是所有的标准宏都由标准库定义的 - 有些是由编译器定义的 - 但它们在这里的文档是相同的)。</p>
+<p>与 prelude 一样，默认情况下会将标准宏导入到所有 crates 中。</p>
+<h1 id="对文档的更改做出贡献" class="section-header"><a href="#对文档的更改做出贡献">对文档的更改做出贡献</a></h1>
+<p>在 <a href="https://rustc-dev-guide.rust-lang.org/contributing.html#writing-documentation">这里</a> 查看 Rust 贡献指南。
+该文档的源代码可以在 <a href="https://github.com/rust-lang/rust">GitHub</a> 上找到。
+要贡献更改，请确保您先阅读指南，然后为您建议的更改提交拉取请求。</p>
+<p>感谢您的贡献! 如果您看到可以改进的部分文档，请提交 PR，或者先在 <a href="https://discord.gg/rust-lang">Discord</a> #docs 上与我们聊天。</p>
+<h1 id="rust-标准库之旅" class="section-header"><a href="#rust-标准库之旅">Rust 标准库之旅</a></h1>
+<p>crate 文档的其余部分致力于指出 Rust 标准库的显著特性。</p>
+<h2 id="容器和集合" class="section-header"><a href="#容器和集合">容器和集合</a></h2>
+<p><a href="option/index.html" title="option"><code>option</code></a> 和 <a href="result/index.html" title="result"><code>result</code></a> 模块定义了可选和错误处理类型 <a href="option/enum.Option.html"><code>Option&lt;T&gt;</code></a> 和 <a href="result/enum.Result.html"><code>Result&lt;T, E&gt;</code></a>。<a href="iter/index.html" title="iter"><code>iter</code></a> 模块定义了 Rust 的迭代器 trait <a href="iter/trait.Iterator.html" title="Iterator"><code>Iterator</code></a>，它与 <a href="../book/ch03-05-control-flow.html#looping-through-a-collection-with-for"><code>for</code></a> 循环一起工作来访问集合。</p>
+<p>标准库公开了三种处理连续内存区域的常用方法:</p>
+<ul>
+<li><a href="vec/struct.Vec.html"><code>Vec&lt;T&gt;</code></a> - 在运行时可调整大小的堆分配的 <em>vector</em>。</li>
+<li><a href="https://doc.rust-lang.org/1.54.0/std/primitive.array.html" title="array"><code>[T; N]</code></a> - 在编译时具有固定大小的内联 <em>数组</em>。</li>
+<li><a href="https://doc.rust-lang.org/1.54.0/std/primitive.slice.html" title="slice"><code>[T]</code></a> - 动态调整大小的 <em>切片</em> 到任何其他类型的连续存储中，无论是否进行了堆分配。</li>
+</ul>
+<p>切片只能通过某种 <em>指针</em> 来处理，因此具有多种形式，例如:</p>
+<ul>
+<li><code>&amp;[T]</code> - <em>共享切片</em></li>
+<li><code>&amp;mut [T]</code> - <em>可变切片</em></li>
+<li><a href="boxed/index.html"><code>Box&lt;[T]&gt;</code></a> - <em>拥有 (所有权) 的切片</em></li>
+</ul>
+<p><a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html"><code>str</code></a>, UTF-8 字符串片段是一种原始类型，标准库为它定义了许多方法。Rust <a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html"><code>str</code></a> 通常作为不可变引用来访问: <code>&amp;str</code>。使用拥有所有权的 <a href="string/struct.String.html" title="String"><code>String</code></a> 来创建和修改字符串。</p>
+<p>要转换为字符串，请使用 <a href="macro.format.html" title="format!"><code>format!</code></a> 宏; 要从字符串转换，请使用 <a href="str/trait.FromStr.html"><code>FromStr</code></a> trait。</p>
+<p>可以通过将数据放在引用计数的 Box 或 <a href="rc/struct.Rc.html"><code>Rc</code></a> 类型中来共享数据，并且，如果进一步包含在 <a href="cell/struct.Cell.html"><code>Cell</code></a> 或 <a href="cell/struct.RefCell.html"><code>RefCell</code></a> 中，则可以对其进行可变的和共享。
+同样，在并发设置中，通常将原子引用计数的 Box <a href="sync/struct.Arc.html"><code>Arc</code></a> 与 <a href="sync/struct.Mutex.html"><code>Mutex</code></a> 配合以获得相同的效果。</p>
+<p><a href="collections/index.html" title="collections"><code>collections</code></a> 模块定义了 Map，Set，链表和其他典型的集合类型，包括常见的 <a href="collections/hash_map/struct.HashMap.html"><code>HashMap&lt;K, V&gt;</code></a>。</p>
+<h2 id="平台抽象和-io" class="section-header"><a href="#平台抽象和-io">平台抽象和 I/O</a></h2>
+<p>除了基本的数据类型外，标准库还主要关注对通用平台差异的抽象 (尤其是 Windows 和 Unix 派生平台)。</p>
+<p>常见的 I/O 类型包括 <a href="fs/struct.File.html">files</a>，<a href="net/struct.TcpStream.html">TCP</a> 和 <a href="net/struct.UdpSocket.html">UDP</a>。它们被定义在 <a href="io/index.html" title="io"><code>io</code></a>，<a href="fs/index.html" title="fs"><code>fs</code></a> 和 <a href="net/index.html" title="net"><code>net</code></a> 模块中。</p>
+<p><a href="thread/index.html" title="thread"><code>thread</code></a> 模块包含了 Rust 的线程抽象。<a href="sync/index.html" title="sync"><code>sync</code></a> 包含更多的原始共享内存类型，包括 <a href="sync/atomic/index.html"><code>atomic</code></a> 和 <a href="sync/mpsc/index.html"><code>mpsc</code></a>，其中包含用于消息传递的通道类型。</p>
+</div></details><h2 id="reexports" class="section-header"><a href="#reexports">Re-exports</a></h2>
+<table><tr class="import-item"><td><code>pub use core::<a class="mod" href="../core/arch/index.html" title="mod core::arch">arch</a>;</code></td><td class="docblock-short"></td></tr></table><h2 id="primitives" class="section-header"><a href="#primitives">Primitive Types</a></h2>
+<table><tr class="unstable module-item"><td><a class="primitive" href="primitive.never.html" title="std::never primitive">never</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p><code>!</code> 类型，也称为 “never”。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.array.html" title="std::array primitive">array</a></td><td class="docblock-short"><p>一个固定大小的数组，表示为 <code>[T; N]</code>，用于元素类型 <code>T</code> 和非负编译时常量大小， <code>N</code>.</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.bool.html" title="std::bool primitive">bool</a></td><td class="docblock-short"><p>布尔类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.char.html" title="std::char primitive">char</a></td><td class="docblock-short"><p>一个字符类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.f32.html" title="std::f32 primitive">f32</a></td><td class="docblock-short"><p>32 位浮点类型 (特别是 IEEE 754-2008 中定义的 “binary32” 类型)。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.f64.html" title="std::f64 primitive">f64</a></td><td class="docblock-short"><p>64 位浮点类型 (特别是 IEEE 754-2008 中定义的 “binary64” 类型)。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.fn.html" title="std::fn primitive">fn</a></td><td class="docblock-short"><p>函数指针，例如 <code>fn(usize) -&gt; bool</code>。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.i8.html" title="std::i8 primitive">i8</a></td><td class="docblock-short"><p>8 位带符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.i16.html" title="std::i16 primitive">i16</a></td><td class="docblock-short"><p>16 位带符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.i32.html" title="std::i32 primitive">i32</a></td><td class="docblock-short"><p>32 位带符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.i64.html" title="std::i64 primitive">i64</a></td><td class="docblock-short"><p>64 位带符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.i128.html" title="std::i128 primitive">i128</a></td><td class="docblock-short"><p>128 位带符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.isize.html" title="std::isize primitive">isize</a></td><td class="docblock-short"><p>指针大小的有符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.pointer.html" title="std::pointer primitive">pointer</a></td><td class="docblock-short"><p>原始，不安全的指针 <code>*const T</code> 和 <code>* mut T</code>。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.reference.html" title="std::reference primitive">reference</a></td><td class="docblock-short"><p>引用，共享和可变。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.slice.html" title="std::slice primitive">slice</a></td><td class="docblock-short"><p>动态大小的视图到一个连续的序列， <code>[T]</code>.
+这里的连续意味着元素的布局应使每个元素与其相邻元素之间的距离相同。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.str.html" title="std::str primitive">str</a></td><td class="docblock-short"><p>字符串片。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.tuple.html" title="std::tuple primitive">tuple</a></td><td class="docblock-short"><p>有限的异质序列， <code>(T, U, ..)</code>.</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.u8.html" title="std::u8 primitive">u8</a></td><td class="docblock-short"><p>8 位无符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.u16.html" title="std::u16 primitive">u16</a></td><td class="docblock-short"><p>16 位无符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.u32.html" title="std::u32 primitive">u32</a></td><td class="docblock-short"><p>32 位无符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.u64.html" title="std::u64 primitive">u64</a></td><td class="docblock-short"><p>64 位无符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.u128.html" title="std::u128 primitive">u128</a></td><td class="docblock-short"><p>128 位无符号整数类型。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.unit.html" title="std::unit primitive">unit</a></td><td class="docblock-short"><p><code>()</code> 类型，也称为 “unit”。</p>
+</td></tr><tr class="module-item"><td><a class="primitive" href="primitive.usize.html" title="std::usize primitive">usize</a></td><td class="docblock-short"><p>指针大小的无符号整数类型。</p>
+</td></tr></table><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="unstable module-item"><td><a class="mod" href="assert_matches/index.html" title="std::assert_matches mod">assert_matches</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>Unstable 模块包含不稳定的 <code>assert_matches</code> 宏。</p>
+</td></tr><tr class="unstable module-item"><td><a class="mod" href="backtrace/index.html" title="std::backtrace mod">backtrace</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>支持捕获 OS 线程的栈回溯</p>
+</td></tr><tr class="unstable module-item"><td><a class="mod" href="intrinsics/index.html" title="std::intrinsics mod">intrinsics</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>编译器内联函数。</p>
+</td></tr><tr class="unstable module-item"><td><a class="mod" href="lazy/index.html" title="std::lazy mod">lazy</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>惰性值和静态数据的一次性初始化。</p>
+</td></tr><tr class="unstable module-item"><td><a class="mod" href="stream/index.html" title="std::stream mod">stream</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>可组合的异步迭代。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="alloc/index.html" title="std::alloc mod">alloc</a></td><td class="docblock-short"><p>内存分配 API。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="any/index.html" title="std::any mod">any</a></td><td class="docblock-short"><p>该模块实现了 <code>Any</code> trait，它可以通过运行时反射来动态键入任何 <code>'static</code> 类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="array/index.html" title="std::array mod">array</a></td><td class="docblock-short"><p>固定长度数组的辅助函数和类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="ascii/index.html" title="std::ascii mod">ascii</a></td><td class="docblock-short"><p>对 ASCII 字符串和字符的操作。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="borrow/index.html" title="std::borrow mod">borrow</a></td><td class="docblock-short"><p>用于处理借用数据的模块。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="boxed/index.html" title="std::boxed mod">boxed</a></td><td class="docblock-short"><p>堆分配的指针类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="cell/index.html" title="std::cell mod">cell</a></td><td class="docblock-short"><p>可共享的可变容器。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="char/index.html" title="std::char mod">char</a></td><td class="docblock-short"><p>一个字符类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="clone/index.html" title="std::clone mod">clone</a></td><td class="docblock-short"><p>不能隐式复制的类型的 <code>Clone</code> trait。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="cmp/index.html" title="std::cmp mod">cmp</a></td><td class="docblock-short"><p>排序和比较的功能。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="collections/index.html" title="std::collections mod">collections</a></td><td class="docblock-short"><p>集合类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="convert/index.html" title="std::convert mod">convert</a></td><td class="docblock-short"><p>Traits 用于类型之间的转换。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="default/index.html" title="std::default mod">default</a></td><td class="docblock-short"><p><code>Default</code> trait 用于可能具有有意义的默认值的类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="env/index.html" title="std::env mod">env</a></td><td class="docblock-short"><p>检查和操作进程的环境。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="error/index.html" title="std::error mod">error</a></td><td class="docblock-short"><p>Traits 用于处理错误。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="f32/index.html" title="std::f32 mod">f32</a></td><td class="docblock-short"><p><code>f32</code> 单精度浮点类型专用的常量。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="f64/index.html" title="std::f64 mod">f64</a></td><td class="docblock-short"><p><code>f64</code> 双精度浮点类型专用的常量。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="ffi/index.html" title="std::ffi mod">ffi</a></td><td class="docblock-short"><p>与 FFI 绑定有关的实用工具。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="fmt/index.html" title="std::fmt mod">fmt</a></td><td class="docblock-short"><p>用于格式化和打印 <code>String</code>s 的实用工具。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="fs/index.html" title="std::fs mod">fs</a></td><td class="docblock-short"><p>文件系统操纵操作。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="future/index.html" title="std::future mod">future</a></td><td class="docblock-short"><p>异步值。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="hash/index.html" title="std::hash mod">hash</a></td><td class="docblock-short"><p>通用哈希支持。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="hint/index.html" title="std::hint mod">hint</a></td><td class="docblock-short"><p>对编译器的提示，该提示会影响应如何发出或优化代码。
+提示可能是编译时或运行时。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="i8/index.html" title="std::i8 mod">i8</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>8 位带符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="i16/index.html" title="std::i16 mod">i16</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>16 位带符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="i32/index.html" title="std::i32 mod">i32</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>32 位带符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="i64/index.html" title="std::i64 mod">i64</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>64 位有符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="i128/index.html" title="std::i128 mod">i128</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>128 位有符号整数类型的常量。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="io/index.html" title="std::io mod">io</a></td><td class="docblock-short"><p>core I/O 功能的 Traits，助手和类型定义。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="isize/index.html" title="std::isize mod">isize</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>指针大小的有符号整数类型的常量。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="iter/index.html" title="std::iter mod">iter</a></td><td class="docblock-short"><p>可组合的外部迭代。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="marker/index.html" title="std::marker mod">marker</a></td><td class="docblock-short"><p>原始 traits 和类型表示类型的基本属性。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="mem/index.html" title="std::mem mod">mem</a></td><td class="docblock-short"><p>处理内存的基本函数。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="net/index.html" title="std::net mod">net</a></td><td class="docblock-short"><p>TCP/UDP 通信的网络原语。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="num/index.html" title="std::num mod">num</a></td><td class="docblock-short"><p>数字的附加功能。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="ops/index.html" title="std::ops mod">ops</a></td><td class="docblock-short"><p>可重载的运算符。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="option/index.html" title="std::option mod">option</a></td><td class="docblock-short"><p>可选值。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="os/index.html" title="std::os mod">os</a></td><td class="docblock-short"><p>特定于操作系统的功能。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="panic/index.html" title="std::panic mod">panic</a></td><td class="docblock-short"><p>标准库中的 Panic 支持。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="path/index.html" title="std::path mod">path</a></td><td class="docblock-short"><p>跨平台路径操纵。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="pin/index.html" title="std::pin mod">pin</a></td><td class="docblock-short"><p>键入将数据固定到其在内存中的位置的类型。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="prelude/index.html" title="std::prelude mod">prelude</a></td><td class="docblock-short"><p>Rust Prelude</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="primitive/index.html" title="std::primitive mod">primitive</a></td><td class="docblock-short"><p>此模块重导出基本类型，以允许其他声明的类型不可能掩盖的用法。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="process/index.html" title="std::process mod">process</a></td><td class="docblock-short"><p>用于处理进程的模块。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="ptr/index.html" title="std::ptr mod">ptr</a></td><td class="docblock-short"><p>通过裸指针手动管理内存。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="rc/index.html" title="std::rc mod">rc</a></td><td class="docblock-short"><p>单线程引用计数指针。<code>Rc</code> 代表引用计数。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="result/index.html" title="std::result mod">result</a></td><td class="docblock-short"><p><code>Result</code> 类型的错误处理。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="slice/index.html" title="std::slice mod">slice</a></td><td class="docblock-short"><p>动态大小的视图到一个连续的序列， <code>[T]</code>.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="str/index.html" title="std::str mod">str</a></td><td class="docblock-short"><p>Unicode 字符串片。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="string/index.html" title="std::string mod">string</a></td><td class="docblock-short"><p>一个 UTF-8 编码的可增长字符串。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="sync/index.html" title="std::sync mod">sync</a></td><td class="docblock-short"><p>有用的同步原语。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="task/index.html" title="std::task mod">task</a></td><td class="docblock-short"><p>类型和 Traits 用于处理异步任务。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="thread/index.html" title="std::thread mod">thread</a></td><td class="docblock-short"><p>原生线程。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="time/index.html" title="std::time mod">time</a></td><td class="docblock-short"><p>时间量化。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="u8/index.html" title="std::u8 mod">u8</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>8 位无符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="u16/index.html" title="std::u16 mod">u16</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>16 位无符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="u32/index.html" title="std::u32 mod">u32</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>32 位无符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="u64/index.html" title="std::u64 mod">u64</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>64 位无符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="u128/index.html" title="std::u128 mod">u128</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>128 位无符号整数类型的常量。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="mod" href="usize/index.html" title="std::usize mod">usize</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecation planned</span><p>指针大小的无符号整数类型的常量。</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="vec/index.html" title="std::vec mod">vec</a></td><td class="docblock-short"><p>具有堆已分配内容的连续可增长数组类型，写为 <code>Vec&lt;T&gt;</code>。</p>
+</td></tr></table><h2 id="macros" class="section-header"><a href="#macros">Macros</a></h2>
+<table><tr class="unstable module-item"><td><a class="macro" href="macro.concat_idents.html" title="std::concat_idents macro">concat_idents</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>将标识符串联为一个标识符。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.format_args_nl.html" title="std::format_args_nl macro">format_args_nl</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>与 <code>format_args</code> 相同，但最后添加一个换行符。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_aarch64_feature_detected.html" title="std::is_aarch64_feature_detected macro">is_aarch64_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>aarch64</code> 目标以外的其他地方使用 <code>is_aarch64_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_arm_feature_detected.html" title="std::is_arm_feature_detected macro">is_arm_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>ARM</code> 目标以外的其他地方使用 <code>is_arm_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_mips64_feature_detected.html" title="std::is_mips64_feature_detected macro">is_mips64_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>MIPS64</code> 目标以外的其他地方使用 <code>is_mips64_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_mips_feature_detected.html" title="std::is_mips_feature_detected macro">is_mips_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>MIPS</code> 目标以外的其他地方使用 <code>is_mips_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_powerpc64_feature_detected.html" title="std::is_powerpc64_feature_detected macro">is_powerpc64_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>PowerPC64</code> 目标以外的其他地方使用 <code>is_powerpc64_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.is_powerpc_feature_detected.html" title="std::is_powerpc_feature_detected macro">is_powerpc_feature_detected</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>如果在 <code>PowerPC</code> 目标以外的其他地方使用 <code>is_powerpc_feature_detected</code>，则阻止编译。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.llvm_asm.html" title="std::llvm_asm macro">llvm_asm</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>LLVM 样式的内联汇编。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.log_syntax.html" title="std::log_syntax macro">log_syntax</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>将传递的 tokens 打印到标准输出中。</p>
+</td></tr><tr class="unstable module-item"><td><a class="macro" href="macro.trace_macros.html" title="std::trace_macros macro">trace_macros</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>启用或禁用用于调试其他宏的跟踪功能。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.assert.html" title="std::assert macro">assert</a></td><td class="docblock-short"><p>声明在运行时布尔表达式为 <code>true</code>。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.assert_eq.html" title="std::assert_eq macro">assert_eq</a></td><td class="docblock-short"><p>断言两个表达式彼此相等 (使用 <a href="cmp/trait.PartialEq.html" title="PartialEq"><code>PartialEq</code></a>)。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.assert_ne.html" title="std::assert_ne macro">assert_ne</a></td><td class="docblock-short"><p>断言两个表达式彼此不相等 (使用 <a href="cmp/trait.PartialEq.html" title="PartialEq"><code>PartialEq</code></a>)。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.cfg.html" title="std::cfg macro">cfg</a></td><td class="docblock-short"><p>在编译时评估配置标志的布尔组合。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.column.html" title="std::column macro">column</a></td><td class="docblock-short"><p>扩展到调用它的列号。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.compile_error.html" title="std::compile_error macro">compile_error</a></td><td class="docblock-short"><p>导致编译失败，并遇到给定的错误消息。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.concat.html" title="std::concat macro">concat</a></td><td class="docblock-short"><p>将字面量串联成一个静态字符串切片。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.dbg.html" title="std::dbg macro">dbg</a></td><td class="docblock-short"><p>打印并返回给定表达式的值，以进行快速而肮脏的调试。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.debug_assert.html" title="std::debug_assert macro">debug_assert</a></td><td class="docblock-short"><p>声明在运行时布尔表达式为 <code>true</code>。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.debug_assert_eq.html" title="std::debug_assert_eq macro">debug_assert_eq</a></td><td class="docblock-short"><p>断言两个表达式彼此相等。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.debug_assert_ne.html" title="std::debug_assert_ne macro">debug_assert_ne</a></td><td class="docblock-short"><p>断言两个表达式彼此不相等。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.env.html" title="std::env macro">env</a></td><td class="docblock-short"><p>在编译时检查环境变量。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.eprint.html" title="std::eprint macro">eprint</a></td><td class="docblock-short"><p>打印到标准错误。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.eprintln.html" title="std::eprintln macro">eprintln</a></td><td class="docblock-short"><p>用换行符打印到标准错误。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.file.html" title="std::file macro">file</a></td><td class="docblock-short"><p>扩展为调用该文件的文件名。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.format.html" title="std::format macro">format</a></td><td class="docblock-short"><p>使用运行时表达式的插值创建 <code>String</code>。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.format_args.html" title="std::format_args macro">format_args</a></td><td class="docblock-short"><p>构造其他字符串格式宏的参数。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.include.html" title="std::include macro">include</a></td><td class="docblock-short"><p>根据上下文将文件解析为表达式或项。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.include_bytes.html" title="std::include_bytes macro">include_bytes</a></td><td class="docblock-short"><p>包含一个文件作为对字节数组的引用。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.include_str.html" title="std::include_str macro">include_str</a></td><td class="docblock-short"><p>包含 UTF-8 编码的文件作为字符串。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.is_x86_feature_detected.html" title="std::is_x86_feature_detected macro">is_x86_feature_detected</a></td><td class="docblock-short"><p>一个在 <em>运行时</em> 测试 x86/x86-64 平台上是否具有 CPU 功能的宏。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.line.html" title="std::line macro">line</a></td><td class="docblock-short"><p>扩展为在其上被调用的行号。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.matches.html" title="std::matches macro">matches</a></td><td class="docblock-short"><p>返回给定表达式是否与任何给定模式匹配。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.module_path.html" title="std::module_path macro">module_path</a></td><td class="docblock-short"><p>扩展为代表当前模块路径的字符串。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.option_env.html" title="std::option_env macro">option_env</a></td><td class="docblock-short"><p>(可选) 在编译时检查环境变量。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.panic.html" title="std::panic macro">panic</a></td><td class="docblock-short"><p>Panics 当前线程。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.print.html" title="std::print macro">print</a></td><td class="docblock-short"><p>打印到标准输出。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.println.html" title="std::println macro">println</a></td><td class="docblock-short"><p>用换行符打印到标准输出。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.stringify.html" title="std::stringify macro">stringify</a></td><td class="docblock-short"><p>对其参数进行字符串化。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.thread_local.html" title="std::thread_local macro">thread_local</a></td><td class="docblock-short"><p>声明一个新的 <a href="thread/struct.LocalKey.html"><code>std::thread::LocalKey</code></a> 类型的线程本地存储密钥。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.todo.html" title="std::todo macro">todo</a></td><td class="docblock-short"><p>表示未完成的代码。</p>
+</td></tr><tr class="deprecated module-item"><td><a class="macro" href="macro.try.html" title="std::try macro">try</a></td><td class="docblock-short"><span class="stab deprecated" title="">Deprecated</span><p>解开结果或传播其错误。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.unimplemented.html" title="std::unimplemented macro">unimplemented</a></td><td class="docblock-short"><p>通过恐慌并带有 “not implemented” 消息来指示未实现的代码。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.unreachable.html" title="std::unreachable macro">unreachable</a></td><td class="docblock-short"><p>表示无法访问的代码。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.vec.html" title="std::vec macro">vec</a></td><td class="docblock-short"><p>创建一个包含参数的 <a href="vec/struct.Vec.html"><code>Vec</code></a>。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.write.html" title="std::write macro">write</a></td><td class="docblock-short"><p>将格式化的数据写入缓冲区。</p>
+</td></tr><tr class="module-item"><td><a class="macro" href="macro.writeln.html" title="std::writeln macro">writeln</a></td><td class="docblock-short"><p>将格式化的数据写入缓冲区，并附加换行符。</p>
+</td></tr></table><h2 id="keywords" class="section-header"><a href="#keywords">Keywords</a></h2>
+<table><tr class="module-item"><td><a class="keyword" href="keyword.SelfTy.html" title="std::SelfTy keyword">SelfTy</a></td><td class="docblock-short"><p><a href="keyword.trait.html"><code>trait</code></a> 或 <a href="keyword.impl.html"><code>impl</code></a> 块中的实现类型，或类型定义中的当前类型。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.as.html" title="std::as keyword">as</a></td><td class="docblock-short"><p>在类型之间进行转换，或重命名导入。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.async.html" title="std::async keyword">async</a></td><td class="docblock-short"><p>返回 <a href="future/trait.Future.html"><code>Future</code></a>，而不是阻塞当前线程。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.await.html" title="std::await keyword">await</a></td><td class="docblock-short"><p>暂停执行，直到 <a href="future/trait.Future.html"><code>Future</code></a> 的结果准备就绪为止。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.break.html" title="std::break keyword">break</a></td><td class="docblock-short"><p>从循环中提前退出。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.const.html" title="std::const keyword">const</a></td><td class="docblock-short"><p>编译时常量和编译时可评估函数。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.continue.html" title="std::continue keyword">continue</a></td><td class="docblock-short"><p>跳到循环的下一个迭代。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.crate.html" title="std::crate keyword">crate</a></td><td class="docblock-short"><p>Rust 二进制或库。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.dyn.html" title="std::dyn keyword">dyn</a></td><td class="docblock-short"><p><code>dyn</code> 是 [trait 对象] 类型的前缀。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.else.html" title="std::else keyword">else</a></td><td class="docblock-short"><p><a href="keyword.if.html"><code>if</code></a> 条件评估为 <a href="keyword.false.html"><code>false</code></a> 时要评估的表达式。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.enum.html" title="std::enum keyword">enum</a></td><td class="docblock-short"><p>可以是几个成员中任何一个的类型。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.extern.html" title="std::extern keyword">extern</a></td><td class="docblock-short"><p>链接到或导入外部代码。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.false.html" title="std::false keyword">false</a></td><td class="docblock-short"><p><a href="https://doc.rust-lang.org/1.54.0/std/primitive.bool.html" title="bool"><code>bool</code></a> 类型的值，表示逻辑 <strong>false</strong>。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.fn.html" title="std::fn keyword">fn</a></td><td class="docblock-short"><p>一个函数或函数指针。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.for.html" title="std::for keyword">for</a></td><td class="docblock-short"><p>使用 <a href="keyword.in.html"><code>in</code></a> 进行迭代，使用 <a href="keyword.impl.html"><code>impl</code></a> 或 <a href="../reference/trait-bounds.html#higher-ranked-trait-bounds">higher-ranked trait bounds</a> (<code>for&lt;'a&gt;</code>) 实现 trait。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.if.html" title="std::if keyword">if</a></td><td class="docblock-short"><p>如果条件成立，则评估一个块。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.impl.html" title="std::impl keyword">impl</a></td><td class="docblock-short"><p>为类型实现一些功能。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.in.html" title="std::in keyword">in</a></td><td class="docblock-short"><p>使用 <a href="keyword.for.html"><code>for</code></a> 迭代一系列值。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.let.html" title="std::let keyword">let</a></td><td class="docblock-short"><p>将值绑定到变量。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.loop.html" title="std::loop keyword">loop</a></td><td class="docblock-short"><p>无限循环。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.match.html" title="std::match keyword">match</a></td><td class="docblock-short"><p>基于模式匹配的控制流。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.mod.html" title="std::mod keyword">mod</a></td><td class="docblock-short"><p>将代码整理到 <a href="../reference/items/modules.html">模块</a> 中。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.move.html" title="std::move keyword">move</a></td><td class="docblock-short"><p>按值捕获 <a href="../book/ch13-01-closures.html">闭包</a> 的环境。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.mut.html" title="std::mut keyword">mut</a></td><td class="docblock-short"><p>可变变量，引用或指针。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.pub.html" title="std::pub keyword">pub</a></td><td class="docblock-short"><p>使一个项目对其他人可见。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.ref.html" title="std::ref keyword">ref</a></td><td class="docblock-short"><p>在模式匹配期间由引用绑定。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.return.html" title="std::return keyword">return</a></td><td class="docblock-short"><p>从函数返回值。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.self.html" title="std::self keyword">self</a></td><td class="docblock-short"><p>方法的接收者，或当前模块。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.static.html" title="std::static keyword">static</a></td><td class="docblock-short"><p>静态项是在程序的整个持续时间 (<code>'static</code> 生命周期) 内有效的值。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.struct.html" title="std::struct keyword">struct</a></td><td class="docblock-short"><p>由其他类型组成的类型。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.super.html" title="std::super keyword">super</a></td><td class="docblock-short"><p>当前 <a href="../reference/items/modules.html">模块</a> 的父级。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.trait.html" title="std::trait keyword">trait</a></td><td class="docblock-short"><p>一组类型的通用接口。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.true.html" title="std::true keyword">true</a></td><td class="docblock-short"><p><a href="https://doc.rust-lang.org/1.54.0/std/primitive.bool.html" title="bool"><code>bool</code></a> 类型的值，表示逻辑 <code>true</code>。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.type.html" title="std::type keyword">type</a></td><td class="docblock-short"><p>为现有类型定义别名。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.union.html" title="std::union keyword">union</a></td><td class="docblock-short"><p><a href="../reference/items/unions.html">Rust 等价于 c 风格的 union</a>。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.unsafe.html" title="std::unsafe keyword">unsafe</a></td><td class="docblock-short"><p><a href="../book/ch19-01-unsafe-rust.html">memory safety</a> 不能由类型系统验证的代码或接口。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.use.html" title="std::use keyword">use</a></td><td class="docblock-short"><p>从其他 crates 或模块导入或重命名项。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.where.html" title="std::where keyword">where</a></td><td class="docblock-short"><p>添加使用项必须坚持的约束。</p>
+</td></tr><tr class="module-item"><td><a class="keyword" href="keyword.while.html" title="std::while keyword">while</a></td><td class="docblock-short"><p>保持条件时循环播放。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>

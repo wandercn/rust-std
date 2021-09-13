@@ -1,0 +1,1182 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\std\src\lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+</pre><pre class="rust">
+<span class="doccomment">//! # Rust 标准库</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Rust 标准库是可移植 Rust 软件的基础，这是一组针对 [更广泛的 Rust 生态系统][crates.io] 的最小且经过实战测试的共享抽象。</span>
+<span class="doccomment">//! 它提供了核心类型，例如 [`Vec&lt;T&gt;`] 和 [`Option&lt;T&gt;`]，库定义的对 [语言原语](#primitives) 的操作，[标准库宏](#macros)，[I/O] 和 [多线程][multithreading]，以及许多 [其他][other] 东西。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `std` 默认情况下可用于所有的 Rust crates。因此，可以通过 [`use`] 语句使用路径 `std` 来访问标准库，就像在 [`use std::env`] 中一样。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # 如何阅读本文档</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 如果您已经知道要查找的内容的名称，最快的查找方法是使用页面顶部的 &lt;a href=&quot;#&quot; onclick=&quot;focusSearchBar();&quot;&gt;搜索栏&lt;/a&gt;。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 否则，您可能想跳转到以下有用的部分之一:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [`std::*` modules](#modules)</span>
+<span class="doccomment">//! * [Primitive types](#primitives)</span>
+<span class="doccomment">//! * [Standard macros](#macros)</span>
+<span class="doccomment">//! * [The Rust Prelude]</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 如果这是您第一次来，那么标准库的文档可以被随意的阅读。点击有趣的东西通常会把您带到有趣的地方。</span>
+<span class="doccomment">//! 尽管如此，您还是不想错过一些重要的内容，因此请继续阅读标准库及其文档!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 一旦您熟悉了标准库的内容，您可能会发现冗长的描述会使人分心。在开发阶段，您可能需要按页面顶部附近的 `[-]` 按钮，将其折叠为更易于阅读的视图。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 当您看到 `[-]` 按钮的时候，也请注意 `[src]` 按钮。Rust 的 API 文档附带了源代码，我们鼓励您阅读它。</span>
+<span class="doccomment">//! 标准库的资源通常是高质量的，通常可以启发人们对幕后的了解。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # 标准库文档中有什么?</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 首先，Rust 标准库分为多个重点 [模块](#modules)，所有的这些模块都会在本页下方列出。这些模块是所有 Rust 锻造的基础，它们具有强大的名称，如 [`std::slice`] 和 [`std::cmp`]。</span>
+<span class="doccomment">//! 模块的文档通常包括模块的概述和示例，是开始熟悉库的好地方。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 其次，此处记录了 [primitive types] 上的隐式方法。造成混淆的原因有两个:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 1. 虽然原语是由编译器实现的，但标准库是直接在原语类型上实现方法 (而且它是唯一一个这样做的库)。在 [原语](#primitives) 部分中对此进行了说明。</span>
+<span class="doccomment">//! 2. 标准库导出了许多模块，这些模块的名称和原始类型的名称相同。它们定义了与原始类型有关的其他项，但没有定义所有重要的方法。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 例如，有一个 [基本类型为 `i32`](primitive::i32) 的页面列出了可以调用的所有方法</span>
+<span class="doccomment">//! 32 位整数 (非常有用)，并且有一个 [page for the module `std::i32`] 记录了常量值 [`MIN`] 和 [`MAX`] (很少有用)。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 请注意原始 [`str`] 和 [`[T]`][prim@slice] (也称为 &#39;slice&#39;) 的文档。[`String`] 和 [`Vec&lt;T&gt;`] 上许多方法的调用实际上都是通过 [解引用强制多态][deref-coercions] 分别对 [`str`] 和 [`[T]`][prim@slice] 上的方法的调用。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 第三，标准库还定义了 [The Rust Prelude]，这是一小部分项目 - 主要是 traits - 导入到每个 crate 的每个模块中。</span>
+<span class="doccomment">//! prelude 中的 traits 无处不在，这使 prelude 文档成为了解该库的一个很好的切入点。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 最后，标准库导出了许多标准宏，并且在 [此页面](#macros) 上列出了它们 (从技术上讲，并不是所有的标准宏都由标准库定义的 - 有些是由编译器定义的 - 但它们在这里的文档是相同的)。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 与 prelude 一样，默认情况下会将标准宏导入到所有 crates 中。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # 对文档的更改做出贡献</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 在 [这里](https://rustc-dev-guide.rust-lang.org/contributing.html#writing-documentation) 查看 Rust 贡献指南。</span>
+<span class="doccomment">//! 该文档的源代码可以在 [GitHub](https://github.com/rust-lang/rust) 上找到。</span>
+<span class="doccomment">//! 要贡献更改，请确保您先阅读指南，然后为您建议的更改提交拉取请求。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 感谢您的贡献! 如果您看到可以改进的部分文档，请提交 PR，或者先在 [Discord][rust-discord] #docs 上与我们聊天。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Rust 标准库之旅</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! crate 文档的其余部分致力于指出 Rust 标准库的显著特性。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## 容器和集合</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`option`] 和 [`result`] 模块定义了可选和错误处理类型 [`Option&lt;T&gt;`] 和 [`Result&lt;T, E&gt;`]。[`iter`] 模块定义了 Rust 的迭代器 trait [`Iterator`]，它与 [`for`] 循环一起工作来访问集合。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 标准库公开了三种处理连续内存区域的常用方法:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [`Vec&lt;T&gt;`] - 在运行时可调整大小的堆分配的 *vector*。</span>
+<span class="doccomment">//! * [`[T; N]`][prim@array] - 在编译时具有固定大小的内联 *数组*。</span>
+<span class="doccomment">//! * [`[T]`][prim@slice] - 动态调整大小的 *切片* 到任何其他类型的连续存储中，无论是否进行了堆分配。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 切片只能通过某种 *指针* 来处理，因此具有多种形式，例如:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * `&amp;[T]` - *共享切片*</span>
+<span class="doccomment">//! * `&amp;mut [T]` - *可变切片*</span>
+<span class="doccomment">//! * [`Box&lt;[T]&gt;`][owned slice] - *拥有 (所有权) 的切片*</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`str`], UTF-8 字符串片段是一种原始类型，标准库为它定义了许多方法。Rust [`str`] 通常作为不可变引用来访问: `&amp;str`。使用拥有所有权的 [`String`] 来创建和修改字符串。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 要转换为字符串，请使用 [`format!`] 宏; 要从字符串转换，请使用 [`FromStr`] trait。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 可以通过将数据放在引用计数的 Box 或 [`Rc`] 类型中来共享数据，并且，如果进一步包含在 [`Cell`] 或 [`RefCell`] 中，则可以对其进行可变的和共享。</span>
+<span class="doccomment">//! 同样，在并发设置中，通常将原子引用计数的 Box [`Arc`] 与 [`Mutex`] 配合以获得相同的效果。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`collections`] 模块定义了 Map，Set，链表和其他典型的集合类型，包括常见的 [`HashMap&lt;K, V&gt;`]。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## 平台抽象和 I/O</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 除了基本的数据类型外，标准库还主要关注对通用平台差异的抽象 (尤其是 Windows 和 Unix 派生平台)。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 常见的 I/O 类型包括 [files]，[TCP] 和 [UDP]。它们被定义在 [`io`]，[`fs`] 和 [`net`] 模块中。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`thread`] 模块包含了 Rust 的线程抽象。[`sync`] 包含更多的原始共享内存类型，包括 [`atomic`] 和 [`mpsc`]，其中包含用于消息传递的通道类型。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [I/O]: io</span>
+<span class="doccomment">//! [`MIN`]: i32::MIN</span>
+<span class="doccomment">//! [`MAX`]: i32::MAX</span>
+<span class="doccomment">//! [page for the module `std::i32`]: crate::i32</span>
+<span class="doccomment">//! [TCP]: net::TcpStream</span>
+<span class="doccomment">//! [The Rust Prelude]: prelude</span>
+<span class="doccomment">//! [UDP]: net::UdpSocket</span>
+<span class="doccomment">//! [`Arc`]: sync::Arc</span>
+<span class="doccomment">//! [owned slice]: boxed</span>
+<span class="doccomment">//! [`Cell`]: cell::Cell</span>
+<span class="doccomment">//! [`FromStr`]: str::FromStr</span>
+<span class="doccomment">//! [`HashMap&lt;K, V&gt;`]: collections::HashMap</span>
+<span class="doccomment">//! [`Mutex`]: sync::Mutex</span>
+<span class="doccomment">//! [`Option&lt;T&gt;`]: option::Option</span>
+<span class="doccomment">//! [`Rc`]: rc::Rc</span>
+<span class="doccomment">//! [`RefCell`]: cell::RefCell</span>
+<span class="doccomment">//! [`Result&lt;T, E&gt;`]: result::Result</span>
+<span class="doccomment">//! [`Vec&lt;T&gt;`]: vec::Vec</span>
+<span class="doccomment">//! [`atomic`]: sync::atomic</span>
+<span class="doccomment">//! [`for`]: ../book/ch03-05-control-flow.html#looping-through-a-collection-with-for</span>
+<span class="doccomment">//! [`str`]: prim@str</span>
+<span class="doccomment">//! [`mpsc`]: sync::mpsc</span>
+<span class="doccomment">//! [`std::cmp`]: cmp</span>
+<span class="doccomment">//! [`std::slice`]: mod@slice</span>
+<span class="doccomment">//! [`use std::env`]: env/index.html</span>
+<span class="doccomment">//! [`use`]: ../book/ch07-02-defining-modules-to-control-scope-and-privacy.html</span>
+<span class="doccomment">//! [crates.io]: https://crates.io</span>
+<span class="doccomment">//! [deref-coercions]: ../book/ch15-02-deref.html#implicit-deref-coercions-with-functions-and-methods</span>
+<span class="doccomment">//! [files]: fs::File</span>
+<span class="doccomment">//! [multithreading]: thread</span>
+<span class="doccomment">//! [other]: #what-is-in-the-standard-library-documentation</span>
+<span class="doccomment">//! [primitive types]: ../book/ch03-02-data-types.html</span>
+<span class="doccomment">//! [rust-discord]: https://discord.gg/rust-lang</span>
+<span class="doccomment">//! [array]: prim@array</span>
+<span class="doccomment">//! [slice]: prim@slice</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;restricted-std&quot;</span>), <span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>))]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;restricted-std&quot;</span>, <span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;restricted_std&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>))]</span>
+<span class="attribute">#![<span class="ident">doc</span>(
+    <span class="ident">html_playground_url</span> <span class="op">=</span> <span class="string">&quot;https://play.rust-lang.org/&quot;</span>,
+    <span class="ident">issue_tracker_base_url</span> <span class="op">=</span> <span class="string">&quot;https://github.com/rust-lang/rust/issues/&quot;</span>,
+    <span class="ident">test</span>(<span class="ident">no_crate_inject</span>, <span class="ident">attr</span>(<span class="ident">deny</span>(<span class="ident">warnings</span>))),
+    <span class="ident">test</span>(<span class="ident">attr</span>(<span class="ident">allow</span>(<span class="ident">dead_code</span>, <span class="ident">deprecated</span>, <span class="ident">unused_variables</span>, <span class="ident">unused_mut</span>)))
+)]</span>
+<span class="comment">// 不要链接到 std。我们是 std。</span>
+<span class="attribute">#![<span class="ident">no_std</span>]</span>
+<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">deprecated_in_future</span>)]</span>
+<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_docs</span>)]</span>
+<span class="attribute">#![<span class="ident">warn</span>(<span class="ident">missing_debug_implementations</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">explicit_outlives_requirements</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_lifetimes</span>)]</span>
+<span class="comment">// 告诉编译器链接到 panic_abort 或 panic_unwind</span>
+<span class="attribute">#![<span class="ident">needs_panic_runtime</span>]</span>
+<span class="comment">// std 可能以特定于平台的方式使用特性</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_features</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">rustc_allow_const_fn_unstable</span>)]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(
+    <span class="ident">test</span>,
+    <span class="ident">feature</span>(<span class="ident">internal_output_capture</span>, <span class="ident">print_internals</span>, <span class="ident">update_panic_count</span>, <span class="ident">thread_local_const_init</span>)
+)]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(
+    <span class="ident">all</span>(<span class="ident">target_vendor</span> <span class="op">=</span> <span class="string">&quot;fortanix&quot;</span>, <span class="ident">target_env</span> <span class="op">=</span> <span class="string">&quot;sgx&quot;</span>),
+    <span class="ident">feature</span>(<span class="ident">slice_index_methods</span>, <span class="ident">coerce_unsized</span>, <span class="ident">sgx_platform</span>)
+)]</span>
+<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">rustc::existing_doc_keyword</span>)]</span>
+<span class="comment">// std 实现了不稳定的特性，其中许多是永远不会稳定的内部编译器细节</span>
+<span class="comment">//</span>
+<span class="comment">// NB: 对下面的列表排序是为了最大限度地减少合并冲突。</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_error_handler</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">alloc_layout_extra</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">allocator_api</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">allocator_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">allow_internal_unsafe</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">allow_internal_unstable</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">arbitrary_self_types</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">array_error_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">assert_matches</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">associated_type_bounds</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">async_stream</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">atomic_mut_ptr</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">auto_traits</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">bench_black_box</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">box_syntax</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">c_variadic</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">cfg_accessible</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">cfg_eval</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">cfg_target_has_atomic</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">cfg_target_thread_local</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">char_error_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">char_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">concat_idents</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_cstr_unchecked</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_floating_point_arithmetic</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_fn_ptr_basics</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_fn_transmute</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_io_structs</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_ip</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_ipv4</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_ipv6</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_raw_ptr_deref</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_socketaddr</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">container_error_extra</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">core_intrinsics</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">custom_test_frameworks</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">decl_macro</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_cfg</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_keyword</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_masked</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">doc_notable_trait</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">dropck_eyepatch</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">duration_checked_float</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">duration_constants</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">edition_panic</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">exact_size_is_empty</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">exhaustive_patterns</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">extend_one</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">float_interpolation</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">fn_traits</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">format_args_nl</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">gen_future</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">generator_trait</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">get_mut_unchecked</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">global_asm</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">hashmap_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">int_error_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">integer_atomics</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">int_log</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">into_future</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">intra_doc_pointers</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">iter_zip</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">lang_items</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">linkage</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">llvm_asm</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">log_syntax</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">map_try_insert</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">maybe_uninit_extra</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">maybe_uninit_slice</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">maybe_uninit_uninit_array</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">min_specialization</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">needs_panic_runtime</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">negative_impls</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">never_type</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">new_uninit</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">nll</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">nonnull_slice_from_raw_parts</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">once_cell</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">panic_info_message</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">panic_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">panic_unwind</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">pin_static_ref</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">prelude_import</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">ptr_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">ready_macro</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">rustc_attrs</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">rustc_private</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">shrink_to</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">slice_concat_ext</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">slice_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">slice_ptr_get</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">slice_ptr_len</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">staged_api</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">std_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">stdsimd</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">stmt_expr_attributes</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">str_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">test</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">thread_local</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">thread_local_internals</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">toowned_clone_into</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">total_cmp</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">trace_macros</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">try_blocks</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">try_reserve</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">unboxed_closures</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">unsafe_cell_raw_get</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">unwind_attributes</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">unwrap_infallible</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">vec_into_raw_parts</span>)]</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">vec_spare_capacity</span>)]</span>
+<span class="comment">// NB: 对上面的列表排序是为了最大限度地减少合并冲突。</span>
+<span class="attribute">#![<span class="ident">default_lib_allocator</span>]</span>
+
+<span class="comment">// 显式导入 prelude。</span>
+<span class="comment">// 在构建依赖于 std 的 crates 时，编译器使用此不稳定属性来隐式导入 prelude。</span>
+<span class="attribute">#[<span class="ident">prelude_import</span>]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
+<span class="kw">use</span> <span class="ident">prelude::v1</span>::<span class="kw-2">*</span>;
+
+<span class="comment">// 访问 Bencher 等</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">test</span>;
+
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_imports</span>)]</span> <span class="comment">// 并非所有平台都使用来自 `alloc` 的宏</span>
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span> <span class="kw">as</span> <span class="ident">alloc_crate</span>;
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">masked</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_extern_crates</span>)]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">libc</span>;
+
+<span class="comment">// 当前，我们总是需要一个 unwinder 来回溯</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">masked</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_extern_crates</span>)]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">unwind</span>;
+
+<span class="comment">// 在测试期间，此 crate 实际上不是 &quot;真正的&quot; std 库，而是链接到实际的 std 库，该库是从相同的源代码编译而成的。</span>
+<span class="comment">// 因此，std 定义的任何 lang 项都被有条件地排除 (否则它们将生成重复的 lang 项错误)，并且它定义的任何全局变量都不是真实 std 中使用的全局变量。</span>
+<span class="comment">//</span>
+<span class="comment">// 所以这个仅在测试期间定义的导入使 test-std 可以访问 real-std lang 项和全局变量。</span>
+<span class="comment">// 请参见 #2912</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">std</span> <span class="kw">as</span> <span class="ident">realstd</span>;
+
+<span class="comment">// 编译器未内置的标准宏。</span>
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">mod</span> <span class="ident">macros</span>;
+
+<span class="comment">// Rust prelude</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">prelude</span>;
+
+<span class="comment">// 公共模块声明和重导出</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::borrow</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::boxed</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::fmt</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::format</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::rc</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::slice</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::str</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::string</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc_crate::vec</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::any</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_arch&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.27.0&quot;</span>)]</span>
+<span class="comment">// 必须提供 `no_inline` 属性，以提供所有目标的文档。</span>
+<span class="comment">// See https://github.com/rust-lang/rust/pull/57808#issuecomment-457390549formoreinformation.</span>
+<span class="comment">//</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">no_inline</span>)]</span> <span class="comment">// Note (#82861): 正确的文档要求</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::arch</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;core_array&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::array</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::cell</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::char</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::clone</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::cmp</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::convert</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::default</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;futures_api&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::future</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::hash</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;core_hint&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.27.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::hint</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;i128&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.26.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::i128</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::i16</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::i32</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::i64</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::i8</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::intrinsics</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::isize</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::iter</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::marker</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::mem</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::ops</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::option</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pin&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.33.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::pin</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::ptr</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::result</span>;
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;async_stream&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;79024&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::stream</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;i128&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.26.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::u128</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::u16</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::u32</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::u64</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::u8</span>;
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::usize</span>;
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">f32</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">f64</span>;
+
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">thread</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">ascii</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">backtrace</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">collections</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">env</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">ffi</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">fs</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">io</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">net</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">num</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">os</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">panic</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">path</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">process</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">sync</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">time</span>;
+
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;once_cell&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;74465&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">lazy</span>;
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;futures_api&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">task</span> {
+    <span class="doccomment">//! 类型和 Traits 用于处理异步任务。</span>
+
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">inline</span>)]</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;futures_api&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.36.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::task</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">inline</span>)]</span>
+    <span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;wake_trait&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.51.0&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">alloc::task</span>::<span class="kw-2">*</span>;
+}
+
+<span class="comment">// 平台抽象模块</span>
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">mod</span> <span class="ident">sys_common</span>;
+<span class="kw">mod</span> <span class="ident">sys</span>;
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">alloc</span>;
+
+<span class="comment">// private 支持模块</span>
+<span class="kw">mod</span> <span class="ident">panicking</span>;
+
+<span class="comment">// 运行时入口点和编译器使用的一些不稳定的公共函数</span>
+<span class="comment">//</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">rt</span>;
+
+<span class="attribute">#[<span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;../../backtrace/src/lib.rs&quot;</span>]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>, <span class="ident">unused_attributes</span>)]</span>
+<span class="kw">mod</span> <span class="ident">backtrace_rs</span>;
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;simd_x86&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.27.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">std_detect::is_x86_feature_detected</span>;
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;stdsimd&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;48556&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">std_detect</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;stdsimd&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;48556&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">std_detect</span>::{
+    <span class="ident">is_aarch64_feature_detected</span>, <span class="ident">is_arm_feature_detected</span>, <span class="ident">is_mips64_feature_detected</span>,
+    <span class="ident">is_mips_feature_detected</span>, <span class="ident">is_powerpc64_feature_detected</span>, <span class="ident">is_powerpc_feature_detected</span>,
+};
+
+<span class="comment">// 重导出 libcore 中定义的宏。</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rust1&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.0.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>, <span class="ident">deprecated_in_future</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core</span>::{
+    <span class="ident">assert_eq</span>, <span class="ident">assert_ne</span>, <span class="ident">debug_assert</span>, <span class="ident">debug_assert_eq</span>, <span class="ident">debug_assert_ne</span>, <span class="ident">matches</span>, <span class="ident">r#try</span>, <span class="ident">todo</span>,
+    <span class="ident">unimplemented</span>, <span class="ident">unreachable</span>, <span class="ident">write</span>, <span class="ident">writeln</span>,
+};
+
+<span class="comment">// 重导出通过 libcore 定义的内置宏。</span>
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;builtin_macro_prelude&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.38.0&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core</span>::{
+    <span class="ident">assert</span>, <span class="ident">assert_matches</span>, <span class="ident">cfg</span>, <span class="ident">column</span>, <span class="ident">compile_error</span>, <span class="ident">concat</span>, <span class="ident">concat_idents</span>, <span class="ident">env</span>, <span class="ident">file</span>,
+    <span class="ident">format_args</span>, <span class="ident">format_args_nl</span>, <span class="ident">include</span>, <span class="ident">include_bytes</span>, <span class="ident">include_str</span>, <span class="ident">line</span>, <span class="ident">llvm_asm</span>, <span class="ident">log_syntax</span>,
+    <span class="ident">module_path</span>, <span class="ident">option_env</span>, <span class="ident">stringify</span>, <span class="ident">trace_macros</span>,
+};
+
+<span class="attribute">#[<span class="ident">stable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;core_primitive&quot;</span>, <span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;1.43.0&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">core::primitive</span>;
+
+<span class="comment">// 包括许多私有模块，这些模块仅用于提供原始类型的 rustdoc 文档。</span>
+<span class="comment">// 使用 `include!` 是因为 rustdoc 只在 crate 级别上查找这些模块。</span>
+<span class="comment">//</span>
+<span class="macro">include!</span>(<span class="string">&quot;primitive_docs.rs&quot;</span>);
+
+<span class="comment">// 包括许多私有模块，这些模块仅用于为现有关键字提供 rustdoc 文档。</span>
+<span class="comment">// 使用 `include!` 是因为 rustdoc 只在 crate 级别上查找这些模块。</span>
+<span class="comment">//</span>
+<span class="macro">include!</span>(<span class="string">&quot;keyword_docs.rs&quot;</span>);
+
+<span class="comment">// 这是必需的，以避免在未启用 `restricted-std` 时产生不稳定的错误。</span>
+<span class="comment">// #![feature(restricted_std)] 在 rustc-std-workspace-std 中的使用是无条件的，所以不稳定的特性需要在某处定义。</span>
+<span class="comment">//</span>
+<span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;restricted_std&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+<span class="kw">mod</span> <span class="ident">__restricted_std_workaround</span> {}
+
+<span class="kw">mod</span> <span class="ident">sealed</span> {
+    <span class="doccomment">/// 这个 trait 从 crate 外部无法访问，这阻止了我们扩展 trait 的外部实现。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 这允许在未来添加更多 trait 方法。</span>
+    <span class="attribute">#[<span class="ident">unstable</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sealed&quot;</span>, <span class="ident">issue</span> <span class="op">=</span> <span class="string">&quot;none&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Sealed</span> {}
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script><script src="../../source-script1.55.0.js"></script><script src="../../source-files1.55.0.js"></script></body></html>

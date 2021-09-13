@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="使用 `IMM8` 中的控件比较 `a` 和 `b` 中隐含长度的包装字符串，并返回生成的索引。 与 [`_mm_cmpestri`] 相似，不同之处在于 [`_mm_cmpestri`] 需要明确指定 `a` 和 `b` 的长度。"><meta name="keywords" content="rust, rustlang, rust-lang, _mm_cmpistri"><title>_mm_cmpistri in core::arch::x86 - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../storage1.55.0.js"></script><script src="../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="../../index.html">core</a>::<wbr><a href="../index.html">arch</a>::<wbr><a href="index.html">x86</a></h2><div id="sidebar-vars" data-name="_mm_cmpistri" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="../../index.html">core</a>::<wbr><a href="../index.html">arch</a>::<wbr><a href="index.html">x86</a>::<wbr><a class="fn" href="#">_mm_cmpistri</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.27.0">1.27.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/core/up/up/stdarch/crates/core_arch/src/x86/sse42.rs.html#264-267" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub unsafe fn _mm_cmpistri&lt;const IMM8:&nbsp;i32&gt;(a: <a class="struct" href="struct.__m128i.html" title="struct core::arch::x86::__m128i">__m128i</a>, b: <a class="struct" href="struct.__m128i.html" title="struct core::arch::x86::__m128i">__m128i</a>) -&gt; i32</pre><div class="item-info"><div class="stab portability">This is supported on <strong>x86 and target feature <code>sse4.2</code></strong> only.</div></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>使用 <code>IMM8</code> 中的控件比较 <code>a</code> 和 <code>b</code> 中隐含长度的包装字符串，并返回生成的索引。
+与 <a href="fn._mm_cmpestri.html" title="_mm_cmpestri"><code>_mm_cmpestri</code></a> 相似，不同之处在于 <a href="fn._mm_cmpestri.html" title="_mm_cmpestri"><code>_mm_cmpestri</code></a> 需要明确指定 <code>a</code> 和 <code>b</code> 的长度。</p>
+<h1 id="控制方式" class="section-header"><a href="#控制方式">控制方式</a></h1>
+<p><code>IMM8</code> 指定的控件可以是以下一种或多种。</p>
+<h2 id="数据大小和签名" class="section-header"><a href="#数据大小和签名">数据大小和签名</a></h2>
+<ul>
+<li><a href="constant._SIDD_UBYTE_OPS.html" title="_SIDD_UBYTE_OPS"><code>_SIDD_UBYTE_OPS</code></a> - Default</li>
+<li><a href="constant._SIDD_UWORD_OPS.html" title="_SIDD_UWORD_OPS"><code>_SIDD_UWORD_OPS</code></a></li>
+<li><a href="constant._SIDD_SBYTE_OPS.html" title="_SIDD_SBYTE_OPS"><code>_SIDD_SBYTE_OPS</code></a></li>
+<li><a href="constant._SIDD_SWORD_OPS.html" title="_SIDD_SWORD_OPS"><code>_SIDD_SWORD_OPS</code></a></li>
+</ul>
+<h2 id="比较选项" class="section-header"><a href="#比较选项">比较选项</a></h2>
+<ul>
+<li><a href="constant._SIDD_CMP_EQUAL_ANY.html" title="_SIDD_CMP_EQUAL_ANY"><code>_SIDD_CMP_EQUAL_ANY</code></a> - Default</li>
+<li><a href="constant._SIDD_CMP_RANGES.html" title="_SIDD_CMP_RANGES"><code>_SIDD_CMP_RANGES</code></a></li>
+<li><a href="constant._SIDD_CMP_EQUAL_EACH.html" title="_SIDD_CMP_EQUAL_EACH"><code>_SIDD_CMP_EQUAL_EACH</code></a></li>
+<li><a href="constant._SIDD_CMP_EQUAL_ORDERED.html" title="_SIDD_CMP_EQUAL_ORDERED"><code>_SIDD_CMP_EQUAL_ORDERED</code></a></li>
+</ul>
+<h2 id="结果极性" class="section-header"><a href="#结果极性">结果极性</a></h2>
+<ul>
+<li><a href="constant._SIDD_POSITIVE_POLARITY.html" title="_SIDD_POSITIVE_POLARITY"><code>_SIDD_POSITIVE_POLARITY</code></a> - Default</li>
+<li><a href="constant._SIDD_NEGATIVE_POLARITY.html" title="_SIDD_NEGATIVE_POLARITY"><code>_SIDD_NEGATIVE_POLARITY</code></a></li>
+</ul>
+<h2 id="返回位" class="section-header"><a href="#返回位">返回位</a></h2>
+<ul>
+<li><a href="constant._SIDD_LEAST_SIGNIFICANT.html" title="_SIDD_LEAST_SIGNIFICANT"><code>_SIDD_LEAST_SIGNIFICANT</code></a> - Default</li>
+<li><a href="constant._SIDD_MOST_SIGNIFICANT.html" title="_SIDD_MOST_SIGNIFICANT"><code>_SIDD_MOST_SIGNIFICANT</code></a></li>
+</ul>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<p>使用 <a href="constant._SIDD_CMP_EQUAL_ORDERED.html" title="_SIDD_CMP_EQUAL_ORDERED"><code>_SIDD_CMP_EQUAL_ORDERED</code></a> 查找子字符串</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86_64</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">haystack</span> <span class="op">=</span> <span class="string">b&quot;This is a long string of text data\r\n\tthat extends
+multiple lines&quot;</span>;
+<span class="kw">let</span> <span class="ident">needle</span> <span class="op">=</span> <span class="string">b&quot;\r\n\t\0\0\0\0\0\0\0\0\0\0\0\0\0&quot;</span>;
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">needle</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+<span class="kw">let</span> <span class="ident">hop</span> <span class="op">=</span> <span class="number">16</span>;
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indexes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+
+<span class="comment">// 将 haystack 分成 16 个字节的块，并在该块中找到第一个 &quot;\r\n\t&quot;。</span>
+<span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">chunk</span>) <span class="kw">in</span> <span class="ident">haystack</span>.<span class="ident">chunks</span>(<span class="ident">hop</span>).<span class="ident">enumerate</span>() {
+    <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">chunk</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+    <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">_mm_cmpistri</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">_SIDD_CMP_EQUAL_ORDERED</span>);
+    <span class="kw">if</span> <span class="ident">idx</span> <span class="op">!</span><span class="op">=</span> <span class="number">16</span> {
+        <span class="ident">indexes</span>.<span class="ident">push</span>((<span class="ident">idx</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="op">+</span> (<span class="ident">i</span> <span class="op">*</span> <span class="ident">hop</span>));
+    }
+}
+<span class="macro">assert_eq!</span>(<span class="ident">indexes</span>, <span class="macro">vec!</span>[<span class="number">34</span>]);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23%5Bcfg(target_arch%20%3D%20%22x86%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86%3A%3A*%3B%0A%23%5Bcfg(target_arch%20%3D%20%22x86_64%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86_64%3A%3A*%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20if%20is_x86_feature_detected!(%22sse4.2%22)%20%7B%0A%20%20%20%20%20%20%20%20%23%5Btarget_feature(enable%20%3D%20%22sse4.2%22)%5D%0A%20%20%20%20%20%20%20%20unsafe%20fn%20worker()%20%7B%0Alet%20haystack%20%3D%20b%22This%20is%20a%20long%20string%20of%20text%20data%5Cr%5Cn%5Ctthat%20extends%0Amultiple%20lines%22%3B%0Alet%20needle%20%3D%20b%22%5Cr%5Cn%5Ct%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%22%3B%0A%0Alet%20a%20%3D%20_mm_loadu_si128(needle.as_ptr()%20as%20*const%20_)%3B%0Alet%20hop%20%3D%2016%3B%0Alet%20mut%20indexes%20%3D%20Vec%3A%3Anew()%3B%0A%0A%2F%2F%20%E5%B0%86%20haystack%20%E5%88%86%E6%88%90%2016%20%E4%B8%AA%E5%AD%97%E8%8A%82%E7%9A%84%E5%9D%97%EF%BC%8C%E5%B9%B6%E5%9C%A8%E8%AF%A5%E5%9D%97%E4%B8%AD%E6%89%BE%E5%88%B0%E7%AC%AC%E4%B8%80%E4%B8%AA%20%22%5Cr%5Cn%5Ct%22%E3%80%82%0Afor%20(i%2C%20chunk)%20in%20haystack.chunks(hop).enumerate()%20%7B%0A%20%20%20%20let%20b%20%3D%20_mm_loadu_si128(chunk.as_ptr()%20as%20*const%20_)%3B%0A%20%20%20%20let%20idx%20%3D%20_mm_cmpistri(a%2C%20b%2C%20_SIDD_CMP_EQUAL_ORDERED)%3B%0A%20%20%20%20if%20idx%20!%3D%2016%20%7B%0A%20%20%20%20%20%20%20%20indexes.push((idx%20as%20usize)%20%2B%20(i%20*%20hop))%3B%0A%20%20%20%20%7D%0A%7D%0Aassert_eq!(indexes%2C%20vec!%5B34%5D)%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20unsafe%20%7B%20worker()%3B%20%7D%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p><code>_mm_cmpistri</code> 内联函数还可以用于查找 haystack 中一个或多个给定字符集的存在。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86_64</span>::<span class="kw-2">*</span>;
+
+<span class="comment">// 确保您的输入是 16 字节对齐的</span>
+<span class="kw">let</span> <span class="ident">password</span> <span class="op">=</span> <span class="string">b&quot;hunter2\0\0\0\0\0\0\0\0\0&quot;</span>;
+<span class="kw">let</span> <span class="ident">special_chars</span> <span class="op">=</span> <span class="string">b&quot;!@#$%^&amp;*()[]:;&lt;&gt;&quot;</span>;
+
+<span class="comment">// 加载输入</span>
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">special_chars</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">password</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+
+<span class="comment">// 使用 _SIDD_CMP_EQUAL_ANY 查找 b 中任何字节的索引</span>
+<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">_mm_cmpistri</span>(<span class="ident">a</span>.<span class="ident">into</span>(), <span class="ident">b</span>.<span class="ident">into</span>(), <span class="ident">_SIDD_CMP_EQUAL_ANY</span>);
+
+<span class="kw">if</span> <span class="ident">idx</span> <span class="op">&lt;</span> <span class="number">16</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;Congrats! Your password contains a special character&quot;</span>);
+} <span class="kw">else</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;Your password should contain a special character&quot;</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23%5Bcfg(target_arch%20%3D%20%22x86%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86%3A%3A*%3B%0A%23%5Bcfg(target_arch%20%3D%20%22x86_64%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86_64%3A%3A*%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20if%20is_x86_feature_detected!(%22sse4.2%22)%20%7B%0A%20%20%20%20%20%20%20%20%23%5Btarget_feature(enable%20%3D%20%22sse4.2%22)%5D%0A%20%20%20%20%20%20%20%20unsafe%20fn%20worker()%20%7B%0A%2F%2F%20%E7%A1%AE%E4%BF%9D%E6%82%A8%E7%9A%84%E8%BE%93%E5%85%A5%E6%98%AF%2016%20%E5%AD%97%E8%8A%82%E5%AF%B9%E9%BD%90%E7%9A%84%0Alet%20password%20%3D%20b%22hunter2%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%22%3B%0Alet%20special_chars%20%3D%20b%22!%40%23%24%25%5E%26*()%5B%5D%3A%3B%3C%3E%22%3B%0A%0A%2F%2F%20%E5%8A%A0%E8%BD%BD%E8%BE%93%E5%85%A5%0Alet%20a%20%3D%20_mm_loadu_si128(special_chars.as_ptr()%20as%20*const%20_)%3B%0Alet%20b%20%3D%20_mm_loadu_si128(password.as_ptr()%20as%20*const%20_)%3B%0A%0A%2F%2F%20%E4%BD%BF%E7%94%A8%20_SIDD_CMP_EQUAL_ANY%20%E6%9F%A5%E6%89%BE%20b%20%E4%B8%AD%E4%BB%BB%E4%BD%95%E5%AD%97%E8%8A%82%E7%9A%84%E7%B4%A2%E5%BC%95%0Alet%20idx%20%3D%20_mm_cmpistri(a.into()%2C%20b.into()%2C%20_SIDD_CMP_EQUAL_ANY)%3B%0A%0Aif%20idx%20%3C%2016%20%7B%0A%20%20%20%20println!(%22Congrats!%20Your%20password%20contains%20a%20special%20character%22)%3B%0Apanic!(%22%7B%3A%3F%7D%20does%20not%20contain%20a%20special%20character%22%2C%20password)%3B%0A%7D%20else%20%7B%0A%20%20%20%20println!(%22Your%20password%20should%20contain%20a%20special%20character%22)%3B%0A%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20unsafe%20%7B%20worker()%3B%20%7D%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>查找字符范围内的 haystack 中第一个字符的索引。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86_64</span>::<span class="kw-2">*</span>;
+
+
+<span class="comment">// 指定要搜索的 [A-Za-z0-9] 值的范围。</span>
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="string">b&quot;AZaz09\0\0\0\0\0\0\0\0\0\0&quot;</span>;
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">a</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+
+<span class="comment">// 使用 _SIDD_CMP_RANGES 查找范围内第一个字节的索引。</span>
+<span class="comment">// 在这种情况下，它将是字符串中找到的第一个字母数字字节。</span>
+<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">_mm_cmpistri</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">_SIDD_CMP_RANGES</span>);
+
+<span class="kw">if</span> <span class="ident">idx</span> <span class="op">&lt;</span> <span class="number">16</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;Found an alpha numeric character&quot;</span>);
+} <span class="kw">else</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;Did not find an alpha numeric character&quot;</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23%5Bcfg(target_arch%20%3D%20%22x86%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86%3A%3A*%3B%0A%23%5Bcfg(target_arch%20%3D%20%22x86_64%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86_64%3A%3A*%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20if%20is_x86_feature_detected!(%22sse4.2%22)%20%7B%0A%20%20%20%20%20%20%20%20%23%5Btarget_feature(enable%20%3D%20%22sse4.2%22)%5D%0A%20%20%20%20%20%20%20%20unsafe%20fn%20worker()%20%7B%0Alet%20b%20%3D%20b%22%3A%3B%3C%3D%3E%3F%40%5B%5C%5C%5D%5E_%60abc%22%3B%0Alet%20b%20%3D%20_mm_loadu_si128(b.as_ptr()%20as%20*const%20_)%3B%0A%0A%2F%2F%20%E6%8C%87%E5%AE%9A%E8%A6%81%E6%90%9C%E7%B4%A2%E7%9A%84%20%5BA-Za-z0-9%5D%20%E5%80%BC%E7%9A%84%E8%8C%83%E5%9B%B4%E3%80%82%0Alet%20a%20%3D%20b%22AZaz09%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%5C0%22%3B%0Alet%20a%20%3D%20_mm_loadu_si128(a.as_ptr()%20as%20*const%20_)%3B%0A%0A%2F%2F%20%E4%BD%BF%E7%94%A8%20_SIDD_CMP_RANGES%20%E6%9F%A5%E6%89%BE%E8%8C%83%E5%9B%B4%E5%86%85%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E8%8A%82%E7%9A%84%E7%B4%A2%E5%BC%95%E3%80%82%0A%2F%2F%20%E5%9C%A8%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8C%E5%AE%83%E5%B0%86%E6%98%AF%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E6%89%BE%E5%88%B0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AF%8D%E6%95%B0%E5%AD%97%E5%AD%97%E8%8A%82%E3%80%82%0Alet%20idx%20%3D%20_mm_cmpistri(a%2C%20b%2C%20_SIDD_CMP_RANGES)%3B%0A%0Aif%20idx%20%3C%2016%20%7B%0A%20%20%20%20println!(%22Found%20an%20alpha%20numeric%20character%22)%3B%0Aassert_eq!(idx%2C%2013)%3B%0A%7D%20else%20%7B%0A%20%20%20%20println!(%22Did%20not%20find%20an%20alpha%20numeric%20character%22)%3B%0A%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20unsafe%20%7B%20worker()%3B%20%7D%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>使用 16 位字符。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">std::arch::x86_64</span>::<span class="kw-2">*</span>;
+
+<span class="comment">// 加载输入</span>
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">some_utf16_words</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">_mm_loadu_si128</span>(<span class="ident">more_utf16_words</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span>);
+
+<span class="comment">// 指定 _SIDD_UWORD_OPS 以比较单词而不是字节，并使用 _SIDD_CMP_EQUAL_EACH 比较两个字符串。</span>
+<span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">_mm_cmpistri</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">_SIDD_UWORD_OPS</span> <span class="op">|</span> <span class="ident">_SIDD_CMP_EQUAL_EACH</span>);
+
+<span class="kw">if</span> <span class="ident">idx</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;16-bit unicode strings were equal!&quot;</span>);
+} <span class="kw">else</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;16-bit unicode strings were not equal!&quot;</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23%5Bcfg(target_arch%20%3D%20%22x86%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86%3A%3A*%3B%0A%23%5Bcfg(target_arch%20%3D%20%22x86_64%22)%5D%0Ause%20std%3A%3Aarch%3A%3Ax86_64%3A%3A*%3B%0A%0Afn%20main()%20%7B%0A%20%20%20%20if%20is_x86_feature_detected!(%22sse4.2%22)%20%7B%0A%20%20%20%20%20%20%20%20%23%5Btarget_feature(enable%20%3D%20%22sse4.2%22)%5D%0A%20%20%20%20%20%20%20%20unsafe%20fn%20worker()%20%7B%0Alet%20mut%20some_utf16_words%20%3D%20%5B0u16%3B%208%5D%3B%0Alet%20mut%20more_utf16_words%20%3D%20%5B0u16%3B%208%5D%3B%0A'%E2%9D%A4'.encode_utf16(%26mut%20some_utf16_words)%3B%0A'%F0%9D%95%8A'.encode_utf16(%26mut%20more_utf16_words)%3B%0A%2F%2F%20%E5%8A%A0%E8%BD%BD%E8%BE%93%E5%85%A5%0Alet%20a%20%3D%20_mm_loadu_si128(some_utf16_words.as_ptr()%20as%20*const%20_)%3B%0Alet%20b%20%3D%20_mm_loadu_si128(more_utf16_words.as_ptr()%20as%20*const%20_)%3B%0A%0A%2F%2F%20%E6%8C%87%E5%AE%9A%20_SIDD_UWORD_OPS%20%E4%BB%A5%E6%AF%94%E8%BE%83%E5%8D%95%E8%AF%8D%E8%80%8C%E4%B8%8D%E6%98%AF%E5%AD%97%E8%8A%82%EF%BC%8C%E5%B9%B6%E4%BD%BF%E7%94%A8%20_SIDD_CMP_EQUAL_EACH%20%E6%AF%94%E8%BE%83%E4%B8%A4%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%82%0Alet%20idx%20%3D%20_mm_cmpistri(a%2C%20b%2C%20_SIDD_UWORD_OPS%20%7C%20_SIDD_CMP_EQUAL_EACH)%3B%0A%0Aif%20idx%20%3D%3D%200%20%7B%0A%20%20%20%20println!(%2216-bit%20unicode%20strings%20were%20equal!%22)%3B%0Apanic!(%22Strings%20should%20not%20be%20equal!%22)%0A%7D%20else%20%7B%0A%20%20%20%20println!(%2216-bit%20unicode%20strings%20were%20not%20equal!%22)%3B%0A%7D%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20unsafe%20%7B%20worker()%3B%20%7D%0A%20%20%20%20%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p><a href="https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=_mm_cmpistri">Intel’s documentation</a></p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="core" data-search-index-js="../../../search-index1.55.0.js" data-search-js="../../../search1.55.0.js"></div><script src="../../../main1.55.0.js"></script></body></html>

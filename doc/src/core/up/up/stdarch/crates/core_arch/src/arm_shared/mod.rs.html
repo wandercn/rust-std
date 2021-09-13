@@ -1,0 +1,244 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\core\src\..\..\stdarch\crates\core_arch\src\arm_shared\mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../../../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../../../../../../storage1.55.0.js"></script><script src="../../../../../../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../../../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../../../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../../../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../../../../../core/index.html'><div class='logo-container rust-logo'><img src='../../../../../../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../../../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../../../../../settings.html" title="settings"><img src="../../../../../../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+</pre><pre class="rust">
+<span class="doccomment">//! ARM C 语言扩展 (ACLE)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # 开发人员注意事项</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 以下是代表不同 ARM 体系结构的内置目标的列表; 该列表包括他们拥有的 `target_feature`。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - `armv4t-unknown-linux-gnueabi` - **ARMv4** - `+v4t`</span>
+<span class="doccomment">//! - `armv5te-unknown-linux-gnueabi` - **ARMv5TE** - `+v4t +v5te`</span>
+<span class="doccomment">//! - `arm-unknown-linux-gnueabi` - **ARMv6** - `+v4t +v5te +v6`</span>
+<span class="doccomment">//! - `thumbv6m-none-eabi` - **ARMv6-M** - `+v4t +v5te +v6 +thumb-mode +mclass`</span>
+<span class="doccomment">//! - `armv7-unknown-linux-gnueabihf` - **ARMv7-A** - `+v4t +v5te +v6 +v6k +v6t2 +v7 +dsp +thumb2 +aclass`</span>
+<span class="doccomment">//! - `armv7r-none-eabi` - **ARMv7-R** - `+v4t +v5te +v6 +v6k +v6t2  +v7 +dsp +thumb2 +rclass`</span>
+<span class="doccomment">//! - `thumbv7m-none-eabi` - **ARMv7-M** - `+v4t +v5te +v6 +v6k +v6t2 +v7 +thumb2 +thumb-mode +mclass`</span>
+<span class="doccomment">//! - `thumbv7em-none-eabi` - **ARMv7E-M** - `+v4t +v5te +v6 +v6k +v6t2 +v7 +dsp +thumb2 +thumb-mode +mclass`</span>
+<span class="doccomment">//! - `thumbv8m.main-none-eabi` - **ARMv8-M** - `+v4t +v5te +v6 +v6k +v6t2 +v7 +thumb2 +thumb-mode +mclass`</span>
+<span class="doccomment">//! - `armv8r-none-eabi` - **ARMv8-R** - `+v4t +v5te +v6 +v6k +v6t2 +v7 +v8 +thumb2 +rclass`</span>
+<span class="doccomment">//! - `aarch64-unknown-linux-gnu` - **ARMv8-A (AArch64)** - `+fp +neon`</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ACLE 的 10.1 部分说:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - &quot;In the sequence of Arm architectures { v5, v5TE, v6, v6T2, v7 } each architecture includes its predecessor instruction set.&quot;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - &quot;In the sequence of Thumb-only architectures { v6-M, v7-M, v7E-M } each architecture includes its predecessor instruction set.&quot;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 通过该信息并查看 LLVM 功能的工作方式 (使用自定义目标)，我们可以确定属于其他功能的子集的功能:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 图例: `a &lt; b` 读为 &quot;`a` 是 `b` 的子集&quot;; 这意味着如果启用了 `b`，那么还将启用 `a`。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - `v4t &lt; v5te &lt; v6 &lt; v6k &lt; v6t2 &lt; v7 &lt; v8`</span>
+<span class="doccomment">//! - `v6 &lt; v8m &lt; v6t2`</span>
+<span class="doccomment">//! - `v7 &lt; v8m.main`</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! *NOTE*: ACLE 的 5.4.7 部分说:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - &quot;__ARM_FEATURE_DSP is defined to 1 if the DSP (v5E) instructions are supported and the intrinsics defined in Saturating intrinsics are available.&quot;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 这与 LLVM 如何使用 &#39;+dsp&#39; 功能不匹配。未为 v5te 目标设置此功能，因此我们必须解决这一差异。</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # References</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - [ACLE Q2 2018](https://developer.arm.com/docs/101028/latest)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+
+<span class="comment">// 仅适用于 &#39;neon&#39; 子模块</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
+
+<span class="comment">// 通过专用指令 (如 DMB) 支持 8、7 和 6-M。通过 CP15 指令支持所有其他 arches。</span>
+<span class="comment">// 参见 ACLE 的 10.1 部分</span>
+<span class="kw">mod</span> <span class="ident">barrier</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::barrier</span>::<span class="kw-2">*</span>;
+
+<span class="kw">mod</span> <span class="ident">hints</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::hints</span>::<span class="kw-2">*</span>;
+
+<span class="kw">mod</span> <span class="ident">registers</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::registers</span>::<span class="kw-2">*</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">mod</span> <span class="ident">crc</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">crc</span>::<span class="kw-2">*</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">mod</span> <span class="ident">crypto</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::crypto</span>::<span class="kw-2">*</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod</span> <span class="ident">neon</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span><span class="ident">::neon</span>::<span class="kw-2">*</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;aarch64&quot;</span>, <span class="ident">target_feature</span> <span class="op">=</span> <span class="string">&quot;v7&quot;</span>, <span class="ident">doc</span>))]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod</span> <span class="ident">test_support</span>;
+
+<span class="kw">mod</span> <span class="ident">sealed</span> {
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Dmb</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__dmb</span>(<span class="kw-2">&amp;</span><span class="self">self</span>);
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Dsb</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__dsb</span>(<span class="kw-2">&amp;</span><span class="self">self</span>);
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Isb</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__isb</span>(<span class="kw-2">&amp;</span><span class="self">self</span>);
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rsr</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__rsr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>;
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rsr64</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__rsr64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span>;
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rsrp</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__rsrp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>;
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Wsr</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__wsr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u32</span>);
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Wsr64</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__wsr64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u64</span>);
+    }
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Wsrp</span> {
+        <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">__wsrp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">u8</span>);
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../../../../../" data-current-crate="core" data-search-index-js="../../../../../../../../../search-index1.55.0.js" data-search-js="../../../../../../../../../search1.55.0.js"></div><script src="../../../../../../../../../main1.55.0.js"></script><script src="../../../../../../../../../source-script1.55.0.js"></script><script src="../../../../../../../../../source-files1.55.0.js"></script></body></html>

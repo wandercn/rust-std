@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Duration","`Duration` 类型代表时间跨度，通常用于系统超时。"],["FromSecsError","将秒的浮点值转换为 [`Duration`] 时可能返回的错误。"]]});

@@ -1,0 +1,206 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library\alloc\src\collections\btree\append.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>append.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../../../storage1.55.0.js"></script><script src="../../../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../alloc/index.html'><div class='logo-container rust-logo'><img src='../../../../rust-logo1.55.0.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../settings.html" title="settings"><img src="../../../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::merge_iter::MergeIterInner</span>;
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::node</span>::{<span class="self">self</span>, <span class="ident">Root</span>};
+<span class="kw">use</span> <span class="ident">core::iter::FusedIterator</span>;
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Root</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// 从两个升序的迭代器的并集追加所有键值对，并在此过程中递增 `length` 变量。后者使调用者在丢弃处理程序 panic 时更容易避免泄漏。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果两个迭代器都产生相同的键，则此方法将从左迭代器中丢弃 pair，并从右迭代器中追加 pair。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// 如果要使树以严格的升序结束 (例如 `BTreeMap`)，则两个迭代器都应以严格的升序生成键，每个键都大于树中的所有键，包括输入时树中已存在的任何键。</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">append_from_sorted_iters</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">left</span>: <span class="ident">I</span>, <span class="ident">right</span>: <span class="ident">I</span>, <span class="ident">length</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">usize</span>)
+    <span class="kw">where</span>
+        <span class="ident">K</span>: <span class="ident">Ord</span>,
+        <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">FusedIterator</span>,
+    {
+        <span class="comment">// 我们准备在线性时间内将 `left` 和 `right` 合并为一个排序的序列。</span>
+        <span class="kw">let</span> <span class="ident">iter</span> <span class="op">=</span> <span class="ident">MergeIter</span>(<span class="ident">MergeIterInner::new</span>(<span class="ident">left</span>, <span class="ident">right</span>));
+
+        <span class="comment">// 同时，我们根据线性时间中的排序序列构建一棵树。</span>
+        <span class="self">self</span>.<span class="ident">bulk_push</span>(<span class="ident">iter</span>, <span class="ident">length</span>)
+    }
+
+    <span class="doccomment">/// 将所有键值对推入树的末尾，并在此过程中递增 `length` 变量。</span>
+    <span class="doccomment">/// 后者使调用者在迭代器出现 panic 时更容易避免泄漏。</span>
+    <span class="doccomment">///</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bulk_push</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">iter</span>: <span class="ident">I</span>, <span class="ident">length</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">usize</span>)
+    <span class="kw">where</span>
+        <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span>,
+    {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cur_node</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">borrow_mut</span>().<span class="ident">last_leaf_edge</span>().<span class="ident">into_node</span>();
+        <span class="comment">// 遍历所有键值对，将它们推入正确级别的节点。</span>
+        <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">value</span>) <span class="kw">in</span> <span class="ident">iter</span> {
+            <span class="comment">// 尝试将键值对推入当前的叶节点。</span>
+            <span class="kw">if</span> <span class="ident">cur_node</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">node::CAPACITY</span> {
+                <span class="ident">cur_node</span>.<span class="ident">push</span>(<span class="ident">key</span>, <span class="ident">value</span>);
+            } <span class="kw">else</span> {
+                <span class="comment">// 没有剩余空间了，上去推一下。</span>
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">open_node</span>;
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">test_node</span> <span class="op">=</span> <span class="ident">cur_node</span>.<span class="ident">forget_type</span>();
+                <span class="kw">loop</span> {
+                    <span class="kw">match</span> <span class="ident">test_node</span>.<span class="ident">ascend</span>() {
+                        <span class="prelude-val">Ok</span>(<span class="ident">parent</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="kw">let</span> <span class="ident">parent</span> <span class="op">=</span> <span class="ident">parent</span>.<span class="ident">into_node</span>();
+                            <span class="kw">if</span> <span class="ident">parent</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">node::CAPACITY</span> {
+                                <span class="comment">// 找到一个剩余空间的节点，将其推入此处。</span>
+                                <span class="ident">open_node</span> <span class="op">=</span> <span class="ident">parent</span>;
+                                <span class="kw">break</span>;
+                            } <span class="kw">else</span> {
+                                <span class="comment">// 再上去</span>
+                                <span class="ident">test_node</span> <span class="op">=</span> <span class="ident">parent</span>.<span class="ident">forget_type</span>();
+                            }
+                        }
+                        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                            <span class="comment">// 我们在顶部，创建一个新的根节点并推送到那里。</span>
+                            <span class="ident">open_node</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">push_internal_level</span>();
+                            <span class="kw">break</span>;
+                        }
+                    }
+                }
+
+                <span class="comment">// push 键值对和新的右子树。</span>
+                <span class="kw">let</span> <span class="ident">tree_height</span> <span class="op">=</span> <span class="ident">open_node</span>.<span class="ident">height</span>() <span class="op">-</span> <span class="number">1</span>;
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right_tree</span> <span class="op">=</span> <span class="ident">Root::new</span>();
+                <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">tree_height</span> {
+                    <span class="ident">right_tree</span>.<span class="ident">push_internal_level</span>();
+                }
+                <span class="ident">open_node</span>.<span class="ident">push</span>(<span class="ident">key</span>, <span class="ident">value</span>, <span class="ident">right_tree</span>);
+
+                <span class="comment">// 再次下降到最右边的叶子。</span>
+                <span class="ident">cur_node</span> <span class="op">=</span> <span class="ident">open_node</span>.<span class="ident">forget_type</span>().<span class="ident">last_leaf_edge</span>().<span class="ident">into_node</span>();
+            }
+
+            <span class="comment">// 每次迭代都增加长度，以确保即使推进迭代器崩溃，映射也会丢弃附加的元素。</span>
+            <span class="comment">//</span>
+            <span class="kw-2">*</span><span class="ident">length</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+        }
+        <span class="self">self</span>.<span class="ident">fix_right_border_of_plentiful</span>();
+    }
+}
+
+<span class="comment">// 用于将两个排序的序列合并为一个的迭代器</span>
+<span class="kw">struct</span> <span class="ident">MergeIter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">MergeIterInner</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>);
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">Ord</span>, <span class="ident">V</span>, <span class="ident">I</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">MergeIter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span>, <span class="ident">I</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">FusedIterator</span>,
+{
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> (<span class="ident">K</span>, <span class="ident">V</span>);
+
+    <span class="doccomment">/// 如果两个键相等，则从正确的源返回键值对。</span>
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> {
+        <span class="kw">let</span> (<span class="ident">a_next</span>, <span class="ident">b_next</span>) <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">nexts</span>(<span class="op">|</span><span class="ident">a</span>: <span class="kw-2">&amp;</span>(<span class="ident">K</span>, <span class="ident">V</span>), <span class="ident">b</span>: <span class="kw-2">&amp;</span>(<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">|</span> <span class="ident">K::cmp</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="number">0</span>));
+        <span class="ident">b_next</span>.<span class="ident">or</span>(<span class="ident">a_next</span>)
+    }
+}</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="alloc" data-search-index-js="../../../../search-index1.55.0.js" data-search-js="../../../../search1.55.0.js"></div><script src="../../../../main1.55.0.js"></script><script src="../../../../source-script1.55.0.js"></script><script src="../../../../source-files1.55.0.js"></script></body></html>

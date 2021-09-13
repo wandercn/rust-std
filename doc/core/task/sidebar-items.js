@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Poll","指示值是否可用，或者当前任务是否已安排为接收唤醒。"]],"macro":[["ready","提取 `Poll<T>` 的成功类型。"]],"struct":[["Context","异步任务的 `Context`。"],["RawWaker","`RawWaker` 允许任务执行器的实现者创建 [`Waker`]，该 [`Waker`] 提供自定义的唤醒行为。"],["RawWakerVTable","虚拟函数指针表 (vtable)，用于指定 [`RawWaker`] 的行为。"],["Waker","`Waker` 是通过通知执行者准备运行来唤醒任务的句柄。"]]});

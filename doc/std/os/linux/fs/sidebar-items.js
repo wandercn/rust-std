@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["MetadataExt","`fs::Metadata` 的特定于 OS 的扩展。"]]});

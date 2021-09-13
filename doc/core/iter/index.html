@@ -1,0 +1,274 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="可组合的外部迭代。"><meta name="keywords" content="rust, rustlang, rust-lang, iter"><title>core::iter - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module iter</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><div id="sidebar-vars" data-name="iter" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">core</a>::<wbr><a class="mod" href="#">iter</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/core/iter/mod.rs.html#1-423" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>可组合的外部迭代。</p>
+<p>如果您发现自己具有某种类型的集合，并且需要对所述集合的元素执行操作，那么您会很快遇到 ‘iterators’。
+迭代器在惯用的 Rust 代码中大量使用，所以值得熟悉它们。</p>
+<p>在解释更多内容之前，让我们讨论一下该模块的结构:</p>
+<h1 id="organization" class="section-header"><a href="#organization">Organization</a></h1>
+<p>该模块主要是按类型来组织的:</p>
+<ul>
+<li><a href="#traits">Traits</a> 是核心部分: 这些 traits 定义了存在哪种迭代器，以及可以使用它们进行哪些操作。这些 traits 的方法值得投入一些额外的学习时间。</li>
+<li><a href="#functions">Functions</a> 提供了一些有用的方法来创建一些基本的迭代器。</li>
+<li><a href="#structs">Structs</a> 通常是模块 traits 上各种方法的返回类型。通常，您将需要查看创建 <code>struct</code> 的方法，而不是 <code>struct</code> 本身。
+有关原因的更多详细信息，请参见 <a href="#implementing-iterator">实现迭代器</a>。</li>
+</ul>
+<p>就是这样! 让我们深入研究迭代器。</p>
+<h1 id="iterator" class="section-header"><a href="#iterator">Iterator</a></h1>
+<p>该模块的核心是 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> trait。<a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 的核心如下所示:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">trait</span> <span class="ident">Iterator</span> {
+    <span class="kw">type</span> <span class="ident">Item</span>;
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span>;
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Atrait%20Iterator%20%7B%0A%20%20%20%20type%20Item%3B%0A%20%20%20%20fn%20next(%26mut%20self)%20-%3E%20Option%3CSelf%3A%3AItem%3E%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>迭代器具有 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a> 方法，该方法在调用时将返回 <a href="../option/enum.Option.html" title="Option"><code>Option</code></a><code>&lt;Item&gt;</code>。
+<a href="trait.Iterator.html#tymethod.next"><code>next</code></a> 只要有元素，它们将返回 <a href="../option/enum.Option.html#variant.Some"><code>Some(Item)</code></a>，一旦所有元素用尽，将返回 <code>None</code> 表示迭代已完成。
+各个迭代器可能选择恢复迭代，因此再次调用 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a> 可能会或可能不会最终在某个时候再次开始返回 <a href="../option/enum.Option.html#variant.Some"><code>Some(Item)</code></a> (例如，请参见 <a href="../../std/sync/mpsc/struct.TryIter.html"><code>TryIter</code></a>)。</p>
+<p><a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 的完整定义还包括许多其他方法，但是它们是默认方法，基于 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a> 构建，因此您可以免费获得它们。</p>
+<p>迭代器也是可组合的，通常将它们链接在一起以进行更复杂的处理形式。有关更多详细信息，请参见下面的 <a href="#adapters">Adapters</a> 部分。</p>
+<h1 id="三种迭代形式" class="section-header"><a href="#三种迭代形式">三种迭代形式</a></h1>
+<p>有三种常见的方法可以从集合中创建迭代器:</p>
+<ul>
+<li><code>iter()</code>, 在 <code>&amp;T</code> 上迭代。</li>
+<li><code>iter_mut()</code>, 在 <code>&amp;mut T</code> 上迭代。</li>
+<li><code>into_iter()</code>, 在 <code>T</code> 上迭代。</li>
+</ul>
+<p>在适当的情况下，标准库中的各种内容都可以实现这三个中的一个或多个。</p>
+<h1 id="实现迭代器" class="section-header"><a href="#实现迭代器">实现迭代器</a></h1>
+<p>创建自己的迭代器涉及两个步骤: 创建一个 <code>struct</code> 来保存迭代器的状态，然后为该 <code>struct</code> 实现 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a>。
+这就是为什么此模块中有这么多 <code>struct</code> 的原因: 每个迭代器和迭代器适配器都有一个。</p>
+<p>让我们创建一个名为 <code>Counter</code> 的迭代器，该迭代器的范围从 <code>1</code> 到 <code>5</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="comment">// 首先，结构体:</span>
+
+<span class="doccomment">/// 从 1 到 5 计数的迭代器</span>
+<span class="kw">struct</span> <span class="ident">Counter</span> {
+    <span class="ident">count</span>: <span class="ident">usize</span>,
+}
+
+<span class="comment">// 我们希望计数从一开始，所以让我们添加一个 new() 方法来提供帮助。</span>
+<span class="comment">// 这不是严格必要的，但很方便。</span>
+<span class="comment">// 请注意，我们将 `count` 从零开始，我们将在下面的 `next () ` 实现中看到其原因。</span>
+<span class="kw">impl</span> <span class="ident">Counter</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Counter</span> {
+        <span class="ident">Counter</span> { <span class="ident">count</span>: <span class="number">0</span> }
+    }
+}
+
+<span class="comment">// 然后，我们为 `Counter` 实现 `Iterator`:</span>
+
+<span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Counter</span> {
+    <span class="comment">// 我们将使用 usize 进行计数</span>
+    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">usize</span>;
+
+    <span class="comment">// next() 是唯一需要的方法</span>
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span> {
+        <span class="comment">// 增加我们的数量。这就是为什么我们从零开始。</span>
+        <span class="self">self</span>.<span class="ident">count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+
+        <span class="comment">// 检查我们是否已经完成计数。</span>
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">count</span> <span class="op">&lt;</span> <span class="number">6</span> {
+            <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">count</span>)
+        } <span class="kw">else</span> {
+            <span class="prelude-val">None</span>
+        }
+    }
+}
+
+<span class="comment">// 现在我们可以使用它了!</span>
+
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">counter</span> <span class="op">=</span> <span class="ident">Counter::new</span>();
+
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">Some</span>(<span class="number">5</span>));
+<span class="macro">assert_eq!</span>(<span class="ident">counter</span>.<span class="ident">next</span>(), <span class="prelude-val">None</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%2F%2F%20%E9%A6%96%E5%85%88%EF%BC%8C%E7%BB%93%E6%9E%84%E4%BD%93%3A%0A%0Afn%20main()%20%7B%0A%2F%2F%2F%20%E4%BB%8E%201%20%E5%88%B0%205%20%E8%AE%A1%E6%95%B0%E7%9A%84%E8%BF%AD%E4%BB%A3%E5%99%A8%0Astruct%20Counter%20%7B%0A%20%20%20%20count%3A%20usize%2C%0A%7D%0A%0A%2F%2F%20%E6%88%91%E4%BB%AC%E5%B8%8C%E6%9C%9B%E8%AE%A1%E6%95%B0%E4%BB%8E%E4%B8%80%E5%BC%80%E5%A7%8B%EF%BC%8C%E6%89%80%E4%BB%A5%E8%AE%A9%E6%88%91%E4%BB%AC%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA%20new()%20%E6%96%B9%E6%B3%95%E6%9D%A5%E6%8F%90%E4%BE%9B%E5%B8%AE%E5%8A%A9%E3%80%82%0A%2F%2F%20%E8%BF%99%E4%B8%8D%E6%98%AF%E4%B8%A5%E6%A0%BC%E5%BF%85%E8%A6%81%E7%9A%84%EF%BC%8C%E4%BD%86%E5%BE%88%E6%96%B9%E4%BE%BF%E3%80%82%0A%2F%2F%20%E8%AF%B7%E6%B3%A8%E6%84%8F%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B0%86%20%60count%60%20%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B0%86%E5%9C%A8%E4%B8%8B%E9%9D%A2%E7%9A%84%20%60next%20()%20%60%20%E5%AE%9E%E7%8E%B0%E4%B8%AD%E7%9C%8B%E5%88%B0%E5%85%B6%E5%8E%9F%E5%9B%A0%E3%80%82%0Aimpl%20Counter%20%7B%0A%20%20%20%20fn%20new()%20-%3E%20Counter%20%7B%0A%20%20%20%20%20%20%20%20Counter%20%7B%20count%3A%200%20%7D%0A%20%20%20%20%7D%0A%7D%0A%0A%2F%2F%20%E7%84%B6%E5%90%8E%EF%BC%8C%E6%88%91%E4%BB%AC%E4%B8%BA%20%60Counter%60%20%E5%AE%9E%E7%8E%B0%20%60Iterator%60%3A%0A%0Aimpl%20Iterator%20for%20Counter%20%7B%0A%20%20%20%20%2F%2F%20%E6%88%91%E4%BB%AC%E5%B0%86%E4%BD%BF%E7%94%A8%20usize%20%E8%BF%9B%E8%A1%8C%E8%AE%A1%E6%95%B0%0A%20%20%20%20type%20Item%20%3D%20usize%3B%0A%0A%20%20%20%20%2F%2F%20next()%20%E6%98%AF%E5%94%AF%E4%B8%80%E9%9C%80%E8%A6%81%E7%9A%84%E6%96%B9%E6%B3%95%0A%20%20%20%20fn%20next(%26mut%20self)%20-%3E%20Option%3CSelf%3A%3AItem%3E%20%7B%0A%20%20%20%20%20%20%20%20%2F%2F%20%E5%A2%9E%E5%8A%A0%E6%88%91%E4%BB%AC%E7%9A%84%E6%95%B0%E9%87%8F%E3%80%82%E8%BF%99%E5%B0%B1%E6%98%AF%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E3%80%82%0A%20%20%20%20%20%20%20%20self.count%20%2B%3D%201%3B%0A%0A%20%20%20%20%20%20%20%20%2F%2F%20%E6%A3%80%E6%9F%A5%E6%88%91%E4%BB%AC%E6%98%AF%E5%90%A6%E5%B7%B2%E7%BB%8F%E5%AE%8C%E6%88%90%E8%AE%A1%E6%95%B0%E3%80%82%0A%20%20%20%20%20%20%20%20if%20self.count%20%3C%206%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20Some(self.count)%0A%20%20%20%20%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20None%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%7D%0A%0A%2F%2F%20%E7%8E%B0%E5%9C%A8%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E5%AE%83%E4%BA%86!%0A%0Alet%20mut%20counter%20%3D%20Counter%3A%3Anew()%3B%0A%0Aassert_eq!(counter.next()%2C%20Some(1))%3B%0Aassert_eq!(counter.next()%2C%20Some(2))%3B%0Aassert_eq!(counter.next()%2C%20Some(3))%3B%0Aassert_eq!(counter.next()%2C%20Some(4))%3B%0Aassert_eq!(counter.next()%2C%20Some(5))%3B%0Aassert_eq!(counter.next()%2C%20None)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>以这种方式调用 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a> 将重复进行。Rust 有一个构造，可以在迭代器上调用 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a>，直到它到达 <code>None</code>。让我们接下来讨论。</p>
+<p>还要注意，<code>Iterator</code> 提供了内部调用 <code>next</code> 的方法的默认实现，例如 <code>nth</code> 和 <code>fold</code>。
+但是，如果迭代器可以在不调用 <code>next</code> 的情况下更有效地计算它们，则还可以编写方法的自定义实现，例如 <code>nth</code> 和 <code>fold</code>。</p>
+<h1 id="for-循环和-intoiterator" class="section-header"><a href="#for-循环和-intoiterator"><code>for</code> 循环和 <code>IntoIterator</code></a></h1>
+<p>Rust 的 <code>for</code> 循环语法实际上是迭代器的语法糖。这是 <code>for</code> 的基本示例:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="ident">values</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20values%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0A%0Afor%20x%20in%20values%20%7B%0A%20%20%20%20println!(%22%7B%7D%22%2C%20x)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>这将打印数字 1 到 5，每个数字都在各自的行上。但是您会在这里注意到: 我们从未在 vector 上调用任何东西来产生迭代器。是什么赋予了?</p>
+<p>标准库中有一个 trait，用于将某些东西转换为迭代器: <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a>.
+trait 具有一个方法 <a href="trait.IntoIterator.html#tymethod.into_iter"><code>into_iter</code></a>，该方法将实现 <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a> 的类型转换为迭代器。
+让我们再次看一下 <code>for</code> 循环，以及编译器将其转换为什么:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="ident">values</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20values%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0A%0Afor%20x%20in%20values%20%7B%0A%20%20%20%20println!(%22%7B%7D%22%2C%20x)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>Rust 将其反糖化为:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+{
+    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">IntoIterator::into_iter</span>(<span class="ident">values</span>) {
+        <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">loop</span> {
+            <span class="kw">let</span> <span class="ident">next</span>;
+            <span class="kw">match</span> <span class="ident">iter</span>.<span class="ident">next</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">val</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">val</span>,
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">break</span>,
+            };
+            <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">next</span>;
+            <span class="kw">let</span> () <span class="op">=</span> { <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>); };
+        },
+    };
+    <span class="ident">result</span>
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20values%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0A%7B%0A%20%20%20%20let%20result%20%3D%20match%20IntoIterator%3A%3Ainto_iter(values)%20%7B%0A%20%20%20%20%20%20%20%20mut%20iter%20%3D%3E%20loop%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20let%20next%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20match%20iter.next()%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20Some(val)%20%3D%3E%20next%20%3D%20val%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20None%20%3D%3E%20break%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20let%20x%20%3D%20next%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20let%20()%20%3D%20%7B%20println!(%22%7B%7D%22%2C%20x)%3B%20%7D%3B%0A%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%7D%3B%0A%20%20%20%20result%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>首先，我们在值上调用 <code>into_iter()</code>。然后，我们在返回的迭代器上进行匹配，一遍又一遍地调用 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a>，直到我们看到一个 <code>None</code>。
+到那时，我们 <code>break</code> 退出了循环，我们已经完成了迭代。</p>
+<p>这里还有一点微妙之处: 标准库包含一个有趣的 <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a> 实现:</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore">
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&gt;</span> <span class="ident">IntoIterator</span> <span class="kw">for</span> <span class="ident">I</span></pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Aimpl%3CI%3A%20Iterator%3E%20IntoIterator%20for%20I%0A%7D&amp;edition=2018">Run</a></div>
+<p>换句话说，所有 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 都通过返回自身来实现 <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a>。这意味着两件事:</p>
+<ol>
+<li>如果要编写 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a>，则可以将其与 <code>for</code> 循环一起使用。</li>
+<li>如果要创建集合，则为其实现 <a href="trait.IntoIterator.html" title="IntoIterator"><code>IntoIterator</code></a> 将使您的集合可以与 <code>for</code> 循环一起使用。</li>
+</ol>
+<h1 id="通过引用进行迭代" class="section-header"><a href="#通过引用进行迭代">通过引用进行迭代</a></h1>
+<p>由于 <a href="trait.IntoIterator.html#tymethod.into_iter"><code>into_iter()</code></a> 将 <code>self</code> 作为值，因此使用 <code>for</code> 循环遍历一个集合将消耗该集合。通常，您可能需要迭代一个集合而不使用它。
+许多集合提供了在引用上提供迭代器的方法，通常分别称为 <code>iter()</code> 和 <code>iter_mut()</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">41</span>];
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="ident">values</span>.<span class="ident">iter_mut</span>() {
+    <span class="kw-2">*</span><span class="ident">x</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+}
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="ident">values</span>.<span class="ident">iter</span>() {
+    <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">x</span>, <span class="number">42</span>);
+}
+<span class="macro">assert_eq!</span>(<span class="ident">values</span>.<span class="ident">len</span>(), <span class="number">1</span>); <span class="comment">// `values` 仍然归此函数所有。</span></pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20values%20%3D%20vec!%5B41%5D%3B%0Afor%20x%20in%20values.iter_mut()%20%7B%0A%20%20%20%20*x%20%2B%3D%201%3B%0A%7D%0Afor%20x%20in%20values.iter()%20%7B%0A%20%20%20%20assert_eq!(*x%2C%2042)%3B%0A%7D%0Aassert_eq!(values.len()%2C%201)%3B%20%2F%2F%20%60values%60%20%E4%BB%8D%E7%84%B6%E5%BD%92%E6%AD%A4%E5%87%BD%E6%95%B0%E6%89%80%E6%9C%89%E3%80%82%0A%7D&amp;edition=2018">Run</a></div>
+<p>如果集合类型 <code>C</code> 提供 <code>iter()</code>，则它通常还为 <code>&amp;C</code> 实现 <code>IntoIterator</code>，而该实现只是调用 <code>iter()</code>。
+同样，提供 <code>iter_mut()</code> 的集合 <code>C</code> 通常通过委派给 <code>iter_mut()</code> 来为 <code>&amp;mut C</code> 实现 <code>IntoIterator</code>。这样可以方便快捷地实现以下目的:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">41</span>];
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">values</span> { <span class="comment">// 与 `values.iter_mut()` 相同</span>
+    <span class="kw-2">*</span><span class="ident">x</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+}
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">values</span> { <span class="comment">// 与 `values.iter()` 相同</span>
+    <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">x</span>, <span class="number">42</span>);
+}
+<span class="macro">assert_eq!</span>(<span class="ident">values</span>.<span class="ident">len</span>(), <span class="number">1</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20mut%20values%20%3D%20vec!%5B41%5D%3B%0Afor%20x%20in%20%26mut%20values%20%7B%20%2F%2F%20%E4%B8%8E%20%60values.iter_mut()%60%20%E7%9B%B8%E5%90%8C%0A%20%20%20%20*x%20%2B%3D%201%3B%0A%7D%0Afor%20x%20in%20%26values%20%7B%20%2F%2F%20%E4%B8%8E%20%60values.iter()%60%20%E7%9B%B8%E5%90%8C%0A%20%20%20%20assert_eq!(*x%2C%2042)%3B%0A%7D%0Aassert_eq!(values.len()%2C%201)%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>尽管许多集合都提供 <code>iter()</code>，但并非所有人都提供 <code>iter_mut()</code>。
+例如，如果键的哈希值发生更改，则对 <a href="../../std/collections/struct.HashSet.html"><code>HashSet&lt;T&gt;</code></a> 或 <a href="../../std/collections/struct.HashMap.html"><code>HashMap&lt;K, V&gt;</code></a> 的键进行更改可能会使该集合处于不一致状态，因此这些集合仅提供 <code>iter()</code>。</p>
+<h1 id="adapters" class="section-header"><a href="#adapters">Adapters</a></h1>
+<p>接受一个 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 并返回另一个 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 的函数通常被称为迭代器适配器，因为它们是适配器模式的一种形式。</p>
+<p>常见的迭代器适配器包括 <a href="trait.Iterator.html#method.map"><code>map</code></a>，<a href="trait.Iterator.html#method.take"><code>take</code></a> 和 <a href="trait.Iterator.html#method.filter"><code>filter</code></a>。
+有关更多信息，请参见其文档。</p>
+<p>如果迭代器适配器为 panics，则迭代器将处于未指定 (但内存安全) 状态。
+也不能保证此状态在 Rust 的各个版本中都保持不变，因此您应避免依赖 panicked 的迭代器返回的确切值。</p>
+<h1 id="laziness" class="section-header"><a href="#laziness">Laziness</a></h1>
+<p>迭代器 (和迭代器 <a href="#adapters">适配器</a>) 是懒惰的)。这意味着仅仅创建一个迭代器并不会做很多事情。除非您调用 <a href="trait.Iterator.html#tymethod.next"><code>next</code></a>，否则什么都不会发生。
+当创建仅出于其副作用的迭代器时，这有时会引起混乱。
+例如，<a href="trait.Iterator.html#method.map"><code>map</code></a> 方法在其迭代的每个元素上调用一个闭包:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+<span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>));</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0A%23!%5Ballow(unused_must_use)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0Av.iter().map(%7Cx%7C%20println!(%22%7B%7D%22%2C%20x))%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>这将不会打印任何值，因为我们只是创建了一个迭代器，而不是使用它。编译器将警告我们这种行为:</p>
+<pre><code class="language-text">warning: unused result that must be used: iterators are lazy and
+do nothing unless consumed
+</code></pre>
+<p>编写 <a href="trait.Iterator.html#method.map"><code>map</code></a> 的副作用的惯用方式是使用 <code>for</code> 循环或调用 <a href="trait.Iterator.html#method.for_each"><code>for_each</code></a> 方法:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="ident">v</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>));
+<span class="comment">// or</span>
+<span class="kw">for</span> <span class="ident">x</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">v</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">x</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20v%20%3D%20vec!%5B1%2C%202%2C%203%2C%204%2C%205%5D%3B%0A%0Av.iter().for_each(%7Cx%7C%20println!(%22%7B%7D%22%2C%20x))%3B%0A%2F%2F%20or%0Afor%20x%20in%20%26v%20%7B%0A%20%20%20%20println!(%22%7B%7D%22%2C%20x)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>评估迭代器的另一种常见方法是使用 <a href="trait.Iterator.html#method.collect"><code>collect</code></a> 方法来生成新的集合。</p>
+<h1 id="infinity" class="section-header"><a href="#infinity">Infinity</a></h1>
+<p>迭代器不必一定是有限的。例如，开放式范围是一个无限迭代器:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">numbers</span> <span class="op">=</span> <span class="number">0</span>..;</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20numbers%20%3D%200..%3B%0A%7D&amp;edition=2018">Run</a></div>
+<p>通常使用 <a href="trait.Iterator.html#method.take"><code>take</code></a> 迭代器适配器将无限迭代器转换为有限迭代器:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">numbers</span> <span class="op">=</span> <span class="number">0</span>..;
+<span class="kw">let</span> <span class="ident">five_numbers</span> <span class="op">=</span> <span class="ident">numbers</span>.<span class="ident">take</span>(<span class="number">5</span>);
+
+<span class="kw">for</span> <span class="ident">number</span> <span class="kw">in</span> <span class="ident">five_numbers</span> {
+    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">number</span>);
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20numbers%20%3D%200..%3B%0Alet%20five_numbers%20%3D%20numbers.take(5)%3B%0A%0Afor%20number%20in%20five_numbers%20%7B%0A%20%20%20%20println!(%22%7B%7D%22%2C%20number)%3B%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>这将在各自的行上打印数字 <code>0</code> 至 <code>4</code>。</p>
+<p>请记住，无限迭代器上的方法，即使可以在有限时间内数学确定结果的方法，也可能不会终止。
+具体来说，通常需要遍历迭代器中每个元素的方法 (如 <a href="trait.Iterator.html#method.min"><code>min</code></a>) 对于任何无限迭代器都可能不会成功返回。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">let</span> <span class="ident">ones</span> <span class="op">=</span> <span class="ident">std::iter::repeat</span>(<span class="number">1</span>);
+<span class="kw">let</span> <span class="ident">least</span> <span class="op">=</span> <span class="ident">ones</span>.<span class="ident">min</span>().<span class="ident">unwrap</span>(); <span class="comment">// 不好了! 无限循环!</span>
+<span class="comment">// `ones.min()` 导致无限循环，所以我们不会达到这一点!</span>
+<span class="macro">println!</span>(<span class="string">&quot;The smallest number one is {}.&quot;</span>, <span class="ident">least</span>);</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Alet%20ones%20%3D%20std%3A%3Aiter%3A%3Arepeat(1)%3B%0Alet%20least%20%3D%20ones.min().unwrap()%3B%20%2F%2F%20%E4%B8%8D%E5%A5%BD%E4%BA%86!%20%E6%97%A0%E9%99%90%E5%BE%AA%E7%8E%AF!%0A%2F%2F%20%60ones.min()%60%20%E5%AF%BC%E8%87%B4%E6%97%A0%E9%99%90%E5%BE%AA%E7%8E%AF%EF%BC%8C%E6%89%80%E4%BB%A5%E6%88%91%E4%BB%AC%E4%B8%8D%E4%BC%9A%E8%BE%BE%E5%88%B0%E8%BF%99%E4%B8%80%E7%82%B9!%0Aprintln!(%22The%20smallest%20number%20one%20is%20%7B%7D.%22%2C%20least)%3B%0A%7D&amp;edition=2018">Run</a></div>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="unstable module-item"><td><a class="struct" href="struct.Intersperse.html" title="core::iter::Intersperse struct">Intersperse</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>在所有元素之间放置分隔符的迭代器适配器。</p>
+</td></tr><tr class="unstable module-item"><td><a class="struct" href="struct.IntersperseWith.html" title="core::iter::IntersperseWith struct">IntersperseWith</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>在所有元素之间放置分隔符的迭代器适配器。</p>
+</td></tr><tr class="unstable module-item"><td><a class="struct" href="struct.MapWhile.html" title="core::iter::MapWhile struct">MapWhile</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>一个仅在 <code>predicate</code> 返回 <code>Some(_)</code> 时才接受元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Chain.html" title="core::iter::Chain struct">Chain</a></td><td class="docblock-short"><p>链中将两个迭代器链接在一起的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Cloned.html" title="core::iter::Cloned struct">Cloned</a></td><td class="docblock-short"><p>一个迭代器，可克隆基础迭代器的元素。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Copied.html" title="core::iter::Copied struct">Copied</a></td><td class="docblock-short"><p>复制基础迭代器元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Cycle.html" title="core::iter::Cycle struct">Cycle</a></td><td class="docblock-short"><p>无限重复的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Empty.html" title="core::iter::Empty struct">Empty</a></td><td class="docblock-short"><p>没有任何结果的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Enumerate.html" title="core::iter::Enumerate struct">Enumerate</a></td><td class="docblock-short"><p>一个在迭代过程中产生当前计数和元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Filter.html" title="core::iter::Filter struct">Filter</a></td><td class="docblock-short"><p>一个用 <code>predicate</code> 过滤 <code>iter</code> 元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.FilterMap.html" title="core::iter::FilterMap struct">FilterMap</a></td><td class="docblock-short"><p>一个使用 <code>f</code> 来过滤 <code>iter</code> 中的元素和 map 元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.FlatMap.html" title="core::iter::FlatMap struct">FlatMap</a></td><td class="docblock-short"><p>Z0 将每个元素映射到一个迭代器，并产生所生成的迭代器的元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Flatten.html" title="core::iter::Flatten struct">Flatten</a></td><td class="docblock-short"><p>一个迭代器，它使可迭代化的事物的迭代器中的嵌套层次变得平坦。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.FromFn.html" title="core::iter::FromFn struct">FromFn</a></td><td class="docblock-short"><p>一个迭代器，每次迭代调用提供的闭包 <code>F: FnMut() -&gt; Option&lt;T&gt;</code>。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Fuse.html" title="core::iter::Fuse struct">Fuse</a></td><td class="docblock-short"><p>在基础迭代器一次生成 <code>None</code> 之后，将永远生成 <code>None</code> 的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Inspect.html" title="core::iter::Inspect struct">Inspect</a></td><td class="docblock-short"><p>一个迭代器，在产生该迭代器之前，会对每个元素调用带有引用的函数。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Map.html" title="core::iter::Map struct">Map</a></td><td class="docblock-short"><p>将 <code>iter</code> 的值与 <code>f</code> 映射的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Once.html" title="core::iter::Once struct">Once</a></td><td class="docblock-short"><p>一个仅产生一次元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.OnceWith.html" title="core::iter::OnceWith struct">OnceWith</a></td><td class="docblock-short"><p>通过应用提供的闭包 <code>F: FnOnce() -&gt; A</code> 产生类型为 <code>A</code> 的单个元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Peekable.html" title="core::iter::Peekable struct">Peekable</a></td><td class="docblock-short"><p>带有 <code>peek()</code> 的迭代器，该迭代器将可选的引用返回到下一个元素。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Repeat.html" title="core::iter::Repeat struct">Repeat</a></td><td class="docblock-short"><p>一个无限重复元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.RepeatWith.html" title="core::iter::RepeatWith struct">RepeatWith</a></td><td class="docblock-short"><p>一个迭代器，通过应用提供的闭包 <code>F: FnMut() -&gt; A</code>，无限地重复 <code>A</code> 类型的元素。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Rev.html" title="core::iter::Rev struct">Rev</a></td><td class="docblock-short"><p>方向相反的双端迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Scan.html" title="core::iter::Scan struct">Scan</a></td><td class="docblock-short"><p>一个迭代器，用于在迭代另一个迭代器时维持状态。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Skip.html" title="core::iter::Skip struct">Skip</a></td><td class="docblock-short"><p>一个跳过 <code>iter</code> 的 <code>n</code> 元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.SkipWhile.html" title="core::iter::SkipWhile struct">SkipWhile</a></td><td class="docblock-short"><p><code>predicate</code> 返回 <code>true</code> 时拒绝元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.StepBy.html" title="core::iter::StepBy struct">StepBy</a></td><td class="docblock-short"><p>一个用于按自定义数量步进迭代器的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Successors.html" title="core::iter::Successors struct">Successors</a></td><td class="docblock-short"><p>一个新的迭代器，其中每个连续项都是根据前一个进行计算的。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Take.html" title="core::iter::Take struct">Take</a></td><td class="docblock-short"><p>一个仅迭代 <code>iter</code> 的前 <code>n</code> 迭代的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.TakeWhile.html" title="core::iter::TakeWhile struct">TakeWhile</a></td><td class="docblock-short"><p>一个仅在 <code>predicate</code> 返回 <code>true</code> 时才接受元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Zip.html" title="core::iter::Zip struct">Zip</a></td><td class="docblock-short"><p>同时迭代其他两个迭代器的迭代器。</p>
+</td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<table><tr class="unstable module-item"><td><a class="trait" href="trait.Step.html" title="core::iter::Step trait">Step</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>具有 <em>successor</em> 和 <em>predecessor</em> 操作概念的对象。</p>
+</td></tr><tr class="unstable module-item"><td><a class="trait" href="trait.TrustedLen.html" title="core::iter::TrustedLen trait">TrustedLen</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>一个使用 size_hint 报告准确长度的迭代器。</p>
+</td></tr><tr class="unstable module-item"><td><a class="trait" href="trait.TrustedStep.html" title="core::iter::TrustedStep trait">TrustedStep</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>一种支持 <a href="trait.Step.html" title="Step"><code>Step</code></a> 的所有不可变变量的类型。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.DoubleEndedIterator.html" title="core::iter::DoubleEndedIterator trait">DoubleEndedIterator</a></td><td class="docblock-short"><p>一个能够从两端产生元素的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.ExactSizeIterator.html" title="core::iter::ExactSizeIterator trait">ExactSizeIterator</a></td><td class="docblock-short"><p>知道其确切长度的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Extend.html" title="core::iter::Extend trait">Extend</a></td><td class="docblock-short"><p>用迭代器的内容扩展集合。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.FromIterator.html" title="core::iter::FromIterator trait">FromIterator</a></td><td class="docblock-short"><p>从 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a> 转换。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.FusedIterator.html" title="core::iter::FusedIterator trait">FusedIterator</a></td><td class="docblock-short"><p>一个迭代器，用完后总是继续产生 <code>None</code>。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.IntoIterator.html" title="core::iter::IntoIterator trait">IntoIterator</a></td><td class="docblock-short"><p>转换为 <a href="trait.Iterator.html" title="Iterator"><code>Iterator</code></a>。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Iterator.html" title="core::iter::Iterator trait">Iterator</a></td><td class="docblock-short"><p>用于处理迭代器的接口。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Product.html" title="core::iter::Product trait">Product</a></td><td class="docblock-short"><p>Trait 表示可以通过乘以迭代器的元素来创建的类型。</p>
+</td></tr><tr class="module-item"><td><a class="trait" href="trait.Sum.html" title="core::iter::Sum trait">Sum</a></td><td class="docblock-short"><p>Trait 表示可以通过汇总迭代器创建的类型。</p>
+</td></tr></table><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<table><tr class="unstable module-item"><td><a class="fn" href="fn.zip.html" title="core::iter::zip fn">zip</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>将参数转换为迭代器并压缩它们。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.empty.html" title="core::iter::empty fn">empty</a></td><td class="docblock-short"><p>创建一个不产生任何结果的迭代器。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.from_fn.html" title="core::iter::from_fn fn">from_fn</a></td><td class="docblock-short"><p>创建一个新的迭代器，每次迭代都调用提供的闭包 <code>F: FnMut() -&gt; Option&lt;T&gt;</code>。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.once.html" title="core::iter::once fn">once</a></td><td class="docblock-short"><p>创建一个迭代器，该迭代器只生成一次元素。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.once_with.html" title="core::iter::once_with fn">once_with</a></td><td class="docblock-short"><p>创建一个迭代器，该迭代器通过调用提供的闭包来懒惰地一次生成一个值。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.repeat.html" title="core::iter::repeat fn">repeat</a></td><td class="docblock-short"><p>创建一个新的迭代器，该迭代器不断重复单个元素。</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.repeat_with.html" title="core::iter::repeat_with fn">repeat_with</a></td><td class="docblock-short"><p>创建一个新的迭代器，方法是应用提供的闭包，转发器，无限地重复 <code>A</code> 类型的元素， <code>F: FnMut() -&gt; A</code>.</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.successors.html" title="core::iter::successors fn">successors</a></td><td class="docblock-short"><p>创建一个新的迭代器，在该迭代器的基础上，每个连续项都根据前一个进行计算。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="core" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

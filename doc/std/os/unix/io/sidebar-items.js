@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["AsRawFd","trait，用于从基础 object 中提取原始 unix 文件描述符。"],["FromRawFd","trait 表示从原始文件描述符构造 object 的能力。"],["IntoRawFd","trait 表示使用 object 并获取其原始文件描述符所有权的能力。"]],"type":[["RawFd","原始文件描述符。"]]});

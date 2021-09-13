@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="与 FFI 绑定有关的实用工具。"><meta name="keywords" content="rust, rustlang, rust-lang, ffi"><title>std::ffi - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../../storage1.55.0.js"></script><script src="../../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow1.55.0.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../std/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo1.55.0.png' alt='logo'></div></a><h2 class="location">Module ffi</h2><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></div><div id="sidebar-vars" data-name="ffi" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">std</a>::<wbr><a class="mod" href="#">ffi</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/std/ffi/mod.rs.html#1-168" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>与 FFI 绑定有关的实用工具。</p>
+<p>该模块提供了实用工具来处理跨非 Rust 接口的数据，例如其他编程语言和底层操作系统。它主要用于 FFI (外部函数接口) 绑定和需要与其他语言交换类 C 字符串的代码。</p>
+<h1 id="overview" class="section-header"><a href="#overview">Overview</a></h1>
+<p>Rust 代表 <a href="../string/struct.String.html" title="String"><code>String</code></a> 类型的拥有的字符串，而借用 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html" title="str"><code>str</code></a> 原语的字符串切片。两者始终都是 UTF-8 编码，并且中间可能包含 nul 个字节，即，如果您查看组成字符串的字节，则其中可能有一个 <code>\0</code>。
+<code>String</code> 和 <code>str</code> 都明确存储它们的长度。像 C 中的字符串末尾没有 nul 终止符。</p>
+<p>C 字符串不同于 Rust 字符串:</p>
+<ul>
+<li>
+<p><strong>编码</strong>-Rust 字符串是 UTF-8，但是 C 字符串可以使用其他编码。如果使用的是来自 C 的字符串，则应显式检查其编码，而不是像在 Rust 中那样假定它是 UTF-8。</p>
+</li>
+<li>
+<p><strong>字符大小</strong>-C 字符串可以使用 <code>char</code> 或 <code>wchar_t</code> 大小的字符; 请 <strong>注意</strong> C 的 <code>char</code> 与 Rust 的不同。
+C 标准使这些类型的实际大小易于解释，但是为由每个字符类型组成的字符串定义了不同的 API。Rust 字符串始终为 UTF-8，因此每个不同的 Unicode 字符将以可变的字节数进行编码。
+Rust 类型 <a href="https://doc.rust-lang.org/1.54.0/std/primitive.char.html" title="char"><code>char</code></a> 表示 <code>[Unicode 标量值]</code>，与 <code>[Unicode 代码点]</code> 相似但不相同。</p>
+</li>
+<li>
+<p><strong>Nul 终止符和隐式字符串长度</strong>-C 字符串通常以 Nul 终止，即，它们的末尾有 <code>\0</code> 字符。
+字符串缓冲区的长度不存储，而是必须计算; 要计算字符串的长度，C 代码必须手动调用一个函数，例如 <code>strlen()</code> 表示基于 char 的字符串，<code>wcslen()</code> 表示基于 wchar_t 的字符串。
+这些函数返回字符串中不包括 nul 终止符的字符数，因此缓冲区长度实际上是 <code>len+1</code> 字符。
+Rust 字符串没有 nul 终止符; 它们的长度总是存储的，不需要计算。
+在 Rust 中，访问字符串的长度是 <code>O(1)</code> 操作 (因为存储了长度) ; 在 C 中，它是 <code>O(length)</code> 操作，因为需要通过扫描字符串中的 nul 终止符来计算长度。</p>
+</li>
+<li>
+<p><strong>内部 nul 字符</strong>- 当 C 字符串具有 nul 终止符时，这通常意味着它们中间不能包含 nul 字符 - nul 字符实际上会截断字符串。
+Rust 字符串 <em>可以</em> 中间有 nul 个字符，因为 nul 不必在 Rust 中标记字符串的结尾。</p>
+</li>
+</ul>
+<h1 id="非-rust-字符串的表示形式" class="section-header"><a href="#非-rust-字符串的表示形式">非 Rust 字符串的表示形式</a></h1>
+<p><a href="struct.CString.html" title="CString"><code>CString</code></a> 当您需要在具有 C ABI 的语言之间来回传输 UTF-8 字符串时 (例如 Python)，X 和 <a href="struct.CStr.html" title="CStr"><code>CStr</code></a> 很有用。</p>
+<ul>
+<li>
+<p><strong>从 Rust 到 C:</strong><a href="struct.CString.html" title="CString"><code>CString</code></a> 表示一个拥有的，对 C 友好的字符串: 它是 nul 终止的，并且没有内部 nul 字符。
+Rust 代码可以从普通字符串中创建 <a href="struct.CString.html" title="CString"><code>CString</code></a> (前提是该字符串的中间没有 nul 字符)，然后使用多种方法来获取原始的 * mut [<a href="https://doc.rust-lang.org/1.54.0/std/primitive.u8.html" title="u8">u8</a>]，然后作为参数传递给使用 C 约定的字符串的函数。</p>
+</li>
+<li>
+<p><strong>从 C 到 Rust:</strong><a href="struct.CStr.html" title="CStr"><code>CStr</code></a> 表示借用的 C 字符串; 这就是您用来包装从 C 函数获得的原始 <code>* const</code><a href="https://doc.rust-lang.org/1.54.0/std/primitive.u8.html" title="u8"><code>u8</code></a> 的方式。<a href="struct.CStr.html" title="CStr"><code>CStr</code></a> 保证是一个以 nul 结尾的字节数组。
+拥有 <a href="struct.CStr.html" title="CStr"><code>CStr</code></a> 后，可以将其转换为 Rust <a href="https://doc.rust-lang.org/1.54.0/std/primitive.str.html" title="str"><code>&amp;str</code></a> (如果它是有效的 UTF-8)，或者通过添加替换字符有损地对其进行转换。</p>
+</li>
+</ul>
+<p><a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 当您需要在操作系统本身之间来回传输字符串，或者在捕获外部命令的输出时，X 和 <a href="struct.OsStr.html" title="OsStr"><code>OsStr</code></a> 很有用。
+<a href="struct.OsString.html" title="OsString"><code>OsString</code></a>，<a href="struct.OsStr.html" title="OsStr"><code>OsStr</code></a> 和 Rust 字符串之间的转换与 <a href="struct.CString.html" title="CString"><code>CString</code></a> 和 <a href="struct.CStr.html" title="CStr"><code>CStr</code></a> 的转换相似。</p>
+<ul>
+<li>
+<p><a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 以操作系统喜欢的任何表示形式表示一个拥有的字符串。在 Rust 标准库中，用于传输字符串 to/from 的各种 API，操作系统使用 <a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 代替纯字符串。
+例如，<a href="../env/fn.var_os.html"><code>env::var_os()</code></a> 用于查询环境变量; 它返回一个 <a href="../option/enum.Option.html" title="Option"><code>Option</code></a><code>&lt;</code><a href="struct.OsString.html" title="OsString"><code>OsString</code></a><code>&gt;</code>。如果环境变量存在，您将得到一个 <a href="../option/enum.Option.html#variant.Some" title="Some"><code>Some</code></a><code>(os_string)</code>，然后您可以 <em>然后</em> 尝试将其转换为 Rust 字符串。
+这将产生一个 <a href="../result/enum.Result.html" title="Result"><code>Result</code></a>，以便在环境变量实际上不包含有效的 Unicode 数据的情况下，您的代码可以检测到错误。</p>
+</li>
+<li>
+<p><a href="struct.OsStr.html" title="OsStr"><code>OsStr</code></a> 表示借用字符串引用的形式，该形式可以传递给操作系统。可以按照与 <a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 相似的方式将其转换为 UTF-8 Rust 字符串切片。</p>
+</li>
+</ul>
+<h1 id="conversions" class="section-header"><a href="#conversions">Conversions</a></h1><h2 id="在-unix-上" class="section-header"><a href="#在-unix-上">在 Unix 上</a></h2>
+<p>在 Unix 上，<a href="struct.OsStr.html" title="OsStr"><code>OsStr</code></a> 实现了 std::ffi::<code>[</code>OsStrExt<code>][unix.OsStrExt] trait，并使用两种方法 [</code>from_bytes<code>] 和 [</code>as_bytes`] 对其进行了扩充。
+它们可以进行 UTF-8 字节片和 UTF-8 字节片之间的廉价转换。</p>
+<p>此外，在 Unix 上，<a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 实现了 std::ffi::<code>[OsStringExt]][unix.OsStringExt] trait，它提供了 [</code>from_vec<code>] 和 [</code>into_vec<code>] 方法，这些方法使用其参数，并采用或产生 vectors 作为 [</code>u8`]。</p>
+<h2 id="在-windows-上" class="section-header"><a href="#在-windows-上">在 Windows 上</a></h2>
+<p>在 Windows 上，<a href="struct.OsStr.html" title="OsStr"><code>OsStr</code></a> 实现了 std::ffi::<code>[</code>OsStrExt<code>][windows.OsStrExt] trait，它提供了 [</code>encode_wide<code>] 方法。这提供了一个迭代器，可以将其迭代到 [</code>u16`] 的 vector 中。</p>
+<p>另外，在 Windows 上，<a href="struct.OsString.html" title="OsString"><code>OsString</code></a> 实现了 std::windows: ffi::<code>[</code>OsStringExt<code>][windows.OsStringExt] trait，它提供了 [</code>from_wide<code>] 方法。此方法的结果是一个 [</code>OsString`]，它可以无损地往返于 Windows 字符串。</p>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="unstable module-item"><td><a class="struct" href="struct.FromVecWithNulError.html" title="std::ffi::FromVecWithNulError struct">FromVecWithNulError</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p>指示 nul 字节不在预期位置中的错误。</p>
+</td></tr><tr class="unstable module-item"><td><a class="struct" href="struct.VaList.html" title="std::ffi::VaList struct">VaList</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p><code>va_list</code> 的包装</p>
+</td></tr><tr class="unstable module-item"><td><a class="struct" href="struct.VaListImpl.html" title="std::ffi::VaListImpl struct">VaListImpl</a></td><td class="docblock-short"><span class="stab unstable" title="">Experimental</span><p><code>va_list</code> 的基本实现。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.CStr.html" title="std::ffi::CStr struct">CStr</a></td><td class="docblock-short"><p>借用的 C 字符串的表示形式。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.CString.html" title="std::ffi::CString struct">CString</a></td><td class="docblock-short"><p>一种类型，表示拥有的，C 兼容的，以 nul 终止的字符串，中间没有 nul 字节。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.FromBytesWithNulError.html" title="std::ffi::FromBytesWithNulError struct">FromBytesWithNulError</a></td><td class="docblock-short"><p>指示 nul 字节不在预期位置中的错误。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.IntoStringError.html" title="std::ffi::IntoStringError struct">IntoStringError</a></td><td class="docblock-short"><p>将 <a href="struct.CString.html" title="CString"><code>CString</code></a> 转换为 <a href="../string/struct.String.html" title="String"><code>String</code></a> 时，指示 UTF-8 无效的错误。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.NulError.html" title="std::ffi::NulError struct">NulError</a></td><td class="docblock-short"><p>指示发现内部 nul 字节的错误。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.OsStr.html" title="std::ffi::OsStr struct">OsStr</a></td><td class="docblock-short"><p>借用引用到 OS 字符串 (请参见 <a href="struct.OsString.html" title="OsString"><code>OsString</code></a>)。</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.OsString.html" title="std::ffi::OsString struct">OsString</a></td><td class="docblock-short"><p>一种类型，可以表示拥有的，可变的平台原生字符串，但可以廉价地与 Rust 字符串互转换。</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.c_void.html" title="std::ffi::c_void enum">c_void</a></td><td class="docblock-short"><p>当用作 <a href="../primitive.pointer.html" title="pointer">指针</a> 时，等效于 C 的 <code>void</code> 类型。</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="std" data-search-index-js="../../search-index1.55.0.js" data-search-js="../../search1.55.0.js"></div><script src="../../main1.55.0.js"></script></body></html>

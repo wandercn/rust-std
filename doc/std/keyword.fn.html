@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="一个函数或函数指针。"><meta name="keywords" content="rust, rustlang, rust-lang, fn"><title>fn - Rust</title><link rel="stylesheet" type="text/css" href="../normalize1.55.0.css"><link rel="stylesheet" type="text/css" href="../rustdoc1.55.0.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light1.55.0.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark1.55.0.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu1.55.0.css" disabled ><script id="default-settings"></script><script src="../storage1.55.0.js"></script><script src="../crates1.55.0.js"></script><noscript><link rel="stylesheet" href="../noscript1.55.0.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon1.55.0.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x161.55.0.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x321.55.0.png"><style type="text/css">#crate-search{background-image:url("../down-arrow1.55.0.svg");}</style></head><body class="rustdoc keyword"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../std/index.html'><div class='logo-container rust-logo'><img src='../rust-logo1.55.0.png' alt='logo'></div></a><div class="sidebar-elems"><h2 class="location">Other items in<br><a href="index.html">std</a></h2><div id="sidebar-vars" data-name="fn" data-ty="keyword" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush1.55.0.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel1.55.0.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Keyword <a class="keyword" href="#">fn</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard1.55.0.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/std/keyword_docs.rs.html#494" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>一个函数或函数指针。</p>
+<p>函数是在 Rust 中执行代码的主要方式。通常称为函数的函数块可以在各种不同的位置定义，并分配有许多不同的属性和修饰符。</p>
+<p>仅位于未附加任何模块的模块中的独立函数是常见的，但是大多数函数最终将最终位于 <a href="keyword.impl.html"><code>impl</code></a> 块中，或者位于另一种类型本身上，或者作为该类型的 trait 隐式实现。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">standalone_function</span>() {
+    <span class="comment">// code</span>
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">public_thing</span>(<span class="ident">argument</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+    <span class="comment">// code</span>
+}
+
+<span class="kw">struct</span> <span class="ident">Thing</span> {
+    <span class="ident">foo</span>: <span class="ident">i32</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Thing</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">foo</span>: <span class="number">42</span>,
+        }
+    }
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Afn%20standalone_function()%20%7B%0A%20%20%20%20%2F%2F%20code%0A%7D%0A%0Apub%20fn%20public_thing(argument%3A%20bool)%20-%3E%20String%20%7B%0A%20%20%20%20%2F%2F%20code%0A%22%22.to_string()%0A%7D%0A%0Astruct%20Thing%20%7B%0A%20%20%20%20foo%3A%20i32%2C%0A%7D%0A%0Aimpl%20Thing%20%7B%0A%20%20%20%20pub%20fn%20new()%20-%3E%20Self%20%7B%0A%20%20%20%20%20%20%20%20Self%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20foo%3A%2042%2C%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>除了以 <code>fn name(arg: type, ..) -&gt; return_type</code> 形式显示固定类型外，函数还可以声明类型参数列表以及它们所属的 trait bounds。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">generic_function</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Clone</span><span class="op">&gt;</span>(<span class="ident">x</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">T</span>, <span class="ident">T</span>, <span class="ident">T</span>) {
+    (<span class="ident">x</span>.<span class="ident">clone</span>(), <span class="ident">x</span>.<span class="ident">clone</span>(), <span class="ident">x</span>.<span class="ident">clone</span>())
+}
+
+<span class="kw">fn</span> <span class="ident">generic_where</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">x</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>
+    <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">std::ops::Add</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Copy</span>
+{
+    <span class="ident">x</span> <span class="op">+</span> <span class="ident">x</span> <span class="op">+</span> <span class="ident">x</span>
+}</pre><a class="test-arrow" target="_blank" href="https://play.rust-lang.org/?code=%23!%5Ballow(unused)%5D%0Afn%20main()%20%7B%0Afn%20generic_function%3CT%3A%20Clone%3E(x%3A%20T)%20-%3E%20(T%2C%20T%2C%20T)%20%7B%0A%20%20%20%20(x.clone()%2C%20x.clone()%2C%20x.clone())%0A%7D%0A%0Afn%20generic_where%3CT%3E(x%3A%20T)%20-%3E%20T%0A%20%20%20%20where%20T%3A%20std%3A%3Aops%3A%3AAdd%3COutput%20%3D%20T%3E%20%2B%20Copy%0A%7B%0A%20%20%20%20x%20%2B%20x%20%2B%20x%0A%7D%0A%7D&amp;edition=2018">Run</a></div>
+<p>在尖括号中声明 trait bounds 在功能上与使用 <code>where</code> 子句相同。
+由程序员决定在每种情况下哪种效果更好，但是当事情长于一行时，<code>where</code> 往往会更好。</p>
+<p>除了通过 <code>pub</code> 公开之外，<code>fn</code> 还可以添加 <a href="keyword.extern.html"><code>extern</code></a> 以用于 FFI。</p>
+<p>有关各种类型的函数以及如何使用它们的更多信息，请查阅 <a href="../book/ch03-03-how-functions-work.html">Rust book</a> 或 <a href="../reference/items/functions.html">Reference</a>。</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="std" data-search-index-js="../search-index1.55.0.js" data-search-js="../search1.55.0.js"></div><script src="../main1.55.0.js"></script></body></html>
