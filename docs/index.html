@@ -17,6 +17,8 @@
 <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet"> 
 
   <link href="https://cdn.jsdelivr.net/npm/@bootcss/www.bootcss.com@0.0.50/dist/css/site.min.css" rel="stylesheet">
+  <link href="http://textillate.js.org/assets/animate.css" rel="stylesheet">
+
 
 <style>
 .job-hot {
@@ -54,7 +56,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand hidden-sm" href="https://rust.ffactory.org" onclick="_hmt.push(['_trackEvent', 'navbar', 'click', 'navbar-首页'])">Rust中文网(非官方)</a>
+      <a class="navbar-brand hidden-sm " href="https://rust.ffactory.org" onclick="_hmt.push(['_trackEvent', 'navbar', 'click', 'navbar-首页'])">Rust中文网(非官方)</a>
     </div>
     <div class="navbar-collapse collapse" role="navigation">
       <ul class="nav navbar-nav">
@@ -109,15 +111,15 @@
     
 
   <div class="jumbotron masthead" style="background: -webkit-gradient(linear, 40% 50%,80% 20%, from(#383E56), to(#35D0BA));">
-  <div class="container">
-    <h1>Rust</h1>
-    <h2>一种赋予每个人构建可靠且高效软件能力的编程语言。</h2>
+  <div class="container ">
+    <h1 class="tlt">Rust</h1>
+    <h2 class="tlt">一种赋予每个人构建可靠且高效软件能力的编程语言。</h2>
     <p class="masthead-button-links">
-      <a class="btn btn-lg btn-primary btn-shadow" href="std/index.html" target="_blank" role="button" onclick="_hmt.push(['_trackEvent', 'masthead', 'click', 'Rust标准库中文文档'])">Rust标准库中文文档(1.55)</a>
+      <a class="btn btn-lg btn-primary btn-shadow tlt" href="std/index.html" target="_blank" role="button" onclick="_hmt.push(['_trackEvent', 'masthead', 'click', 'Rust标准库中文文档'])">Rust标准库中文文档(1.55)</a>
     </p>
     <ul class="masthead-links">
       <li>
-        <a href="https://doc.rust-lang.org/std/" target="_blank" role="button" onclick="_hmt.push(['_trackEvent', 'masthead', 'click', '英文官方文档'])">英文官方文档</a>
+        <a class="tlt" href="https://doc.rust-lang.org/std/" target="_blank" role="button" onclick="_hmt.push(['_trackEvent', 'masthead', 'click', '英文官方文档'])">英文官方文档</a>
       </li>
     </ul>
   </div>
@@ -1488,7 +1490,82 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery-match-height@0.7.2/dist/jquery.matchHeight-min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/@bootcss/www.bootcss.com@0.0.50/dist/js/site.min.js"></script>
+  <script src="http://textillate.js.org/assets/jquery.fittext.js"></script>
+  <script src="http://textillate.js.org/assets/jquery.lettering.js"></script>
+  <script src="http://textillate.js.org/jquery.textillate.js"></script>
+<script type="text/javascript">
+  $('.tlt').textillate({
+  // the default selector to use when detecting multiple texts to animate
+  selector: '.texts',
 
+  // enable looping
+  loop: false,
+
+  // sets the minimum display time for each text before it is replaced
+  minDisplayTime: 2000,
+
+  // sets the initial delay before starting the animation
+  // (note that depending on the in effect you may need to manually apply
+  // visibility: hidden to the element before running this plugin)
+  initialDelay: 0,
+
+  // set whether or not to automatically start animating
+  autoStart: true,
+
+  // custom set of 'in' effects. This effects whether or not the
+  // character is shown/hidden before or after an animation
+  inEffects: [],
+
+  // custom set of 'out' effects
+  outEffects: [ 'hinge' ],
+
+  // in animation settings
+  in: {
+    // set the effect name
+    effect: 'fadeIn',
+    // effect: 'fadeInLeftBig',
+
+    // set the delay factor applied to each consecutive character
+    delayScale: 2.5,
+
+    // set the delay between each character
+    delay: 50,
+
+    // set to true to animate all the characters at the same time
+    sync: false,
+
+    // randomize the character sequence
+    // (note that shuffle doesn't make sense with sync = true)
+    shuffle: false,
+
+    // reverse the character sequence
+    // (note that reverse doesn't make sense with sync = true)
+    reverse: false,
+
+    // callback that executes once the animation has finished
+    callback: function () {}
+  },
+
+  // out animation settings.
+  out: {
+    effect: 'hinge',
+    delayScale: 1.5,
+    delay: 50,
+    sync: false,
+    shuffle: false,
+    reverse: false,
+    callback: function () {}
+  },
+
+  // callback that executes once textillate has finished
+  callback: function () {},
+
+  // set the type of token to animate (available types: 'char' and 'word')
+  type: 'char'
+});
+
+
+</script>
 <!-- <script>
   $(document).ready(function(){
       $('#qqgroup').text(qqgroup);
